@@ -1,0 +1,65 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { verifyToken, getTokenFromHeader, hashToken } from './jwt'
+import { prisma } from './prisma'
+import { Role } from '@prisma/client'
+
+export interface AuthenticatedRequest extends NextRequest {
+  user?: {
+    id: string
+    email: string
+    role: Role
+    sessionId: string
+  }
+}
+
+type RouteHandler = (
+  req: AuthenticatedRequest,
+  context: { params: Record<string, string> }
+) => Promise<NextResponse>
+
+export function withAuth(handler: RouteHandler, allowedRoles?: Role[]) {
+  return async (
+    req: NextRequest,
+    context: { params: Record<string, string> }
+  ): Promise<NextResponse> => {
+    try {
+      const token = getTokenFromHeader(req.headers.get('authorization'))
+
+      if (!token) {
+        return NextResponse.json({ error: 'Token no proporcionado' }, { status: 401 })
+      }
+
+      const payload = verifyToken(token)
+
+      const session = await prisma.session.findUnique({
+        where: { tokenHash: hashToken(token) },
+        include: { user: { select: { status: true } } },
+      })
+
+      if (!session || session.revokedAt || session.expiresAt < new Date()) {
+        return NextResponse.json({ error: 'Sesión inválida o expirada' }, { status: 401 })
+      }
+
+      if (session.user.status !== 'ACTIVE') {
+        return NextResponse.json({ error: 'Cuenta suspendida o inactiva' }, { status: 403 })
+      }
+
+      if (allowedRoles && !allowedRoles.includes(payload.role as Role)) {
+        return NextResponse.json({ error: 'Permisos insuficientes' }, { status: 403 })
+      }
+
+      const authenticatedReq = req as AuthenticatedRequest
+      authenticatedReq.user = {
+        id: payload.sub,
+        email: payload.email,
+        role: payload.role as Role,
+        sessionId: payload.sessionId,
+      }
+
+      return handler(authenticatedReq, context)
+    } catch (error) {
+      console.error('[AUTH MIDDLEWARE ERROR]', error)
+      return NextResponse.json({ error: 'Token inválido' }, { status: 401 })
+    }
+  }
+}
