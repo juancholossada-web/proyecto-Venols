@@ -3,7 +3,21 @@
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 
-const navItems = [
+type NavItem = {
+  href: string
+  icon: string
+  label: string
+  roles: string[]
+  soon?: boolean
+  badge?: string
+}
+
+type NavGroup = {
+  section: string
+  items: NavItem[]
+}
+
+const navItems: NavGroup[] = [
   { section: 'PRINCIPAL', items: [
     { href: '/dashboard', icon: '📊', label: 'Dashboard', roles: ['ADMIN','OPERATOR','TECHNICIAN'] },
     { href: '/dashboard/vessels', icon: '🚢', label: 'Embarcaciones', roles: ['ADMIN','OPERATOR','TECHNICIAN'], soon: true },

@@ -7,18 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  ADMIN
-  OPERATOR
-  TECHNICIAN
-}
-
-enum UserStatus {
-  ACTIVE
-  INACTIVE
-  SUSPENDED
-}
-
 model User {
   id            String     @id @default(cuid())
   email         String     @unique
@@ -34,13 +22,13 @@ model User {
   lockedUntil   DateTime?
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
-  sessions      Session[]
   auditLogs     AuditLog[]
+  sessions      Session[]
 
-  @@map("users")
   @@index([email])
   @@index([role])
   @@index([status])
+  @@map("users")
 }
 
 model Session {
@@ -54,10 +42,10 @@ model Session {
   revokedAt DateTime?
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("sessions")
   @@index([userId])
   @@index([tokenHash])
   @@index([expiresAt])
+  @@map("sessions")
 }
 
 model AuditLog {
@@ -69,10 +57,22 @@ model AuditLog {
   metadata  Json?
   ipAddress String?
   createdAt DateTime @default(now())
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user      User?    @relation(fields: [userId], references: [id])
 
-  @@map("audit_logs")
   @@index([userId])
   @@index([action])
   @@index([createdAt])
+  @@map("audit_logs")
+}
+
+enum Role {
+  ADMIN
+  OPERATOR
+  TECHNICIAN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
 }

@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
 
 const JWT_SECRET = process.env.JWT_SECRET!
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '8h'
+const JWT_EXPIRES_IN = (process.env.JWT_EXPIRES_IN || '8h') as `${number}${'s' | 'm' | 'h' | 'd'}`
 
 export interface JWTPayload {
   sub: string
