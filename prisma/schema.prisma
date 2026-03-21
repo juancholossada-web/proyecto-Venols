@@ -76,3 +76,377 @@ enum UserStatus {
   INACTIVE
   SUSPENDED
 }
+
+model Vessel {
+  id           String        @id @default(cuid())
+  name         String
+  fleetType    FleetType
+  vesselType   String
+  status       VesselStatus  @default(OPERATIVO)
+  flag         String?       @default("Venezuela")
+  yearBuilt    Int?
+  grossTon     Float?
+  length       Float?
+  capacity     Float?
+  capacityUnit String?
+  captain      String?
+  marineOnDuty String?
+  homePort     String?
+  imoNumber    String?       @unique
+  matricula    String?
+  notes        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  fuelReports        FuelReport[]
+  maintenanceReports MaintenanceReport[]
+  statusReports      StatusReport[]
+  assignments        Assignment[]
+  voyages            Voyage[]
+  fuelLogs           FuelLog[]
+  inventoryItems     InventoryItem[]
+  maintenanceOrders  MaintenanceOrder[]
+  complianceDocs     ComplianceDocument[]
+
+  @@index([fleetType])
+  @@index([status])
+  @@map("vessels")
+}
+
+// ═══════ FASE 3 — PERSONAL Y TRIPULACION ═══════
+
+model Employee {
+  id              String           @id @default(cuid())
+  firstName       String
+  lastName        String
+  nationalId      String           @unique
+  nationality     String           @default("Venezolana")
+  position        String
+  seafarerBook    String?
+  passportNumber  String?
+  passportExpiry  DateTime?
+  phone           String?
+  email           String?
+  address         String?
+  birthDate       DateTime?
+  status          EmployeeStatus   @default(ACTIVO)
+  notes           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  certifications  Certification[]
+  assignments     Assignment[]
+
+  @@index([status])
+  @@index([position])
+  @@map("employees")
+}
+
+model Certification {
+  id          String   @id @default(cuid())
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  type        String
+  name        String
+  number      String?
+  issuedBy    String
+  issuedAt    DateTime
+  expiresAt   DateTime
+  fileUrl     String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([employeeId])
+  @@index([expiresAt])
+  @@map("certifications")
+}
+
+model Assignment {
+  id          String           @id @default(cuid())
+  employeeId  String
+  employee    Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  vesselId    String
+  vessel      Vessel           @relation(fields: [vesselId], references: [id], onDelete: Cascade)
+  role        String
+  startDate   DateTime
+  endDate     DateTime?
+  status      AssignmentStatus @default(ACTIVO)
+  notes       String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([employeeId])
+  @@index([vesselId])
+  @@index([status])
+  @@map("assignments")
+}
+
+enum EmployeeStatus {
+  ACTIVO
+  INACTIVO
+  LICENCIA
+  VACACIONES
+  RETIRADO
+}
+
+enum AssignmentStatus {
+  ACTIVO
+  COMPLETADO
+  CANCELADO
+}
+
+model FuelReport {
+  id          String   @id @default(cuid())
+  vesselId    String
+  vessel      Vessel   @relation(fields: [vesselId], references: [id], onDelete: Cascade)
+  date        DateTime
+  fuelLevel   Float
+  fuelUnit    String   @default("litros")
+  consumption Float?
+  location    String?
+  operator    String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([vesselId])
+  @@index([date])
+  @@map("fuel_reports")
+}
+
+model MaintenanceReport {
+  id            String    @id @default(cuid())
+  vesselId      String
+  vessel        Vessel    @relation(fields: [vesselId], references: [id], onDelete: Cascade)
+  date          DateTime
+  type          String
+  description   String
+  technician    String?
+  partsReplaced String?
+  cost          Float?
+  status        String    @default("PENDIENTE")
+  nextScheduled DateTime?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([vesselId])
+  @@index([date])
+  @@map("maintenance_reports")
+}
+
+model StatusReport {
+  id           String       @id @default(cuid())
+  vesselId     String
+  vessel       Vessel       @relation(fields: [vesselId], references: [id], onDelete: Cascade)
+  date         DateTime
+  location     String
+  activity     String
+  fuelLevel    Float?
+  client       String?
+  captain      String
+  marineOnDuty String
+  vesselStatus VesselStatus
+  notes        String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([vesselId])
+  @@index([date])
+  @@map("status_reports")
+}
+
+enum FleetType {
+  PESADA
+  LIVIANA
+}
+
+enum VesselStatus {
+  OPERATIVO
+  EN_TRANSITO
+  ATRACADO
+  MANTENIMIENTO
+  INACTIVO
+}
+
+// ═══════ FASE 4 — OPERACIONES ═══════
+
+model Voyage {
+  id            String       @id @default(cuid())
+  vesselId      String
+  vessel        Vessel       @relation(fields: [vesselId], references: [id], onDelete: Cascade)
+  voyageNumber  String       @unique
+  origin        String
+  destination   String
+  departureAt   DateTime?
+  arrivalAt     DateTime?
+  status        VoyageStatus @default(PLANIFICADO)
+  cargoType     String?
+  cargoTons     Float?
+  charterParty  String?
+  clientId      String?
+  client        Client?      @relation(fields: [clientId], references: [id])
+  notes         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  fuelLogs       FuelLog[]
+  cargoOps       CargoOperation[]
+
+  @@index([vesselId])
+  @@index([status])
+  @@index([clientId])
+  @@map("voyages")
+}
+
+model FuelLog {
+  id              String   @id @default(cuid())
+  vesselId        String
+  vessel          Vessel   @relation(fields: [vesselId], references: [id], onDelete: Cascade)
+  voyageId        String?
+  voyage          Voyage?  @relation(fields: [voyageId], references: [id])
+  date            DateTime
+  fuelType        String   @default("MGO")
+  operationAt     String
+  bunkerReceived  Float?
+  consumed        Float?
+  rob             Float
+  price           Float?
+  supplier        String?
+  bdn             String?
+  reportedBy      String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([vesselId])
+  @@index([voyageId])
+  @@index([date])
+  @@map("fuel_logs")
+}
+
+model InventoryItem {
+  id          String   @id @default(cuid())
+  vesselId    String
+  vessel      Vessel   @relation(fields: [vesselId], references: [id], onDelete: Cascade)
+  name        String
+  category    String
+  quantity    Int      @default(0)
+  unit        String   @default("unidad")
+  minStock    Int      @default(0)
+  location    String?
+  supplier    String?
+  lastRestocked DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([vesselId])
+  @@index([category])
+  @@map("inventory_items")
+}
+
+model CargoOperation {
+  id              String    @id @default(cuid())
+  voyageId        String
+  voyage          Voyage    @relation(fields: [voyageId], references: [id], onDelete: Cascade)
+  operationType   String
+  product         String
+  quantityBL      Float
+  quantityVEF     Float?
+  temperature     Float?
+  apiGravity      Float?
+  waterContent    Float?
+  terminal        String?
+  startAt         DateTime
+  endAt           DateTime?
+  blNumber        String?
+  status          String    @default("EN_PROCESO")
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([voyageId])
+  @@map("cargo_operations")
+}
+
+enum VoyageStatus {
+  PLANIFICADO
+  EN_CURSO
+  COMPLETADO
+  CANCELADO
+}
+
+// ═══════ FASE 5 — CLIENTES, MANTENIMIENTO, COMPLIANCE ═══════
+
+model Client {
+  id        String   @id @default(cuid())
+  name      String
+  taxId     String   @unique
+  type      String   @default("EMPRESA")
+  country   String   @default("Venezuela")
+  address   String?
+  phone     String?
+  email     String?
+  contact   String?
+  notes     String?
+  status    String   @default("ACTIVO")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  voyages   Voyage[]
+
+  @@index([type])
+  @@index([status])
+  @@map("clients")
+}
+
+model MaintenanceOrder {
+  id            String    @id @default(cuid())
+  vesselId      String
+  vessel        Vessel    @relation(fields: [vesselId], references: [id], onDelete: Cascade)
+  type          String
+  description   String
+  priority      String    @default("MEDIA")
+  system        String
+  dueDate       DateTime
+  completedAt   DateTime?
+  technician    String?
+  spareParts    String?
+  cost          Float?
+  status        String    @default("PENDIENTE")
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([vesselId])
+  @@index([status])
+  @@index([priority])
+  @@index([dueDate])
+  @@map("maintenance_orders")
+}
+
+model ComplianceDocument {
+  id          String    @id @default(cuid())
+  vesselId    String?
+  vessel      Vessel?   @relation(fields: [vesselId], references: [id], onDelete: Cascade)
+  employeeId  String?
+  type        String
+  name        String
+  documentNumber String?
+  issuedBy    String
+  issuedAt    DateTime
+  expiresAt   DateTime
+  fileUrl     String?
+  status      String    @default("VIGENTE")
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([vesselId])
+  @@index([employeeId])
+  @@index([expiresAt])
+  @@index([type])
+  @@map("compliance_documents")
+}

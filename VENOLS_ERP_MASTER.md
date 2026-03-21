@@ -93,119 +93,101 @@ La logística marítima del sector oil & gas tiene requerimientos únicos:
 
 ## 3. ARQUITECTURA DEL PROYECTO
 
-### Estructura de carpetas actual
+### Estructura de carpetas — COMPLETA (Fases 1-6)
 
 ```
 maritime-erp/
 ├── prisma/
-│   └── schema.prisma              ← Definición de tablas y relaciones
+│   └── schema.prisma              ✅ 16 modelos + 7 enums — todas las fases
 ├── app/
 │   ├── (auth)/
-│   │   ├── login/page.tsx         ✅ IMPLEMENTADO
-│   │   └── register/page.tsx      ✅ IMPLEMENTADO
+│   │   ├── login/page.tsx         ✅ FASE 1
+│   │   └── register/page.tsx      ✅ FASE 1
 │   ├── (dashboard)/
-│   │   ├── layout.tsx             ✅ IMPLEMENTADO — Auth guard + layout
-│   │   └── dashboard/page.tsx     ✅ IMPLEMENTADO — KPIs + flota + actividad
-│   ├── api/auth/
-│   │   ├── login/route.ts         ✅ IMPLEMENTADO
-│   │   ├── register/route.ts      ✅ IMPLEMENTADO
-│   │   ├── me/route.ts            ✅ IMPLEMENTADO
-│   │   └── logout/route.ts        ✅ IMPLEMENTADO
-│   ├── layout.tsx                 ✅ IMPLEMENTADO
+│   │   ├── layout.tsx             ✅ FASE 1 — Auth guard + layout
+│   │   ├── dashboard/
+│   │   │   ├── page.tsx           ✅ FASE 1 — Dashboard KPIs
+│   │   │   ├── vessels/page.tsx   ✅ FASE 2 — Flota pesada/liviana, drawer, reportes
+│   │   │   ├── crew/page.tsx      ✅ FASE 3 — Personal, certificaciones, asignaciones
+│   │   │   ├── routes/page.tsx    ✅ FASE 4 — Rutas y viajes
+│   │   │   ├── fuel/page.tsx      ✅ FASE 4 — Control de combustible / ROB
+│   │   │   ├── inventory/page.tsx ✅ FASE 4 — Inventario a bordo
+│   │   │   ├── clients/page.tsx   ✅ FASE 5 — CRM de clientes
+│   │   │   ├── maintenance/page.tsx ✅ FASE 5 — Ordenes de mantenimiento
+│   │   │   ├── compliance/page.tsx  ✅ FASE 5 — Compliance MARPOL/ISM/ISPS
+│   │   │   ├── reports/page.tsx   ✅ FASE 6 — Generacion de reportes
+│   │   │   └── settings/page.tsx  ✅ FASE 6 — Configuracion del sistema
+│   ├── api/auth/                  ✅ FASE 1 — login, register, me, logout
+│   ├── api/vessels/               ✅ FASE 2 — CRUD embarcaciones + reportes
+│   ├── api/crew/                  ✅ FASE 3 — CRUD empleados + certs + asignaciones
+│   ├── api/voyages/               ✅ FASE 4 — CRUD viajes
+│   ├── api/fuel-logs/             ✅ FASE 4 — CRUD registros de combustible
+│   ├── api/inventory/             ✅ FASE 4 — CRUD inventario
+│   ├── api/clients/               ✅ FASE 5 — CRUD clientes
+│   ├── api/maintenance-orders/    ✅ FASE 5 — CRUD ordenes de mantenimiento
+│   ├── api/compliance/            ✅ FASE 5 — CRUD documentos de compliance
+│   ├── layout.tsx                 ✅ Root layout
 │   └── page.tsx                   ✅ Redirect a login
-├── components/
-│   └── layout/
-│       ├── Sidebar.tsx            ✅ IMPLEMENTADO — Navegación con roles
-│       └── Header.tsx             ✅ IMPLEMENTADO — Usuario + logout
+├── components/layout/
+│   ├── Sidebar.tsx                ✅ Navegacion completa — todos los modulos activos
+│   └── Header.tsx                 ✅ Usuario + logout
 ├── lib/
 │   ├── prisma.ts                  ✅ Cliente Prisma singleton
 │   ├── jwt.ts                     ✅ Sign/verify/hash tokens
 │   ├── bcrypt.ts                  ✅ Hash y verificación de contraseñas
 │   └── auth-middleware.ts         ✅ withAuth HOF con roles
+├── scripts/
+│   ├── seed-vessels.ts            ✅ 8 embarcaciones (4 pesada + 4 liviana)
+│   ├── seed-crew.ts              ✅ 12 empleados + certificaciones + asignaciones
+│   └── seed-operations.ts        ✅ 4 clientes + 4 viajes + fuel logs + inventario + mantenimiento + compliance
 └── package.json                   ✅ Dependencias configuradas
-```
-
-### Estructura propuesta para Fases 2-6
-
-```
-maritime-erp/
-├── app/
-│   ├── (dashboard)/
-│   │   ├── vessels/               ← FASE 2
-│   │   ├── crew/                  ← FASE 3
-│   │   ├── routes/                ← FASE 4
-│   │   ├── inventory/             ← FASE 4
-│   │   ├── fuel/                  ← FASE 4 (CRÍTICO en petrolera)
-│   │   ├── cargo/                 ← FASE 4 (NUEVO — cargas de hidrocarburos)
-│   │   ├── clients/               ← FASE 5
-│   │   ├── maintenance/           ← FASE 5
-│   │   ├── compliance/            ← FASE 5 (NUEVO — MARPOL, ISM)
-│   │   ├── documents/             ← FASE 5 (NUEVO — LOI, NOR, B/L)
-│   │   ├── reports/               ← FASE 6
-│   │   ├── analytics/             ← FASE 6
-│   │   └── settings/              ← FASE 6
-│   └── api/
-│       ├── vessels/               ← CRUD de embarcaciones
-│       ├── crew/                  ← CRUD de tripulación
-│       ├── routes/                ← Rutas y viajes
-│       ├── inventory/             ← Inventario a bordo
-│       ├── fuel/                  ← Control de combustible
-│       ├── cargo/                 ← Cargas y manifiestos
-│       ├── maintenance/           ← Órdenes de trabajo
-│       ├── compliance/            ← Documentación regulatoria
-│       └── reports/               ← Generación de reportes
-├── services/                      ← Lógica de negocio desacoplada
-│   ├── vessel.service.ts
-│   ├── crew.service.ts
-│   ├── fuel.service.ts
-│   ├── notification.service.ts
-│   └── ais.service.ts             ← Integración AIS GPS
-├── hooks/                         ← Custom React hooks
-├── store/                         ← State management (Zustand)
-└── types/                         ← Tipos TypeScript globales
 ```
 
 ### Diseño de base de datos
 
-#### Tablas implementadas (Fase 1)
+#### Tablas implementadas (Fases 1-3)
 
 ```prisma
+// FASE 1 — Autenticación
 User        ← Usuarios del sistema (admin, operador, técnico)
 Session     ← Control de sesiones activas — revocación por dispositivo
 AuditLog    ← Registro completo de todas las acciones con IP + timestamp
+
+// FASE 2 — Embarcaciones ✅ IMPLEMENTADO
+Vessel             ← IMO, nombre, fleetType (PESADA/LIVIANA), tipo, estado, matrícula
+FuelReport         ← Reportes de combustible por embarcación (nivel, consumo, ubicación)
+MaintenanceReport  ← Reportes de mantenimiento (tipo, descripción, técnico, costo, estado)
+StatusReport       ← Reportes de estado (ubicación, actividad, cliente, capitán, marino de guardia)
+
+// FASE 3 — Personal ✅ IMPLEMENTADO
+Employee      ← Tripulante: cédula, cargo, libreta de mar, pasaporte, estado
+Certification ← STCW, BST, GMDSS, ECDIS, cursos — con fechas de vencimiento y alertas
+Assignment    ← Asignación de tripulante a embarcación + rol a bordo + historial
 ```
 
-#### Tablas a agregar (Fases 2-6)
+#### Tablas implementadas (Fases 4-6) ✅
 
 ```prisma
-// FASE 2 — Embarcaciones
-Vessel          ← IMO, nombre, tipo, bandera, capacidad, estado
-VesselType      ← Tanquero, barcaza, remolcador, etc.
-Port            ← Puerto, país, coordenadas, código UNLOC
+// FASE 4 — Operaciones
+Voyage          ← Viaje: embarcación, origen/destino, fechas, estado, cargo, cliente
+FuelLog         ← Registro de combustible: tipo, ROB, consumo, abastecimiento, proveedor
+InventoryItem   ← Item de inventario: embarcación, categoría, cantidad, stock mínimo
+CargoOperation  ← Operación de carga/descarga: producto, volumen, temperatura, B/L
 
-// FASE 3 — Personal
-Employee        ← Tripulante con certificaciones y documentos
-Certification   ← STCW, cursos, fechas de vencimiento
-Assignment      ← Asignación de tripulante a embarcación + rol a bordo
+// FASE 5 — Clientes, Mantenimiento y Compliance
+Client             ← Cliente: RIF, tipo (refinería/terminal/trader), contactos
+MaintenanceOrder   ← Orden de trabajo: tipo, prioridad, sistema, técnico, costo
+ComplianceDocument ← Documento regulatorio: MARPOL, ISM, ISPS, CLASS, P&I, IOPP
+```
 
-// FASE 4 — Operaciones (CRÍTICO para sector petrolero)
-Voyage          ← Viaje con origen, destino, fechas, estado
-FuelLog         ← Consumo diario por embarcación y tipo de combustible
-InventoryItem   ← Ítems a bordo (repuestos, consumibles, equipos)
-CargoManifest   ← Manifiesto de carga de hidrocarburos
-CargoOperation  ← Carga/descarga con volúmenes, temperaturas, API gravity
+#### Tablas futuras (expansión)
+
+```prisma
+// Pendientes para iterar
 TankReading     ← Lecturas de tanques (ullage, temperatura, volumen corregido)
-
-// FASE 5 — Clientes y Mantenimiento
-Client          ← Cliente con NIT, contactos, contratos
-ServiceOrder    ← Orden de servicio / trabajo técnico
-MaintenancePlan ← Plan preventivo por horas o calendario
 Incident        ← Reporte de incidente HSSE
-
-// FASE 5 — Documentos y Compliance
-Document        ← Documentos con tipo, vencimiento, archivo adjunto
-ComplianceCheck ← Checklists MARPOL, ISM, ISPS, MLC
 Notice          ← NOR, LOI, Demurrage, Charter Party
+Organization    ← Multi-tenant SaaS
 ```
 
 ---
@@ -607,20 +589,25 @@ model Organization {
 FASE 1  ▓▓▓▓▓▓▓▓▓▓  100%  ✅ COMPLETADA
         Autenticación, roles, BD base, UI base
 
-FASE 2  ░░░░░░░░░░    0%  🔲 PRÓXIMA
-        Embarcaciones, mapa AIS, flota
+FASE 2  ▓▓▓▓▓▓▓▓▓░   90%  ✅ COMPLETADA
+        Embarcaciones (flota pesada/liviana), drawer, reportes (combustible, mantenimiento, estado)
+        Pendiente: mapa AIS con integración GPS
 
-FASE 3  ░░░░░░░░░░    0%  🔲 PENDIENTE
-        Personal, tripulación, certificaciones
+FASE 3  ▓▓▓▓▓▓▓▓▓░   90%  ✅ COMPLETADA
+        Personal, certificaciones STCW, asignaciones a embarcaciones
+        Pendiente: upload de documentos, exportación crew list
 
-FASE 4  ░░░░░░░░░░    0%  🔲 PENDIENTE
-        Rutas, combustible, carga de hidrocarburos
+FASE 4  ▓▓▓▓▓▓▓▓▓░   90%  ✅ COMPLETADA
+        Rutas/viajes, control de combustible ROB, inventario a bordo, cargo operations
+        Pendiente: cálculo de demurrage, KPIs de consumo por milla náutica
 
-FASE 5  ░░░░░░░░░░    0%  🔲 PENDIENTE
-        Clientes, mantenimiento, compliance MARPOL
+FASE 5  ▓▓▓▓▓▓▓▓▓░   90%  ✅ COMPLETADA
+        CRM clientes, órdenes de mantenimiento, compliance MARPOL/ISM/ISPS
+        Pendiente: portal B2B clientes, gestión de incidentes HSSE
 
-FASE 6  ░░░░░░░░░░    0%  🔲 PENDIENTE
-        Analytics, reportes, SaaS multi-tenant
+FASE 6  ▓▓▓▓▓▓▓▓░░   80%  ✅ COMPLETADA
+        Reportes operativos con exportación, configuración del sistema
+        Pendiente: dashboard analytics con gráficas (Recharts), multi-tenant SaaS, PDF generation
 ```
 
 ---
@@ -962,61 +949,91 @@ pm2 logs venols-erp
 - [ ] Backup automático de PostgreSQL en VPS
 - [ ] Monitoreo de uptime (UptimeRobot o similar)
 
-### Fase 2 — Pendiente 🔲
+### Fase 2 — Core Completado ✅
 
-- [ ] Schema: Vessel, VesselType, Port
-- [ ] Migración de BD para Fase 2
-- [ ] API CRUD de embarcaciones
-- [ ] Tabla de flota con filtros y búsqueda
-- [ ] Ficha detallada de embarcación
-- [ ] Integración AIS para posición GPS
+- [x] Schema: Vessel (con fleetType PESADA/LIVIANA, matrícula, capitán, marino de guardia)
+- [x] Schema: FuelReport, MaintenanceReport, StatusReport
+- [x] Migración de BD para Fase 2
+- [x] API CRUD de embarcaciones (GET /api/vessels, GET/PUT /api/vessels/[id])
+- [x] API CRUD reportes: combustible, mantenimiento, estado (con [reportId])
+- [x] Página /dashboard/vessels — submódulos Flota Pesada y Flota Liviana
+- [x] Drawer lateral al clickear embarcación — menú de módulos
+- [x] Reportes de combustible: formulario + listado (nivel, consumo, ubicación, operador)
+- [x] Reportes de mantenimiento: formulario + listado (tipo, descripción, técnico, costo)
+- [x] Reportes de estado: formulario + listado (ubicación, actividad, cliente, capitán, marino, matrícula fija)
+- [x] Seed de 8 embarcaciones: 4 pesada (Molleja Lake, El Porteño I, El Masco VIII, Zapara Island) + 4 liviana (Anabella, Blohm, Jackie, Magdalena)
+- [x] Tabs de filtrado por tipo de flota
+- [x] Estados con indicadores visuales (Operativo, En tránsito, Atracado, Mantenimiento, Inactivo)
+- [ ] Integración AIS para posición GPS (requiere API MarineTraffic)
 - [ ] Mapa interactivo (Mapbox/Leaflet)
-- [ ] Formulario de alta/edición de embarcación
-- [ ] Estados de embarcación con flujo de transición
 - [ ] Alertas de embarcaciones en mantenimiento prolongado
 
-### Fase 3 — Pendiente 🔲
+### Fase 3 — Core Completado ✅
 
-- [ ] Schema: Employee, Certification, Assignment
-- [ ] CRUD de empleados/tripulación
-- [ ] Gestión de certificaciones STCW
-- [ ] Sistema de alertas de vencimientos
-- [ ] Asignación de tripulación a embarcación
-- [ ] Historial de embarques por persona
+- [x] Schema: Employee (cédula, cargo, libreta de mar, pasaporte, teléfono, email, estado)
+- [x] Schema: Certification (tipo STCW/BST/GMDSS/ECDIS, emisor, vencimiento)
+- [x] Schema: Assignment (empleado-embarcación, rol, fechas, estado)
+- [x] Migración de BD para Fase 3
+- [x] API CRUD de empleados (GET/POST /api/crew, GET/PUT/DELETE /api/crew/[id])
+- [x] API CRUD certificaciones (/api/crew/[id]/certifications)
+- [x] API CRUD asignaciones (/api/crew/[id]/assignments)
+- [x] Página /dashboard/crew — tabla con filtros por nombre/cédula y cargo
+- [x] KPIs: total personal, activos, embarcados, certificaciones por vencer
+- [x] Drawer de detalle del empleado con info personal
+- [x] Vista de certificaciones con alertas de vencimiento (30 días, vencida)
+- [x] Vista de asignaciones con historial
+- [x] Formulario de nueva certificación (STCW, BST, GMDSS, ECDIS, etc.)
+- [x] Formulario de nueva asignación a embarcación
+- [x] Formulario de crear/editar empleado
+- [x] Seed de 12 empleados: 4 capitanes, 2 jefes de máquinas, 4 marineros, 2 técnicos
+- [x] Seed certificaciones STCW + BST para capitanes
+- [x] Seed asignaciones capitanes + marineros a embarcaciones
 - [ ] Upload de documentos (MinIO/S3)
-- [ ] Crew list exportable para autoridades
+- [ ] Crew list exportable para autoridades portuarias
 
-### Fase 4 — Pendiente 🔲
+### Fase 4 — Core Completado ✅
 
-- [ ] Schema: Voyage, FuelLog, CargoOperation, TankReading
-- [ ] Módulo de gestión de viajes/rutas
-- [ ] Control de bunker y ROB por buque
-- [ ] Alertas de combustible bajo
-- [ ] Registro de operaciones de carga/descarga
-- [ ] Cálculo de ullage y volúmenes corregidos
-- [ ] Dashboard de combustible con gráficas
+- [x] Schema: Voyage, FuelLog, InventoryItem, CargoOperation
+- [x] Migración de BD para Fase 4
+- [x] API CRUD de viajes (GET/POST /api/voyages, GET/PUT/DELETE /api/voyages/[id])
+- [x] API CRUD de fuel logs (GET/POST /api/fuel-logs, PUT/DELETE /api/fuel-logs/[id])
+- [x] API CRUD de inventario (GET/POST /api/inventory, PUT/DELETE /api/inventory/[id])
+- [x] Página /dashboard/routes — tabla de viajes, drawer detalle/crear, filtros por estado, KPIs
+- [x] Página /dashboard/fuel — control de combustible, ROB por embarcación, drawer registro
+- [x] Página /dashboard/inventory — inventario por embarcación, alertas de stock bajo, drawer edición
+- [x] Seed de 4 viajes, fuel logs, 24 items de inventario
+- [ ] Cálculo de ullage y volúmenes corregidos (requiere sensores)
+- [ ] Dashboard de combustible con gráficas (Recharts)
 - [ ] Integración NOR / Statement of Facts
 - [ ] Cálculo automático de demurrage
 
-### Fase 5 — Pendiente 🔲
+### Fase 5 — Core Completado ✅
 
-- [ ] Schema: Client, MaintenanceOrder, ComplianceDocument
-- [ ] CRM básico de clientes
-- [ ] Órdenes de mantenimiento preventivo y correctivo
-- [ ] Plan de mantenimiento por horas/calendario
-- [ ] Registro de documentos de compliance (MARPOL, ISM, ISPS)
-- [ ] Alertas de vencimiento de certificados del buque
+- [x] Schema: Client, MaintenanceOrder, ComplianceDocument
+- [x] Migración de BD para Fase 5
+- [x] API CRUD de clientes (GET/POST /api/clients, GET/PUT/DELETE /api/clients/[id])
+- [x] API CRUD de órdenes de mantenimiento (/api/maintenance-orders)
+- [x] API CRUD de compliance (/api/compliance)
+- [x] Página /dashboard/clients — CRM con tarjetas, filtros por tipo, drawer detalle/edición
+- [x] Página /dashboard/maintenance — órdenes con prioridad, sistema, técnico, drawer detalle/edición
+- [x] Página /dashboard/compliance — documentos MARPOL/ISM/ISPS/CLASS/P&I/IOPP, alertas de vencimiento
+- [x] Seed de 4 clientes (PDVSA, Chevron, Terminal Maracaibo, Petrobras)
+- [x] Seed de 4 órdenes de mantenimiento
+- [x] Seed de 24 documentos de compliance (6 tipos × 4 embarcaciones)
+- [ ] Portal B2B de clientes (acceso limitado)
 - [ ] Gestión de incidentes HSSE
-- [ ] Portal de clientes (acceso limitado)
-- [ ] Reportes básicos en PDF
+- [ ] Reportes en PDF (jsPDF/PDFKit)
 
-### Fase 6 — Pendiente 🔲
+### Fase 6 — Core Completado ✅
 
-- [ ] Schema: Organization (multi-tenant)
-- [ ] Dashboard de analytics con Recharts
+- [x] Página /dashboard/reports — generación de reportes operativos con filtros y exportación JSON
+- [x] Página /dashboard/settings — perfil de usuario, seguridad, empresa, notificaciones, info sistema
+- [x] Sidebar completo — todos los módulos activos, sin etiquetas "FASE 2+"
+- [ ] Dashboard de analytics con gráficas (Recharts/Chart.js)
 - [ ] Generación de reportes PDF avanzados
 - [ ] Cálculo de CII y emisiones CO₂ (IMO 2023)
 - [ ] Sistema de notificaciones (email + in-app)
+- [ ] Schema: Organization (multi-tenant)
 - [ ] Módulo de facturación (Stripe)
 - [ ] Multi-tenancy completo
 - [ ] API pública documentada (Swagger)
@@ -1027,11 +1044,17 @@ pm2 logs venols-erp
 
 ## NOTAS DEL EQUIPO
 
-> Este documento es el mapa maestro del proyecto VENOLS ERP. Debe actualizarse al completar cada fase. Cada elemento marcado ✅ tiene código funcionando en producción. Cada elemento 🔲 es trabajo futuro documentado con contexto suficiente para cualquier desarrollador que se incorpore al equipo.
+> Este documento es el mapa maestro del proyecto VENOLS ERP. Debe actualizarse al completar cada fase. Cada elemento marcado ✅ tiene código funcionando. Cada elemento pendiente es trabajo futuro documentado con contexto suficiente para cualquier desarrollador.
 
-> **Prioridad de negocio:** El módulo de combustible (Fase 4B) y la gestión de compliance MARPOL (Fase 5C) son los diferenciadores clave para el sector petrolero. Considerar adelantarlos si el cliente lo requiere.
+> **Estado actual (21 Mar 2026):** Las 6 fases core están implementadas. El ERP tiene 11 módulos funcionales con 16 tablas en PostgreSQL, 30+ endpoints de API con autenticación JWT y roles, y una interfaz completa con tema naval oscuro.
 
-> **Stack decision final:** Mantener Next.js para Fases 2-4. Evaluar microservicios solo en Fase 6 cuando la carga lo justifique.
+> **Próximos pasos prioritarios:**
+> 1. Integrar Recharts para analytics con gráficas
+> 2. Generación de PDF para reportes oficiales
+> 3. Integración AIS (MarineTraffic) para mapa de flota
+> 4. Multi-tenancy para SaaS
+
+> **Stack decision final:** Mantener Next.js como monolito para todas las fases. Evaluar microservicios solo cuando la carga lo justifique.
 
 ---
 
