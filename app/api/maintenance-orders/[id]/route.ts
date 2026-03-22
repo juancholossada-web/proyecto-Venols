@@ -12,6 +12,10 @@ export const PUT = withAuth(async (req: AuthenticatedRequest, { params }: { para
       completedAt: body.completedAt ? new Date(body.completedAt) : undefined,
       technician: body.technician, spareParts: body.spareParts,
       cost: body.cost ? parseFloat(body.cost) : null, status: body.status, notes: body.notes,
+      cause: body.cause ?? undefined, rootCause: body.rootCause ?? undefined,
+      failureMode: body.failureMode ?? undefined, actionTaken: body.actionTaken ?? undefined,
+      downtimeHours: body.downtimeHours != null ? parseFloat(body.downtimeHours) : undefined,
+      equipmentAffected: body.equipmentAffected ?? undefined,
     },
   })
   return NextResponse.json(order)

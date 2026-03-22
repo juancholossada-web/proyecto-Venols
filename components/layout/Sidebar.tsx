@@ -27,6 +27,7 @@ const navItems: NavGroup[] = [
     { href: '/dashboard/inventory', icon: '📦', label: 'Inventario', roles: ['ADMIN','OPERATOR','TECHNICIAN'] },
     { href: '/dashboard/fuel', icon: '⛽', label: 'Combustible', roles: ['ADMIN','OPERATOR'] },
     { href: '/dashboard/clients', icon: '🤝', label: 'Clientes', roles: ['ADMIN','OPERATOR'] },
+    { href: '/dashboard/daily-reports', icon: '📝', label: 'Reporte Diario', roles: ['ADMIN','OPERATOR','TECHNICIAN'] },
   ]},
   { section: 'MANTENIMIENTO', items: [
     { href: '/dashboard/maintenance', icon: '🔧', label: 'Mantenimiento', roles: ['ADMIN','TECHNICIAN'] },

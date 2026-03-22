@@ -98,6 +98,8 @@ model Vessel {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
+  tankCapacityLiters Float?
+
   fuelReports        FuelReport[]
   maintenanceReports MaintenanceReport[]
   statusReports      StatusReport[]
@@ -107,6 +109,9 @@ model Vessel {
   inventoryItems     InventoryItem[]
   maintenanceOrders  MaintenanceOrder[]
   complianceDocs     ComplianceDocument[]
+  equipment          Equipment[]
+  maintenancePrograms MaintenanceProgram[]
+  dailyReports       DailyReport[]
 
   @@index([fleetType])
   @@index([status])
@@ -342,6 +347,9 @@ model InventoryItem {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  movements   InventoryMovement[]
+
+  @@unique([vesselId, name])
   @@index([vesselId])
   @@index([category])
   @@map("inventory_items")
@@ -416,6 +424,13 @@ model MaintenanceOrder {
   spareParts    String?
   cost          Float?
   status        String    @default("PENDIENTE")
+  // Corrective maintenance fields
+  cause         String?
+  rootCause     String?
+  failureMode   String?
+  actionTaken   String?
+  downtimeHours Float?
+  equipmentAffected String?
   notes         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -449,4 +464,120 @@ model ComplianceDocument {
   @@index([expiresAt])
   @@index([type])
   @@map("compliance_documents")
+}
+
+// ═══════ EQUIPOS Y MAQUINARIA ═══════
+
+model Equipment {
+  id              String   @id @default(cuid())
+  vesselId        String
+  vessel          Vessel   @relation(fields: [vesselId], references: [id], onDelete: Cascade)
+  name            String
+  type            String   // MOTOR_PRINCIPAL, MOTOR_AUXILIAR, GENERADOR, BOMBA, COMPRESOR, WINCHE, GRUA, OTRO
+  brand           String?
+  model           String?
+  serialNumber    String?
+  currentHours    Float    @default(0)
+  lastServiceAt   Float?   // hours reading at last service
+  serviceInterval Float?   // hours between services
+  status          String   @default("OPERATIVO") // OPERATIVO, REQUIERE_SERVICIO, FUERA_SERVICIO
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  hourLogs        EquipmentHourLog[]
+
+  @@unique([vesselId, name])
+  @@index([vesselId])
+  @@index([type])
+  @@map("equipment")
+}
+
+model EquipmentHourLog {
+  id           String    @id @default(cuid())
+  equipmentId  String
+  equipment    Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  date         DateTime
+  hoursReading Float
+  hoursRun     Float?
+  reportedBy   String?
+  notes        String?
+  createdAt    DateTime  @default(now())
+
+  @@index([equipmentId])
+  @@index([date])
+  @@map("equipment_hour_logs")
+}
+
+// ═══════ PROGRAMAS DE MANTENIMIENTO PREVENTIVO ═══════
+
+model MaintenanceProgram {
+  id              String    @id @default(cuid())
+  vesselId        String
+  vessel          Vessel    @relation(fields: [vesselId], references: [id], onDelete: Cascade)
+  name            String
+  description     String
+  system          String
+  frequency       String    // DIARIO, SEMANAL, QUINCENAL, MENSUAL, TRIMESTRAL, SEMESTRAL, ANUAL, POR_HORAS
+  frequencyHours  Float?    // if POR_HORAS
+  lastExecuted    DateTime?
+  nextDue         DateTime?
+  tasks           String    // checklist items (newline separated)
+  materials       String?   // required materials
+  status          String    @default("ACTIVO") // ACTIVO, PAUSADO
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([vesselId])
+  @@index([nextDue])
+  @@index([status])
+  @@map("maintenance_programs")
+}
+
+// ═══════ MOVIMIENTOS DE INVENTARIO ═══════
+
+model InventoryMovement {
+  id              String        @id @default(cuid())
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  type            String        // ENTRADA, SALIDA
+  quantity        Int
+  reason          String?
+  reference       String?       // invoice, order number
+  executedBy      String?
+  date            DateTime      @default(now())
+  notes           String?
+  createdAt       DateTime      @default(now())
+
+  @@index([inventoryItemId])
+  @@index([date])
+  @@index([type])
+  @@map("inventory_movements")
+}
+
+// ═══════ REPORTES DIARIOS DE FLOTA ═══════
+
+model DailyReport {
+  id              String       @id @default(cuid())
+  vesselId        String
+  vessel          Vessel       @relation(fields: [vesselId], references: [id], onDelete: Cascade)
+  date            DateTime
+  client          String?
+  activity        String
+  location        String?
+  captain         String
+  marineOnDuty    String
+  personnel       String?
+  fuelLevelLiters Float?
+  fuelPercentage  Float?
+  vesselStatus    VesselStatus
+  notes           String?
+  createdBy       String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([vesselId])
+  @@index([date])
+  @@map("daily_reports")
 }

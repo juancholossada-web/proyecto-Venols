@@ -26,7 +26,7 @@ export default function RegisterPage() {
       })
       const data = await res.json()
       if (!res.ok) { setError(data.error || 'Error al registrar'); return }
-      localStorage.setItem('accessToken', data.accessToken)
+      localStorage.setItem('token', data.accessToken)
       localStorage.setItem('user', JSON.stringify(data.user))
       router.push('/dashboard')
     } catch {

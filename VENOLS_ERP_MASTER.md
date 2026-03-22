@@ -1051,8 +1051,7 @@ pm2 logs venols-erp
 > **Próximos pasos prioritarios:**
 > 1. Integrar Recharts para analytics con gráficas
 > 2. Generación de PDF para reportes oficiales
-> 3. Integración AIS (MarineTraffic) para mapa de flota
-> 4. Multi-tenancy para SaaS
+
 
 > **Stack decision final:** Mantener Next.js como monolito para todas las fases. Evaluar microservicios solo cuando la carga lo justifique.
 

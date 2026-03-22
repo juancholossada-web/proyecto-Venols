@@ -29,7 +29,7 @@ export default function LoginPage() {
         return
       }
 
-      localStorage.setItem('accessToken', data.accessToken)
+      localStorage.setItem('token', data.accessToken)
       localStorage.setItem('user', JSON.stringify(data.user))
       router.push('/dashboard')
     } catch {

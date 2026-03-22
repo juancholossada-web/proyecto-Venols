@@ -11,13 +11,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken')
+    const token = localStorage.getItem('token')
     if (!token) { router.replace('/login'); return }
 
     fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
       .then(res => {
         if (!res.ok) {
-          localStorage.removeItem('accessToken')
+          localStorage.removeItem('token')
           localStorage.removeItem('user')
           router.replace('/login')
           return null

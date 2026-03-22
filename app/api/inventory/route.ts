@@ -15,6 +15,13 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
 
 export const POST = withAuth(async (req: AuthenticatedRequest) => {
   const body = await req.json()
+  // Check for duplicate
+  const existing = await prisma.inventoryItem.findUnique({
+    where: { vesselId_name: { vesselId: body.vesselId, name: body.name } },
+  })
+  if (existing) {
+    return NextResponse.json({ error: 'Ya existe un producto con ese nombre en esta embarcación' }, { status: 409 })
+  }
   const item = await prisma.inventoryItem.create({
     data: {
       vesselId: body.vesselId, name: body.name, category: body.category,

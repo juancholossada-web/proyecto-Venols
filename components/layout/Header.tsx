@@ -18,11 +18,11 @@ export default function Header({ user }: HeaderProps) {
   const initials = `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
 
   async function handleLogout() {
-    const token = localStorage.getItem('accessToken')
+    const token = localStorage.getItem('token')
     if (token) {
       await fetch('/api/auth/logout', { method: 'POST', headers: { Authorization: `Bearer ${token}` } })
     }
-    localStorage.removeItem('accessToken')
+    localStorage.removeItem('token')
     localStorage.removeItem('user')
     router.replace('/login')
   }
