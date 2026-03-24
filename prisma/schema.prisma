@@ -14,7 +14,7 @@ model PendingRegistration {
   firstName      String
   lastName       String
   phone          String?
-  role           Role     @default(OPERATOR)
+  role           Role     @default(STANDARD)
   otpHash        String
   expiresAt      DateTime
   attempts       Int      @default(0)
@@ -33,7 +33,7 @@ model User {
   lastName      String
   phone         String?
   avatar        String?
-  role          Role       @default(OPERATOR)
+  role          Role       @default(STANDARD)
   status        UserStatus @default(ACTIVE)
   lastLoginAt   DateTime?
   loginAttempts Int        @default(0)
@@ -84,7 +84,11 @@ model AuditLog {
 }
 
 enum Role {
-  ADMIN
+  ADMIN           // Acceso total
+  OPERATOR_HEAVY  // Operador Flota Pesada
+  OPERATOR_LIGHT  // Operador Flota Liviana
+  STANDARD        // Lectura general, sin modificaciones críticas
+  // Deprecated — se mantienen para compatibilidad con datos existentes
   OPERATOR
   TECHNICIAN
 }

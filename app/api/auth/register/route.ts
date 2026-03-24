@@ -12,7 +12,7 @@ const RegisterSchema = z.object({
   firstName: z.string().min(2).max(50).trim(),
   lastName: z.string().min(2).max(50).trim(),
   phone: z.string().optional(),
-  role: z.enum(['ADMIN', 'OPERATOR', 'TECHNICIAN']).optional().default('OPERATOR'),
+  role: z.enum(['ADMIN', 'OPERATOR_HEAVY', 'OPERATOR_LIGHT', 'STANDARD']).optional().default('STANDARD'),
 })
 
 /** Verifica que el dominio del email tenga registros MX válidos */

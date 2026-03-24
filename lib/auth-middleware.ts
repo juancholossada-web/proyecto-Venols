@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken, getTokenFromHeader, hashToken } from './jwt'
 import { prisma } from './prisma'
-import { Role } from '@prisma/client'
+import { Role, FleetType } from '@prisma/client'
 
 export interface AuthenticatedRequest extends NextRequest {
   user?: {
@@ -16,6 +16,35 @@ type RouteHandler = (
   req: AuthenticatedRequest,
   context: { params: Record<string, string> }
 ) => Promise<NextResponse>
+
+/**
+ * Devuelve el filtro de flota que aplica a un rol.
+ * ADMIN y STANDARD no tienen restricción de flota.
+ */
+export function getFleetFilter(role: Role): FleetType | null {
+  if (role === 'OPERATOR_HEAVY') return 'PESADA'
+  if (role === 'OPERATOR_LIGHT') return 'LIVIANA'
+  return null
+}
+
+/**
+ * Roles que pueden escribir/mutar datos operacionales.
+ */
+export const WRITE_ROLES: Role[] = ['ADMIN', 'OPERATOR_HEAVY', 'OPERATOR_LIGHT']
+
+/**
+ * Verifica que un vessel pertenezca a la flota del rol.
+ * Devuelve true si el acceso es válido.
+ */
+export async function canAccessVessel(vesselId: string, role: Role): Promise<boolean> {
+  const fleetFilter = getFleetFilter(role)
+  if (!fleetFilter) return true // ADMIN y STANDARD ven todo
+  const vessel = await prisma.vessel.findFirst({
+    where: { id: vesselId, fleetType: fleetFilter },
+    select: { id: true },
+  })
+  return vessel !== null
+}
 
 export function withAuth(handler: RouteHandler, allowedRoles?: Role[]) {
   return async (

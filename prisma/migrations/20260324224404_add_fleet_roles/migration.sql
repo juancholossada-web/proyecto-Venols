@@ -1,0 +1,4 @@
+-- Paso 1: Agregar nuevos valores al enum (fuera de transacción)
+ALTER TYPE "Role" ADD VALUE IF NOT EXISTS 'OPERATOR_HEAVY';
+ALTER TYPE "Role" ADD VALUE IF NOT EXISTS 'OPERATOR_LIGHT';
+ALTER TYPE "Role" ADD VALUE IF NOT EXISTS 'STANDARD';

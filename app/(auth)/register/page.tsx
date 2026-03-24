@@ -13,7 +13,7 @@ export default function RegisterPage() {
   const [step, setStep] = useState<Step>('form')
 
   const [form, setForm] = useState({
-    firstName: '', lastName: '', email: '', password: '', role: 'OPERATOR',
+    firstName: '', lastName: '', email: '', password: '', role: 'STANDARD',
   })
 
   const [digits, setDigits]             = useState(['', '', '', '', '', ''])
@@ -176,9 +176,10 @@ export default function RegisterPage() {
   }
 
   const roleOptions = [
-    { value: 'OPERATOR',   label: 'Operador',      color: 'var(--accent)',  desc: 'Gestión de embarcaciones y rutas' },
-    { value: 'TECHNICIAN', label: 'Técnico',        color: 'var(--info)',    desc: 'Mantenimiento y reportes técnicos' },
-    { value: 'ADMIN',      label: 'Administrador', color: 'var(--danger)',  desc: 'Acceso total al sistema' },
+    { value: 'ADMIN',          label: 'Administrador',      color: 'var(--danger)',  desc: 'Acceso total al sistema' },
+    { value: 'OPERATOR_HEAVY', label: 'Op. Flota Pesada',   color: 'var(--accent)',  desc: 'Gestión de barcos y operaciones pesadas' },
+    { value: 'OPERATOR_LIGHT', label: 'Op. Flota Liviana',  color: 'var(--info)',    desc: 'Gestión de lanchas y operaciones livianas' },
+    { value: 'STANDARD',       label: 'Estándar',           color: 'var(--text-muted)', desc: 'Consulta general sin modificaciones críticas' },
   ]
 
   // ─────────────────────────────────────────────────────────
@@ -304,8 +305,9 @@ export default function RegisterPage() {
                 <label style={lbl}>Rol</label>
                 <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}
                   style={{ ...inp, cursor: 'pointer' }}>
-                  <option value="OPERATOR">Operador</option>
-                  <option value="TECHNICIAN">Técnico</option>
+                  <option value="STANDARD">Estándar</option>
+                  <option value="OPERATOR_HEAVY">Operador Flota Pesada</option>
+                  <option value="OPERATOR_LIGHT">Operador Flota Liviana</option>
                   <option value="ADMIN">Administrador</option>
                 </select>
               </div>
