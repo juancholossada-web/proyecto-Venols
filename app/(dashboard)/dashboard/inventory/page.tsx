@@ -47,18 +47,18 @@ async function api(path: string, opts?: RequestInit) {
 }
 
 /* ─── Styles ─── */
-const goldBorder = 'rgba(212,149,10,0.15)'
-const goldBorderActive = 'rgba(212,149,10,0.5)'
+const goldBorder = 'var(--border-accent)'
+const goldBorderActive = 'var(--border-accent-strong)'
 
 const cardStyle: React.CSSProperties = {
-  background: '#0a1628', border: `1px solid ${goldBorder}`, borderRadius: '14px', padding: '18px',
+  background: 'var(--bg-surface)', border: '1px solid var(--border-accent)', borderRadius: '12px', padding: '18px',
 }
 const kpiStyle: React.CSSProperties = {
   ...cardStyle, flex: '1 1 200px', minWidth: '180px', display: 'flex', flexDirection: 'column', gap: '6px',
 }
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '9px 12px', background: '#060c1a', border: `1px solid ${goldBorder}`,
-  borderRadius: '8px', color: '#e8f4fd', fontSize: '13px', outline: 'none', boxSizing: 'border-box',
+  width: '100%', padding: '9px 12px', background: 'var(--bg-input)', border: '1px solid var(--border-accent)',
+  borderRadius: '8px', color: 'var(--text-primary)', fontSize: '13px', outline: 'none', boxSizing: 'border-box',
 }
 const selectStyle: React.CSSProperties = {
   ...inputStyle, appearance: 'none' as const, cursor: 'pointer',
@@ -66,24 +66,24 @@ const selectStyle: React.CSSProperties = {
   backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center',
 }
 const btnPrimary: React.CSSProperties = {
-  padding: '10px 20px', background: 'linear-gradient(135deg, #D4950A, #b8820a)', border: 'none',
-  borderRadius: '8px', color: '#060c1a', fontWeight: 700, fontSize: '13px', cursor: 'pointer',
+  padding: '10px 20px', background: 'var(--accent)', border: 'none',
+  borderRadius: '8px', color: '#080E1A', fontWeight: 700, fontSize: '13px', cursor: 'pointer',
 }
 const btnSecondary: React.CSSProperties = {
-  padding: '8px 14px', background: 'transparent', border: `1px solid ${goldBorder}`,
-  borderRadius: '8px', color: '#7fa8c9', fontSize: '12px', cursor: 'pointer',
+  padding: '8px 14px', background: 'transparent', border: '1px solid var(--border-accent)',
+  borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '12px', cursor: 'pointer',
 }
 const btnDanger: React.CSSProperties = {
-  padding: '8px 14px', background: 'transparent', border: '1px solid rgba(231,76,60,0.4)',
-  borderRadius: '8px', color: '#e74c3c', fontSize: '12px', cursor: 'pointer',
+  padding: '8px 14px', background: 'transparent', border: '1px solid rgba(176,48,40,0.40)',
+  borderRadius: '8px', color: 'var(--danger)', fontSize: '12px', cursor: 'pointer',
 }
-const labelStyle: React.CSSProperties = { fontSize: '12px', color: '#7fa8c9', marginBottom: '4px', display: 'block' }
+const labelStyle: React.CSSProperties = { fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }
 const overlayStyle: React.CSSProperties = {
   position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
   zIndex: 1000, display: 'flex', justifyContent: 'flex-end',
 }
 const drawerStyle: React.CSSProperties = {
-  width: '520px', maxWidth: '100vw', height: '100%', background: '#0d1b2e',
+  width: '520px', maxWidth: '100vw', height: '100%', background: 'var(--bg-elevated)',
   borderLeft: `1px solid ${goldBorder}`, overflowY: 'auto', padding: '28px 24px',
   display: 'flex', flexDirection: 'column', gap: '16px',
   animation: 'slideInRight 0.3s ease-out',
@@ -91,12 +91,12 @@ const drawerStyle: React.CSSProperties = {
 
 /* ─── Category config ─── */
 const catColors: Record<string, { bg: string; color: string }> = {
-  Lubricantes: { bg: 'rgba(212,149,10,0.12)', color: '#D4950A' },
-  Repuestos: { bg: 'rgba(127,168,201,0.12)', color: '#7fa8c9' },
-  Aparejos: { bg: 'rgba(39,174,96,0.12)', color: '#27ae60' },
-  Seguridad: { bg: 'rgba(231,76,60,0.12)', color: '#e74c3c' },
+  Lubricantes: { bg: 'rgba(212,149,10,0.12)', color: 'var(--accent)' },
+  Repuestos: { bg: 'rgba(127,168,201,0.12)', color: 'var(--text-muted)' },
+  Aparejos: { bg: 'rgba(39,174,96,0.12)', color: 'var(--success)' },
+  Seguridad: { bg: 'rgba(231,76,60,0.12)', color: 'var(--danger)' },
   Mantenimiento: { bg: 'rgba(142,68,173,0.12)', color: '#8e44ad' },
-  Otros: { bg: 'rgba(85,94,110,0.12)', color: '#555e6e' },
+  Otros: { bg: 'rgba(71,100,126,0.12)', color: 'var(--text-muted)' },
 }
 
 /* ═════════════════════ MAIN PAGE ═════════════════════ */
@@ -339,10 +339,10 @@ export default function InventoryPage() {
 
   /* ─── Loading / Error ─── */
   if (loading) return (
-    <div style={{ color: '#7fa8c9', padding: '40px', textAlign: 'center' }}>Cargando inventario...</div>
+    <div style={{ color: 'var(--text-muted)', padding: '40px', textAlign: 'center' }}>Cargando inventario...</div>
   )
   if (error) return (
-    <div style={{ color: '#e74c3c', padding: '40px', textAlign: 'center' }}>{error}</div>
+    <div style={{ color: 'var(--danger)', padding: '40px', textAlign: 'center' }}>{error}</div>
   )
 
   /* ─── Stock bar component ─── */
@@ -350,7 +350,7 @@ export default function InventoryPage() {
     const isLow = quantity <= minStock
     const max = Math.max(minStock * 2, quantity, 1)
     const pct = Math.min((quantity / max) * 100, 100)
-    const color = isLow ? '#e74c3c' : '#27ae60'
+    const color = isLow ? 'var(--danger)' : 'var(--success)'
     return (
       <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.06)', borderRadius: '3px', overflow: 'hidden' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: '3px', transition: 'width 0.3s ease' }} />
@@ -402,7 +402,7 @@ export default function InventoryPage() {
           {isLow && (
             <span style={{
               fontSize: '10px', fontWeight: 700, padding: '3px 8px', borderRadius: '6px',
-              background: 'rgba(231,76,60,0.15)', color: '#e74c3c', border: '1px solid rgba(231,76,60,0.3)',
+              background: 'rgba(231,76,60,0.15)', color: 'var(--danger)', border: '1px solid rgba(231,76,60,0.3)',
             }}>
               BAJO STOCK
             </span>
@@ -410,22 +410,22 @@ export default function InventoryPage() {
         </div>
 
         {/* Name */}
-        <div style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd', marginBottom: '8px' }}>
+        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
           {item.name}
         </div>
 
         {/* Vessel label in general view */}
         {showVessel && (
-          <div style={{ fontSize: '11px', color: '#7fa8c9', marginBottom: '6px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>
             {item.vessel?.name || vessels.find(v => v.id === item.vesselId)?.name || ''}
           </div>
         )}
 
         {/* Quantity */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-          <span style={{ fontSize: '12px', color: '#7fa8c9' }}>Cantidad</span>
-          <span style={{ fontSize: '14px', fontWeight: 700, color: isLow ? '#e74c3c' : '#e8f4fd' }}>
-            {item.quantity} <span style={{ fontSize: '11px', fontWeight: 400, color: '#7fa8c9' }}>{item.unit}</span>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Cantidad</span>
+          <span style={{ fontSize: '14px', fontWeight: 700, color: isLow ? 'var(--danger)' : 'var(--text-primary)' }}>
+            {item.quantity} <span style={{ fontSize: '11px', fontWeight: 400, color: 'var(--text-muted)' }}>{item.unit}</span>
           </span>
         </div>
 
@@ -433,15 +433,15 @@ export default function InventoryPage() {
         <div style={{ marginBottom: '6px' }}>
           <StockBar quantity={item.quantity} minStock={item.minStock} />
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '3px' }}>
-            <span style={{ fontSize: '10px', color: '#555e6e' }}>Min: {item.minStock}</span>
-            <span style={{ fontSize: '10px', color: '#555e6e' }}>{Math.round((item.quantity / Math.max(item.minStock * 2, item.quantity, 1)) * 100)}%</span>
+            <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Min: {item.minStock}</span>
+            <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{Math.round((item.quantity / Math.max(item.minStock * 2, item.quantity, 1)) * 100)}%</span>
           </div>
         </div>
 
         {/* Supplier */}
         {item.supplier && (
-          <div style={{ fontSize: '11px', color: '#555e6e', marginTop: '6px', borderTop: `1px solid ${goldBorder}`, paddingTop: '8px' }}>
-            Proveedor: <span style={{ color: '#7fa8c9' }}>{item.supplier}</span>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px', borderTop: `1px solid ${goldBorder}`, paddingTop: '8px' }}>
+            Proveedor: <span style={{ color: 'var(--text-muted)' }}>{item.supplier}</span>
           </div>
         )}
       </div>
@@ -536,7 +536,7 @@ export default function InventoryPage() {
         {formError && (
           <div style={{
             padding: '10px 14px', borderRadius: '8px', fontSize: '13px',
-            background: 'rgba(231,76,60,0.1)', border: '1px solid rgba(231,76,60,0.3)', color: '#e74c3c',
+            background: 'rgba(231,76,60,0.1)', border: '1px solid rgba(231,76,60,0.3)', color: 'var(--danger)',
           }}>
             {formError}
           </div>
@@ -582,13 +582,13 @@ export default function InventoryPage() {
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         }}>
           <div>
-            <div style={{ fontSize: '11px', color: '#7fa8c9', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Stock Actual</div>
-            <div style={{ fontSize: '24px', fontWeight: 800, color: currentItem.quantity <= currentItem.minStock ? '#e74c3c' : '#e8f4fd' }}>
-              {currentItem.quantity} <span style={{ fontSize: '12px', fontWeight: 400, color: '#7fa8c9' }}>{currentItem.unit}</span>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Stock Actual</div>
+            <div style={{ fontSize: '24px', fontWeight: 800, color: currentItem.quantity <= currentItem.minStock ? 'var(--danger)' : 'var(--text-primary)' }}>
+              {currentItem.quantity} <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--text-muted)' }}>{currentItem.unit}</span>
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '11px', color: '#7fa8c9' }}>Min: {currentItem.minStock}</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Min: {currentItem.minStock}</div>
             <StockBar quantity={currentItem.quantity} minStock={currentItem.minStock} />
           </div>
         </div>
@@ -597,7 +597,7 @@ export default function InventoryPage() {
         <div style={{
           ...cardStyle, padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px',
         }}>
-          <div style={{ fontSize: '13px', fontWeight: 700, color: '#e8f4fd', marginBottom: '4px' }}>Registrar Movimiento</div>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>Registrar Movimiento</div>
 
           {/* Type toggle */}
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -606,8 +606,8 @@ export default function InventoryPage() {
               style={{
                 flex: 1, padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer',
                 fontWeight: 700, fontSize: '13px', transition: 'all 0.2s',
-                background: movementForm.type === 'ENTRADA' ? 'rgba(39,174,96,0.2)' : '#060c1a',
-                color: movementForm.type === 'ENTRADA' ? '#27ae60' : '#7fa8c9',
+                background: movementForm.type === 'ENTRADA' ? 'rgba(39,174,96,0.2)' : '#080E1A',
+                color: movementForm.type === 'ENTRADA' ? 'var(--success)' : 'var(--text-secondary)',
                 outline: movementForm.type === 'ENTRADA' ? '2px solid rgba(39,174,96,0.5)' : `1px solid ${goldBorder}`,
               }}
             >
@@ -618,8 +618,8 @@ export default function InventoryPage() {
               style={{
                 flex: 1, padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer',
                 fontWeight: 700, fontSize: '13px', transition: 'all 0.2s',
-                background: movementForm.type === 'SALIDA' ? 'rgba(231,76,60,0.2)' : '#060c1a',
-                color: movementForm.type === 'SALIDA' ? '#e74c3c' : '#7fa8c9',
+                background: movementForm.type === 'SALIDA' ? 'rgba(231,76,60,0.2)' : '#080E1A',
+                color: movementForm.type === 'SALIDA' ? 'var(--danger)' : 'var(--text-secondary)',
                 outline: movementForm.type === 'SALIDA' ? '2px solid rgba(231,76,60,0.5)' : `1px solid ${goldBorder}`,
               }}
             >
@@ -707,7 +707,7 @@ export default function InventoryPage() {
           {movementError && (
             <div style={{
               padding: '8px 12px', borderRadius: '8px', fontSize: '12px',
-              background: 'rgba(231,76,60,0.1)', border: '1px solid rgba(231,76,60,0.3)', color: '#e74c3c',
+              background: 'rgba(231,76,60,0.1)', border: '1px solid rgba(231,76,60,0.3)', color: 'var(--danger)',
             }}>
               {movementError}
             </div>
@@ -723,20 +723,20 @@ export default function InventoryPage() {
         </div>
 
         {/* Movement history */}
-        <div style={{ fontSize: '13px', fontWeight: 700, color: '#e8f4fd', marginTop: '8px' }}>
+        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginTop: '8px' }}>
           Historial de Movimientos
         </div>
 
         {loadingMovements ? (
-          <div style={{ color: '#7fa8c9', fontSize: '12px', textAlign: 'center', padding: '20px' }}>
+          <div style={{ color: 'var(--text-muted)', fontSize: '12px', textAlign: 'center', padding: '20px' }}>
             Cargando movimientos...
           </div>
         ) : movements.length === 0 ? (
           <div style={{
             ...cardStyle, padding: '24px', textAlign: 'center',
           }}>
-            <div style={{ fontSize: '13px', color: '#7fa8c9' }}>Sin movimientos registrados</div>
-            <div style={{ fontSize: '11px', color: '#555e6e', marginTop: '4px' }}>
+            <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Sin movimientos registrados</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
               Registra el primer movimiento de este item
             </div>
           </div>
@@ -747,7 +747,7 @@ export default function InventoryPage() {
               return (
                 <div key={mov.id || idx} style={{
                   display: 'flex', gap: '12px', padding: '12px 14px',
-                  background: '#0a1628', borderRadius: '10px',
+                  background: 'var(--bg-surface)', borderRadius: '10px',
                   border: `1px solid ${goldBorder}`,
                   animation: 'fadeIn 0.3s ease-out',
                   animationDelay: `${idx * 0.05}s`,
@@ -758,15 +758,15 @@ export default function InventoryPage() {
                     width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     background: isEntry ? 'rgba(39,174,96,0.12)' : 'rgba(231,76,60,0.12)',
-                    color: isEntry ? '#27ae60' : '#e74c3c', fontSize: '16px', fontWeight: 700,
+                    color: isEntry ? 'var(--success)' : 'var(--danger)', fontSize: '16px', fontWeight: 700,
                   }}>
                     {isEntry ? (
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M8 12V4M8 4L4 8M8 4L12 8" stroke="#27ae60" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M8 12V4M8 4L4 8M8 4L12 8" stroke="var(--success)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     ) : (
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M8 4V12M8 12L4 8M8 12L12 8" stroke="#e74c3c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M8 4V12M8 12L4 8M8 12L12 8" stroke="var(--danger)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     )}
                   </div>
@@ -776,36 +776,36 @@ export default function InventoryPage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                       <span style={{
                         fontSize: '13px', fontWeight: 700,
-                        color: isEntry ? '#27ae60' : '#e74c3c',
+                        color: isEntry ? 'var(--success)' : 'var(--danger)',
                       }}>
                         {isEntry ? '+' : '-'}{mov.quantity} {currentItem.unit}
                       </span>
                       {mov.balanceAfter != null && (
-                        <span style={{ fontSize: '11px', color: '#7fa8c9' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                           Balance: {mov.balanceAfter}
                         </span>
                       )}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#7fa8c9', marginBottom: '2px' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '2px' }}>
                       {formatDate(mov.date)}
                     </div>
                     {mov.reason && (
-                      <div style={{ fontSize: '11px', color: '#e8f4fd' }}>
+                      <div style={{ fontSize: '11px', color: 'var(--text-primary)' }}>
                         {mov.reason}
                       </div>
                     )}
                     {mov.executedBy && (
-                      <div style={{ fontSize: '10px', color: '#555e6e', marginTop: '2px' }}>
+                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
                         Por: {mov.executedBy}
                       </div>
                     )}
                     {mov.reference && (
-                      <div style={{ fontSize: '10px', color: '#555e6e' }}>
+                      <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
                         Ref: {mov.reference}
                       </div>
                     )}
                     {mov.notes && (
-                      <div style={{ fontSize: '10px', color: '#555e6e', fontStyle: 'italic', marginTop: '2px' }}>
+                      <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: '2px' }}>
                         {mov.notes}
                       </div>
                     )}
@@ -824,8 +824,8 @@ export default function InventoryPage() {
       {/* ── Header ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: '#e8f4fd' }}>Inventario</div>
-          <div style={{ fontSize: '13px', color: '#7fa8c9', marginTop: '4px' }}>
+          <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>Inventario</div>
+          <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
             Inventario a bordo — {totalItems} items registrados
           </div>
         </div>
@@ -845,23 +845,23 @@ export default function InventoryPage() {
             background: 'rgba(231,76,60,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M10 6V10M10 14H10.01M8.57 2.72L1.51 14.49C1.19 15.05 1.03 15.33 1.05 15.56C1.07 15.76 1.18 15.94 1.34 16.06C1.53 16.2 1.85 16.2 2.49 16.2H17.51C18.15 16.2 18.47 16.2 18.66 16.06C18.82 15.94 18.93 15.76 18.95 15.56C18.97 15.33 18.81 15.05 18.49 14.49L11.43 2.72C11.11 2.16 10.95 1.88 10.74 1.79C10.56 1.71 10.36 1.71 10.18 1.79C9.97 1.88 9.81 2.16 9.49 2.72L8.57 2.72Z" stroke="#e74c3c" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M10 6V10M10 14H10.01M8.57 2.72L1.51 14.49C1.19 15.05 1.03 15.33 1.05 15.56C1.07 15.76 1.18 15.94 1.34 16.06C1.53 16.2 1.85 16.2 2.49 16.2H17.51C18.15 16.2 18.47 16.2 18.66 16.06C18.82 15.94 18.93 15.76 18.95 15.56C18.97 15.33 18.81 15.05 18.49 14.49L11.43 2.72C11.11 2.16 10.95 1.88 10.74 1.79C10.56 1.71 10.36 1.71 10.18 1.79C9.97 1.88 9.81 2.16 9.49 2.72L8.57 2.72Z" stroke="var(--danger)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: '#e74c3c', marginBottom: '2px' }}>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--danger)', marginBottom: '2px' }}>
               Alerta de Stock Bajo
             </div>
-            <div style={{ fontSize: '12px', color: '#e8f4fd' }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-primary)' }}>
               {lowStock} item{lowStock !== 1 ? 's' : ''} por debajo del stock minimo:{' '}
-              <span style={{ color: '#7fa8c9' }}>
+              <span style={{ color: 'var(--text-muted)' }}>
                 {lowStockItems.slice(0, 3).map(i => i.name).join(', ')}
                 {lowStockItems.length > 3 ? ` y ${lowStockItems.length - 3} mas` : ''}
               </span>
             </div>
           </div>
           <div style={{
-            fontSize: '28px', fontWeight: 800, color: '#e74c3c', minWidth: '50px', textAlign: 'center',
+            fontSize: '28px', fontWeight: 800, color: 'var(--danger)', minWidth: '50px', textAlign: 'center',
           }}>
             {lowStock}
           </div>
@@ -871,23 +871,23 @@ export default function InventoryPage() {
       {/* ── KPIs ── */}
       <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
         <div style={kpiStyle}>
-          <div style={{ fontSize: '12px', color: '#7fa8c9', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Items</div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: '#e8f4fd' }}>{totalItems}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Items</div>
+          <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)' }}>{totalItems}</div>
         </div>
         <div style={{
           ...kpiStyle,
           ...(lowStock > 0 ? { border: '1px solid rgba(231,76,60,0.3)', background: 'rgba(231,76,60,0.04)' } : {}),
         }}>
-          <div style={{ fontSize: '12px', color: '#7fa8c9', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bajo Stock Minimo</div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: lowStock > 0 ? '#e74c3c' : '#27ae60' }}>{lowStock}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bajo Stock Minimo</div>
+          <div style={{ fontSize: '28px', fontWeight: 800, color: lowStock > 0 ? 'var(--danger)' : 'var(--success)' }}>{lowStock}</div>
         </div>
         <div style={kpiStyle}>
-          <div style={{ fontSize: '12px', color: '#7fa8c9', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Categorias</div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: '#D4950A' }}>{distinctCategories}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Categorias</div>
+          <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--accent)' }}>{distinctCategories}</div>
         </div>
         <div style={kpiStyle}>
-          <div style={{ fontSize: '12px', color: '#7fa8c9', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Embarcaciones</div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: '#e8f4fd' }}>{vesselsWithInventory}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Embarcaciones</div>
+          <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)' }}>{vesselsWithInventory}</div>
         </div>
       </div>
 
@@ -902,8 +902,8 @@ export default function InventoryPage() {
             onClick={() => setViewMode('general')}
             style={{
               padding: '8px 14px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600,
-              background: viewMode === 'general' ? 'linear-gradient(135deg, #D4950A, #b8820a)' : '#060c1a',
-              color: viewMode === 'general' ? '#060c1a' : '#7fa8c9',
+              background: viewMode === 'general' ? 'var(--accent)' : '#080E1A',
+              color: viewMode === 'general' ? '#080E1A' : 'var(--text-secondary)',
               transition: 'all 0.2s',
             }}
           >
@@ -913,8 +913,8 @@ export default function InventoryPage() {
             onClick={() => setViewMode('vessel')}
             style={{
               padding: '8px 14px', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 600,
-              background: viewMode === 'vessel' ? 'linear-gradient(135deg, #D4950A, #b8820a)' : '#060c1a',
-              color: viewMode === 'vessel' ? '#060c1a' : '#7fa8c9',
+              background: viewMode === 'vessel' ? 'var(--accent)' : '#080E1A',
+              color: viewMode === 'vessel' ? '#080E1A' : 'var(--text-secondary)',
               transition: 'all 0.2s',
             }}
           >
@@ -963,8 +963,8 @@ export default function InventoryPage() {
       {/* ── Items ── */}
       {filtered.length === 0 && (
         <div style={{ ...cardStyle, padding: '40px', textAlign: 'center' }}>
-          <div style={{ fontSize: '15px', color: '#7fa8c9' }}>No se encontraron items</div>
-          <div style={{ fontSize: '12px', color: '#555e6e', marginTop: '6px' }}>
+          <div style={{ fontSize: '15px', color: 'var(--text-muted)' }}>No se encontraron items</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px' }}>
             {items.length === 0 ? 'Agrega el primer item al inventario' : 'Ajusta los filtros de busqueda'}
           </div>
         </div>
@@ -982,18 +982,18 @@ export default function InventoryPage() {
         <div key={vesselId} style={{ marginBottom: '28px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-              <path d="M3 17L5 7H19L21 17M3 17H21M3 17L1 21H23L21 17M7 7V5C7 3.9 7.9 3 9 3H15C16.1 3 17 3.9 17 5V7" stroke="#7fa8c9" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M3 17L5 7H19L21 17M3 17H21M3 17L1 21H23L21 17M7 7V5C7 3.9 7.9 3 9 3H15C16.1 3 17 3.9 17 5V7" stroke="var(--text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span style={{ fontSize: '16px', fontWeight: 700, color: '#e8f4fd' }}>{group.vesselName}</span>
+            <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>{group.vesselName}</span>
             <span style={{
-              fontSize: '11px', color: '#7fa8c9', background: 'rgba(127,168,201,0.1)',
+              fontSize: '11px', color: 'var(--text-muted)', background: 'rgba(127,168,201,0.1)',
               padding: '2px 10px', borderRadius: '10px',
             }}>
               {group.items.length} item{group.items.length !== 1 ? 's' : ''}
             </span>
             {group.lowStockCount > 0 && (
               <span style={{
-                fontSize: '10px', fontWeight: 700, color: '#e74c3c',
+                fontSize: '10px', fontWeight: 700, color: 'var(--danger)',
                 background: 'rgba(231,76,60,0.12)', padding: '2px 10px', borderRadius: '10px',
                 border: '1px solid rgba(231,76,60,0.25)',
               }}>
@@ -1014,15 +1014,15 @@ export default function InventoryPage() {
           <div style={drawerStyle} onClick={e => e.stopPropagation()}>
             {/* Drawer header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: '#e8f4fd' }}>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>
                 {editingItem ? editingItem.name : 'Nuevo Item'}
               </div>
               <button
                 onClick={closeDrawer}
-                style={{ background: 'none', border: 'none', color: '#7fa8c9', fontSize: '22px', cursor: 'pointer', padding: '4px 8px' }}
+                style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '22px', cursor: 'pointer', padding: '4px 8px' }}
               >
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                  <path d="M4 4L14 14M14 4L4 14" stroke="#7fa8c9" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M4 4L14 14M14 4L4 14" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
               </button>
             </div>
@@ -1031,15 +1031,15 @@ export default function InventoryPage() {
             {editingItem && (
               <div style={{
                 display: 'flex', borderRadius: '10px', overflow: 'hidden',
-                border: `1px solid ${goldBorder}`, background: '#060c1a',
+                border: `1px solid ${goldBorder}`, background: '#080E1A',
               }}>
                 <button
                   onClick={() => setDrawerTab('detalle')}
                   style={{
                     flex: 1, padding: '10px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
                     background: drawerTab === 'detalle' ? 'rgba(212,149,10,0.15)' : 'transparent',
-                    color: drawerTab === 'detalle' ? '#D4950A' : '#7fa8c9',
-                    borderBottom: drawerTab === 'detalle' ? '2px solid #D4950A' : '2px solid transparent',
+                    color: drawerTab === 'detalle' ? 'var(--accent)' : 'var(--text-secondary)',
+                    borderBottom: drawerTab === 'detalle' ? '2px solid var(--accent)' : '2px solid transparent',
                     transition: 'all 0.2s',
                   }}
                 >
@@ -1050,8 +1050,8 @@ export default function InventoryPage() {
                   style={{
                     flex: 1, padding: '10px', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600,
                     background: drawerTab === 'movimientos' ? 'rgba(212,149,10,0.15)' : 'transparent',
-                    color: drawerTab === 'movimientos' ? '#D4950A' : '#7fa8c9',
-                    borderBottom: drawerTab === 'movimientos' ? '2px solid #D4950A' : '2px solid transparent',
+                    color: drawerTab === 'movimientos' ? 'var(--accent)' : 'var(--text-secondary)',
+                    borderBottom: drawerTab === 'movimientos' ? '2px solid var(--accent)' : '2px solid transparent',
                     transition: 'all 0.2s',
                   }}
                 >
@@ -1059,7 +1059,7 @@ export default function InventoryPage() {
                   {movements.length > 0 && (
                     <span style={{
                       marginLeft: '6px', fontSize: '10px', background: 'rgba(212,149,10,0.2)',
-                      padding: '1px 6px', borderRadius: '8px', color: '#D4950A',
+                      padding: '1px 6px', borderRadius: '8px', color: 'var(--accent)',
                     }}>
                       {movements.length}
                     </span>

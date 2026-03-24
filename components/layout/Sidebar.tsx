@@ -8,7 +8,6 @@ type NavItem = {
   icon: string
   label: string
   roles: string[]
-  badge?: string
 }
 
 type NavGroup = {
@@ -17,50 +16,91 @@ type NavGroup = {
 }
 
 const navItems: NavGroup[] = [
-  { section: 'PRINCIPAL', items: [
-    { href: '/dashboard', icon: '📊', label: 'Dashboard', roles: ['ADMIN','OPERATOR','TECHNICIAN'] },
-    { href: '/dashboard/vessels', icon: '🚢', label: 'Embarcaciones', roles: ['ADMIN','OPERATOR','TECHNICIAN'] },
-    { href: '/dashboard/crew', icon: '👥', label: 'Personal', roles: ['ADMIN','OPERATOR'] },
-  ]},
-  { section: 'OPERACIONES', items: [
-    { href: '/dashboard/routes', icon: '🗺️', label: 'Rutas & Viajes', roles: ['ADMIN','OPERATOR'] },
-    { href: '/dashboard/inventory', icon: '📦', label: 'Inventario', roles: ['ADMIN','OPERATOR','TECHNICIAN'] },
-    { href: '/dashboard/fuel', icon: '⛽', label: 'Combustible', roles: ['ADMIN','OPERATOR'] },
-    { href: '/dashboard/clients', icon: '🤝', label: 'Clientes', roles: ['ADMIN','OPERATOR'] },
-    { href: '/dashboard/daily-reports', icon: '📝', label: 'Reporte Diario', roles: ['ADMIN','OPERATOR','TECHNICIAN'] },
-  ]},
-  { section: 'MANTENIMIENTO', items: [
-    { href: '/dashboard/maintenance', icon: '🔧', label: 'Mantenimiento', roles: ['ADMIN','TECHNICIAN'] },
-    { href: '/dashboard/compliance', icon: '📜', label: 'Compliance', roles: ['ADMIN','OPERATOR'] },
-    { href: '/dashboard/reports', icon: '📋', label: 'Reportes', roles: ['ADMIN','OPERATOR','TECHNICIAN'] },
-  ]},
-  { section: 'SISTEMA', items: [
-    { href: '/dashboard/settings', icon: '⚙️', label: 'Configuracion', roles: ['ADMIN'] },
-  ]},
+  {
+    section: 'Principal',
+    items: [
+      { href: '/dashboard',               icon: 'dashboard',         label: 'Dashboard',       roles: ['ADMIN','OPERATOR','TECHNICIAN'] },
+      { href: '/dashboard/vessels',        icon: 'directions_boat',   label: 'Embarcaciones',   roles: ['ADMIN','OPERATOR','TECHNICIAN'] },
+      { href: '/dashboard/crew',           icon: 'groups',            label: 'Personal',         roles: ['ADMIN','OPERATOR'] },
+    ],
+  },
+  {
+    section: 'Operaciones',
+    items: [
+      { href: '/dashboard/inventory',      icon: 'inventory_2',       label: 'Inventario',       roles: ['ADMIN','OPERATOR','TECHNICIAN'] },
+      { href: '/dashboard/fuel',           icon: 'local_gas_station', label: 'Combustible',      roles: ['ADMIN','OPERATOR'] },
+      { href: '/dashboard/clients',        icon: 'business',          label: 'Clientes',         roles: ['ADMIN','OPERATOR'] },
+      { href: '/dashboard/daily-reports',  icon: 'assignment',        label: 'Reporte Diario',   roles: ['ADMIN','OPERATOR','TECHNICIAN'] },
+      { href: '/dashboard/routes',         icon: 'route',             label: 'Rutas & Viajes',  roles: ['ADMIN','OPERATOR'] },
+    ],
+  },
+  {
+    section: 'Mantenimiento',
+    items: [
+      { href: '/dashboard/maintenance',    icon: 'build',             label: 'Mantenimiento',    roles: ['ADMIN','TECHNICIAN'] },
+      { href: '/dashboard/compliance',     icon: 'verified_user',     label: 'Compliance',       roles: ['ADMIN','OPERATOR'] },
+      { href: '/dashboard/reports',        icon: 'analytics',         label: 'Reportes',         roles: ['ADMIN','OPERATOR','TECHNICIAN'] },
+    ],
+  },
+  {
+    section: 'Sistema',
+    items: [
+      { href: '/dashboard/settings',       icon: 'settings',          label: 'Configuración',    roles: ['ADMIN'] },
+    ],
+  },
 ]
 
 export default function Sidebar({ userRole }: { userRole: string }) {
   const pathname = usePathname()
 
   return (
-    <aside style={{ width: '220px', background: '#060c1a', borderRight: '1px solid rgba(212,149,10,0.15)', padding: '16px 12px', display: 'flex', flexDirection: 'column', overflowY: 'auto', flexShrink: 0 }}>
-      {navItems.map(group => (
-        <div key={group.section}>
-          <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(212,149,10,0.4)', padding: '0 8px', margin: '14px 0 6px' }}>{group.section}</div>
-          {group.items.filter(i => i.roles.includes(userRole)).map(item => {
-            const isActive = pathname === item.href
-            return (
-              <Link key={item.href} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 10px', borderRadius: '8px', fontSize: '13px', fontWeight: 500, textDecoration: 'none', color: isActive ? '#D4950A' : '#7fa8c9', background: isActive ? 'rgba(212,149,10,0.1)' : 'transparent', border: `1px solid ${isActive ? 'rgba(212,149,10,0.25)' : 'transparent'}`, marginBottom: '2px' }}>
-                <span style={{ fontSize: '15px', width: '20px', textAlign: 'center' }}>{item.icon}</span>
-                <span style={{ flex: 1 }}>{item.label}</span>
-                {item.badge && <span style={{ background: '#c0392b', color: 'white', fontSize: '10px', fontWeight: 700, padding: '2px 6px', borderRadius: '10px' }}>{item.badge}</span>}
-              </Link>
-            )
-          })}
-        </div>
-      ))}
-      <div style={{ marginTop: 'auto', paddingTop: '16px', borderTop: '1px solid rgba(212,149,10,0.1)', fontSize: '10px', color: 'rgba(212,149,10,0.3)', textAlign: 'center' }}>
-        VENOLS ERP v2.0.0
+    <aside className="w-72 flex-shrink-0 bg-[#161c26] border-r border-white/5 flex flex-col overflow-y-auto">
+      {/* Logo */}
+      <div className="p-6 border-b border-white/5">
+        <h2 className="text-amber-500 font-black text-2xl tracking-tighter">VENOLS</h2>
+        <p className="text-[10px] text-slate-600 uppercase tracking-widest mt-0.5">ERP Maritime</p>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-4 space-y-5">
+        {navItems.map(group => (
+          <div key={group.section}>
+            {/* Section label */}
+            <p className="text-[9px] font-bold text-slate-700 uppercase tracking-widest px-3 mb-1">
+              {group.section}
+            </p>
+
+            <div className="space-y-0.5">
+              {group.items
+                .filter(i => i.roles.includes(userRole))
+                .map(item => {
+                  const isActive = pathname === item.href
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={[
+                        'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium tracking-wide uppercase transition-all',
+                        isActive
+                          ? 'bg-gradient-to-r from-amber-400/20 to-transparent text-amber-500 border-l-4 border-amber-500 pl-2'
+                          : 'text-slate-400 hover:text-slate-100 hover:bg-white/5 border-l-4 border-transparent pl-2',
+                      ].join(' ')}
+                    >
+                      <span className="material-symbols-outlined text-[20px] flex-shrink-0">
+                        {item.icon}
+                      </span>
+                      <span>{item.label}</span>
+                    </Link>
+                  )
+                })}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      {/* Footer */}
+      <div className="px-6 py-4 border-t border-white/5">
+        <p className="text-[9px] text-slate-700 font-mono">VENOLS ERP · v2.0.0</p>
       </div>
     </aside>
   )

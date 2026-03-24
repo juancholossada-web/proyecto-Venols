@@ -27,17 +27,17 @@ type ClientType = typeof CLIENT_TYPES[number]
 
 /* ─── Config ─── */
 const typeColors: Record<string, string> = {
-  REFINERIA: '#e74c3c',
-  OPERADORA: '#D4950A',
-  TERMINAL: '#2d9cdb',
-  TRADER: '#27ae60',
-  ASTILLERO: '#e67e22',
-  EMPRESA: '#7fa8c9',
+  REFINERIA: 'var(--danger)',
+  OPERADORA: 'var(--accent)',
+  TERMINAL: 'var(--info)',
+  TRADER: 'var(--success)',
+  ASTILLERO: 'var(--warning)',
+  EMPRESA: 'var(--text-secondary)',
 }
 
 const statusColors: Record<string, string> = {
-  ACTIVO: '#27ae60',
-  INACTIVO: '#e74c3c',
+  ACTIVO: 'var(--success)',
+  INACTIVO: 'var(--danger)',
 }
 
 /* ─── API helper ─── */
@@ -57,20 +57,20 @@ async function api(path: string, opts?: RequestInit) {
 
 /* ─── Styles ─── */
 const cardStyle: React.CSSProperties = {
-  background: '#0a1628',
-  border: '1px solid rgba(212,149,10,0.15)',
-  borderRadius: '14px',
+  background: 'var(--bg-surface)',
+  border: '1px solid var(--border-accent)',
+  borderRadius: '12px',
 }
 
-const goldBorder = 'rgba(212,149,10,0.15)'
+const goldBorder = 'var(--border-accent)'
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '9px 12px',
-  background: '#060c1a',
-  border: `1px solid ${goldBorder}`,
+  background: 'var(--bg-input)',
+  border: '1px solid var(--border-accent)',
   borderRadius: '8px',
-  color: '#e8f4fd',
+  color: 'var(--text-primary)',
   fontSize: '13px',
   outline: 'none',
   boxSizing: 'border-box',
@@ -78,10 +78,10 @@ const inputStyle: React.CSSProperties = {
 
 const btnPrimary: React.CSSProperties = {
   padding: '10px 20px',
-  background: 'linear-gradient(135deg, #D4950A, #b8820a)',
+  background: 'var(--accent)',
   border: 'none',
   borderRadius: '8px',
-  color: '#060c1a',
+  color: '#080E1A',
   fontWeight: 700,
   fontSize: '13px',
   cursor: 'pointer',
@@ -90,9 +90,9 @@ const btnPrimary: React.CSSProperties = {
 const btnSecondary: React.CSSProperties = {
   padding: '8px 14px',
   background: 'transparent',
-  border: `1px solid ${goldBorder}`,
+  border: '1px solid var(--border-accent)',
   borderRadius: '8px',
-  color: '#7fa8c9',
+  color: 'var(--text-secondary)',
   fontSize: '12px',
   cursor: 'pointer',
 }
@@ -215,7 +215,7 @@ export default function ClientsPage() {
   /* ── Loading ── */
   if (loading) {
     return (
-      <div style={{ color: '#7fa8c9', padding: '40px', textAlign: 'center' }}>
+      <div style={{ color: 'var(--text-muted)', padding: '40px', textAlign: 'center' }}>
         Cargando clientes...
       </div>
     )
@@ -227,8 +227,8 @@ export default function ClientsPage() {
       {/* ── Header ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
         <div>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: '#e8f4fd' }}>Clientes</div>
-          <div style={{ fontSize: '13px', color: '#7fa8c9', marginTop: '4px' }}>
+          <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>Clientes</div>
+          <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
             CRM — Gestión de clientes y relaciones comerciales
           </div>
         </div>
@@ -238,13 +238,13 @@ export default function ClientsPage() {
       {/* ── KPIs ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
         {[
-          { label: 'Total Clientes', value: totalClients, color: '#D4950A' },
-          { label: 'Activos', value: activeClients, color: '#27ae60' },
-          { label: 'Tipos Distintos', value: distinctTypes, color: '#2d9cdb' },
-          { label: 'Con Viajes', value: withVoyages, color: '#e67e22' },
+          { label: 'Total Clientes', value: totalClients, color: 'var(--accent)' },
+          { label: 'Activos', value: activeClients, color: 'var(--success)' },
+          { label: 'Tipos Distintos', value: distinctTypes, color: 'var(--info)' },
+          { label: 'Con Viajes', value: withVoyages, color: 'var(--warning)' },
         ].map(kpi => (
           <div key={kpi.label} style={{ ...cardStyle, padding: '20px' }}>
-            <div style={{ fontSize: '11px', color: '#7fa8c9', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
               {kpi.label}
             </div>
             <div style={{ fontSize: '28px', fontWeight: 800, color: kpi.color }}>{kpi.value}</div>
@@ -262,7 +262,7 @@ export default function ClientsPage() {
             onChange={e => setSearch(e.target.value)}
             style={{ ...inputStyle, paddingLeft: '36px' }}
           />
-          <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#7fa8c9', fontSize: '14px', pointerEvents: 'none' }}>
+          <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: '14px', pointerEvents: 'none' }}>
             ⌕
           </span>
         </div>
@@ -281,7 +281,7 @@ export default function ClientsPage() {
       {/* ── Client Grid ── */}
       {filtered.length === 0 ? (
         <div style={{ ...cardStyle, padding: '60px', textAlign: 'center' }}>
-          <div style={{ fontSize: '16px', color: '#7fa8c9', marginBottom: '8px' }}>
+          <div style={{ fontSize: '16px', color: 'var(--text-muted)', marginBottom: '8px' }}>
             No se encontraron clientes
           </div>
           <div style={{ fontSize: '12px', color: '#556' }}>
@@ -312,11 +312,11 @@ export default function ClientsPage() {
               {/* Card header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#e8f4fd', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {client.name}
                   </div>
                   {client.taxId && (
-                    <div style={{ fontSize: '12px', color: '#7fa8c9' }}>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                       RIF: {client.taxId}
                     </div>
                   )}
@@ -327,8 +327,8 @@ export default function ClientsPage() {
                     borderRadius: '12px',
                     fontSize: '10px',
                     fontWeight: 700,
-                    color: typeColors[client.type] || '#7fa8c9',
-                    background: `${typeColors[client.type] || '#7fa8c9'}18`,
+                    color: typeColors[client.type] || 'var(--text-secondary)',
+                    background: `${typeColors[client.type] || 'var(--text-secondary)'}18`,
                     textTransform: 'uppercase',
                     letterSpacing: '0.3px',
                   }}>
@@ -339,8 +339,8 @@ export default function ClientsPage() {
                     borderRadius: '12px',
                     fontSize: '10px',
                     fontWeight: 700,
-                    color: statusColors[client.status] || '#7fa8c9',
-                    background: `${statusColors[client.status] || '#7fa8c9'}18`,
+                    color: statusColors[client.status] || 'var(--text-secondary)',
+                    background: `${statusColors[client.status] || 'var(--text-secondary)'}18`,
                   }}>
                     {client.status}
                   </span>
@@ -350,22 +350,22 @@ export default function ClientsPage() {
               {/* Card body */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {client.country && (
-                  <div style={{ fontSize: '12px', color: '#7fa8c9' }}>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                     <span style={{ color: '#556', marginRight: '6px' }}>País:</span>{client.country}
                   </div>
                 )}
                 {client.contactPerson && (
-                  <div style={{ fontSize: '12px', color: '#7fa8c9' }}>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                     <span style={{ color: '#556', marginRight: '6px' }}>Contacto:</span>{client.contactPerson}
                   </div>
                 )}
                 {client.phone && (
-                  <div style={{ fontSize: '12px', color: '#7fa8c9' }}>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                     <span style={{ color: '#556', marginRight: '6px' }}>Tel:</span>{client.phone}
                   </div>
                 )}
                 {client.email && (
-                  <div style={{ fontSize: '12px', color: '#7fa8c9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     <span style={{ color: '#556', marginRight: '6px' }}>Email:</span>{client.email}
                   </div>
                 )}
@@ -374,11 +374,11 @@ export default function ClientsPage() {
               {/* Voyage count footer */}
               <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: `1px solid ${goldBorder}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ fontSize: '11px', color: '#556' }}>
-                  Viajes: <span style={{ color: (client._count?.voyages ?? 0) > 0 ? '#D4950A' : '#556', fontWeight: 700 }}>
+                  Viajes: <span style={{ color: (client._count?.voyages ?? 0) > 0 ? 'var(--accent)' : '#556', fontWeight: 700 }}>
                     {client._count?.voyages ?? 0}
                   </span>
                 </div>
-                <span style={{ fontSize: '11px', color: '#D4950A' }}>Ver detalle →</span>
+                <span style={{ fontSize: '11px', color: 'var(--accent)' }}>Ver detalle →</span>
               </div>
             </div>
           ))}
@@ -407,7 +407,7 @@ export default function ClientsPage() {
           right: 0,
           width: '520px',
           height: '100vh',
-          background: '#0a1628',
+          background: 'var(--bg-surface)',
           borderLeft: `1px solid ${goldBorder}`,
           zIndex: 1000,
           transform: drawerOpen ? 'translateX(0)' : 'translateX(100%)',
@@ -419,10 +419,10 @@ export default function ClientsPage() {
       >
         {/* Drawer header */}
         <div style={{ padding: '24px 24px 16px', borderBottom: `1px solid ${goldBorder}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-          <div style={{ fontSize: '17px', fontWeight: 700, color: '#e8f4fd' }}>
+          <div style={{ fontSize: '17px', fontWeight: 700, color: 'var(--text-primary)' }}>
             {drawerMode === 'create' ? 'Nuevo Cliente' : drawerMode === 'edit' ? 'Editar Cliente' : selectedClient?.name || ''}
           </div>
-          <button onClick={closeDrawer} style={{ background: 'none', border: 'none', color: '#7fa8c9', fontSize: '22px', cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}>
+          <button onClick={closeDrawer} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '22px', cursor: 'pointer', padding: '0 4px', lineHeight: 1 }}>
             ✕
           </button>
         </div>
@@ -439,8 +439,8 @@ export default function ClientsPage() {
                   borderRadius: '14px',
                   fontSize: '12px',
                   fontWeight: 700,
-                  color: typeColors[selectedClient.type] || '#7fa8c9',
-                  background: `${typeColors[selectedClient.type] || '#7fa8c9'}18`,
+                  color: typeColors[selectedClient.type] || 'var(--text-secondary)',
+                  background: `${typeColors[selectedClient.type] || 'var(--text-secondary)'}18`,
                   textTransform: 'uppercase',
                 }}>
                   {selectedClient.type}
@@ -450,8 +450,8 @@ export default function ClientsPage() {
                   borderRadius: '14px',
                   fontSize: '12px',
                   fontWeight: 700,
-                  color: statusColors[selectedClient.status] || '#7fa8c9',
-                  background: `${statusColors[selectedClient.status] || '#7fa8c9'}18`,
+                  color: statusColors[selectedClient.status] || 'var(--text-secondary)',
+                  background: `${statusColors[selectedClient.status] || 'var(--text-secondary)'}18`,
                 }}>
                   {selectedClient.status}
                 </span>
@@ -478,7 +478,7 @@ export default function ClientsPage() {
                     <div style={{ fontSize: '11px', color: '#556', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
                       {row.label}
                     </div>
-                    <div style={{ fontSize: '14px', color: '#e8f4fd' }}>
+                    <div style={{ fontSize: '14px', color: 'var(--text-primary)' }}>
                       {row.value}
                     </div>
                   </div>
@@ -499,7 +499,7 @@ export default function ClientsPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Name */}
               <div>
-                <label style={{ fontSize: '12px', color: '#7fa8c9', display: 'block', marginBottom: '6px' }}>Nombre *</label>
+                <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Nombre *</label>
                 <input
                   style={inputStyle}
                   value={form.name}
@@ -510,7 +510,7 @@ export default function ClientsPage() {
 
               {/* Tax ID */}
               <div>
-                <label style={{ fontSize: '12px', color: '#7fa8c9', display: 'block', marginBottom: '6px' }}>RIF / Tax ID</label>
+                <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>RIF / Tax ID</label>
                 <input
                   style={inputStyle}
                   value={form.taxId || ''}
@@ -521,7 +521,7 @@ export default function ClientsPage() {
 
               {/* Type */}
               <div>
-                <label style={{ fontSize: '12px', color: '#7fa8c9', display: 'block', marginBottom: '6px' }}>Tipo *</label>
+                <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Tipo *</label>
                 <select
                   style={{ ...inputStyle, cursor: 'pointer' }}
                   value={form.type}
@@ -535,7 +535,7 @@ export default function ClientsPage() {
 
               {/* Country */}
               <div>
-                <label style={{ fontSize: '12px', color: '#7fa8c9', display: 'block', marginBottom: '6px' }}>País</label>
+                <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>País</label>
                 <input
                   style={inputStyle}
                   value={form.country || ''}
@@ -546,7 +546,7 @@ export default function ClientsPage() {
 
               {/* Address */}
               <div>
-                <label style={{ fontSize: '12px', color: '#7fa8c9', display: 'block', marginBottom: '6px' }}>Dirección</label>
+                <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Dirección</label>
                 <input
                   style={inputStyle}
                   value={form.address || ''}
@@ -557,7 +557,7 @@ export default function ClientsPage() {
 
               {/* Phone */}
               <div>
-                <label style={{ fontSize: '12px', color: '#7fa8c9', display: 'block', marginBottom: '6px' }}>Teléfono</label>
+                <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Teléfono</label>
                 <input
                   style={inputStyle}
                   value={form.phone || ''}
@@ -568,7 +568,7 @@ export default function ClientsPage() {
 
               {/* Email */}
               <div>
-                <label style={{ fontSize: '12px', color: '#7fa8c9', display: 'block', marginBottom: '6px' }}>Email</label>
+                <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Email</label>
                 <input
                   style={inputStyle}
                   type="email"
@@ -580,7 +580,7 @@ export default function ClientsPage() {
 
               {/* Contact Person */}
               <div>
-                <label style={{ fontSize: '12px', color: '#7fa8c9', display: 'block', marginBottom: '6px' }}>Persona de Contacto</label>
+                <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Persona de Contacto</label>
                 <input
                   style={inputStyle}
                   value={form.contactPerson || ''}
@@ -591,7 +591,7 @@ export default function ClientsPage() {
 
               {/* Notes */}
               <div>
-                <label style={{ fontSize: '12px', color: '#7fa8c9', display: 'block', marginBottom: '6px' }}>Notas</label>
+                <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Notas</label>
                 <textarea
                   style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }}
                   value={form.notes || ''}
@@ -602,7 +602,7 @@ export default function ClientsPage() {
 
               {/* Status */}
               <div>
-                <label style={{ fontSize: '12px', color: '#7fa8c9', display: 'block', marginBottom: '6px' }}>Estado</label>
+                <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>Estado</label>
                 <select
                   style={{ ...inputStyle, cursor: 'pointer' }}
                   value={form.status}

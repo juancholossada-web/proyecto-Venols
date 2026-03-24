@@ -82,28 +82,28 @@ type MainTab = 'ordenes' | 'programas' | 'equipos'
 
 /* ─── Config ─── */
 const priorityColors: Record<string, string> = {
-  BAJA: '#7fa8c9',
-  MEDIA: '#D4950A',
-  ALTA: '#e67e22',
-  CRITICA: '#e74c3c',
+  BAJA: 'var(--text-secondary)',
+  MEDIA: 'var(--accent)',
+  ALTA: 'var(--warning)',
+  CRITICA: 'var(--danger)',
 }
 
 const statusColors: Record<string, string> = {
-  PENDIENTE: '#e67e22',
-  PLANIFICADO: '#2d9cdb',
-  EN_PROCESO: '#D4950A',
-  COMPLETADO: '#27ae60',
+  PENDIENTE: 'var(--warning)',
+  PLANIFICADO: 'var(--info)',
+  EN_PROCESO: 'var(--accent)',
+  COMPLETADO: 'var(--success)',
 }
 
 const equipmentStatusColors: Record<string, string> = {
-  OPERATIVO: '#27ae60',
-  REQUIERE_SERVICIO: '#e67e22',
-  FUERA_SERVICIO: '#e74c3c',
+  OPERATIVO: 'var(--success)',
+  REQUIERE_SERVICIO: 'var(--warning)',
+  FUERA_SERVICIO: 'var(--danger)',
 }
 
 const programStatusColors: Record<string, string> = {
-  ACTIVO: '#27ae60',
-  PAUSADO: '#e67e22',
+  ACTIVO: 'var(--success)',
+  PAUSADO: 'var(--warning)',
 }
 
 const systemOptions = [
@@ -159,22 +159,22 @@ async function api(path: string, opts?: RequestInit) {
 }
 
 /* ─── Styles ─── */
-const goldBorder = 'rgba(212,149,10,0.15)'
-const goldBorderActive = 'rgba(212,149,10,0.5)'
+const goldBorder = 'var(--border-accent)'
+const goldBorderActive = 'var(--border-accent-strong)'
 
 const cardStyle: React.CSSProperties = {
-  background: '#0a1628',
-  border: `1px solid ${goldBorder}`,
-  borderRadius: '14px',
+  background: 'var(--bg-surface)',
+  border: '1px solid var(--border-accent)',
+  borderRadius: '12px',
 }
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '9px 12px',
-  background: '#060c1a',
-  border: `1px solid ${goldBorder}`,
+  background: 'var(--bg-input)',
+  border: '1px solid var(--border-accent)',
   borderRadius: '8px',
-  color: '#e8f4fd',
+  color: 'var(--text-primary)',
   fontSize: '13px',
   outline: 'none',
   boxSizing: 'border-box',
@@ -182,10 +182,10 @@ const inputStyle: React.CSSProperties = {
 
 const btnPrimary: React.CSSProperties = {
   padding: '10px 20px',
-  background: 'linear-gradient(135deg, #D4950A, #b8820a)',
+  background: 'var(--accent)',
   border: 'none',
   borderRadius: '8px',
-  color: '#060c1a',
+  color: '#080E1A',
   fontWeight: 700,
   fontSize: '13px',
   cursor: 'pointer',
@@ -194,9 +194,9 @@ const btnPrimary: React.CSSProperties = {
 const btnSecondary: React.CSSProperties = {
   padding: '8px 14px',
   background: 'transparent',
-  border: `1px solid ${goldBorder}`,
+  border: '1px solid var(--border-accent)',
   borderRadius: '8px',
-  color: '#7fa8c9',
+  color: 'var(--text-secondary)',
   fontSize: '12px',
   cursor: 'pointer',
 }
@@ -204,16 +204,16 @@ const btnSecondary: React.CSSProperties = {
 const btnDanger: React.CSSProperties = {
   padding: '8px 14px',
   background: 'transparent',
-  border: '1px solid rgba(231,76,60,0.3)',
+  border: '1px solid rgba(176,48,40,0.35)',
   borderRadius: '8px',
-  color: '#e74c3c',
+  color: 'var(--danger)',
   fontSize: '12px',
   cursor: 'pointer',
 }
 
 const labelStyle: React.CSSProperties = {
   fontSize: '12px',
-  color: '#7fa8c9',
+  color: 'var(--text-muted)',
   marginBottom: '4px',
   display: 'block',
   fontWeight: 600,
@@ -631,7 +631,7 @@ export default function MaintenancePage() {
   /* ─── Render loading ─── */
   if (loading) {
     return (
-      <div style={{ color: '#7fa8c9', padding: '40px', textAlign: 'center' }}>
+      <div style={{ color: 'var(--text-muted)', padding: '40px', textAlign: 'center' }}>
         Cargando mantenimiento...
       </div>
     )
@@ -672,7 +672,7 @@ export default function MaintenancePage() {
           width: '520px',
           maxWidth: '95vw',
           height: '100vh',
-          background: '#0a1628',
+          background: 'var(--bg-surface)',
           borderLeft: `1px solid ${goldBorder}`,
           overflowY: 'auto',
           display: 'flex',
@@ -687,11 +687,11 @@ export default function MaintenancePage() {
             alignItems: 'center',
             position: 'sticky',
             top: 0,
-            background: '#0a1628',
+            background: 'var(--bg-surface)',
             zIndex: 2,
           }}>
-            <div style={{ fontSize: '17px', fontWeight: 700, color: '#e8f4fd' }}>{title}</div>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#7fa8c9', fontSize: '22px', cursor: 'pointer', lineHeight: 1 }}>
+            <div style={{ fontSize: '17px', fontWeight: 700, color: 'var(--text-primary)' }}>{title}</div>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '22px', cursor: 'pointer', lineHeight: 1 }}>
               &#x2715;
             </button>
           </div>
@@ -717,8 +717,8 @@ export default function MaintenancePage() {
       {/* ── Header ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: '#e8f4fd' }}>Mantenimiento</div>
-          <div style={{ fontSize: '13px', color: '#7fa8c9', marginTop: '4px' }}>
+          <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>Mantenimiento</div>
+          <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
             Gestion integral de mantenimiento de la flota
           </div>
         </div>
@@ -739,9 +739,9 @@ export default function MaintenancePage() {
               style={{
                 padding: '12px 24px',
                 border: 'none',
-                borderBottom: active ? '3px solid #D4950A' : '3px solid transparent',
+                borderBottom: active ? '3px solid var(--accent)' : '3px solid transparent',
                 background: active ? 'rgba(212,149,10,0.08)' : 'transparent',
-                color: active ? '#D4950A' : '#7fa8c9',
+                color: active ? 'var(--accent)' : 'var(--text-secondary)',
                 fontWeight: active ? 700 : 500,
                 fontSize: '14px',
                 cursor: 'pointer',
@@ -766,16 +766,16 @@ export default function MaintenancePage() {
           {/* ── KPIs ── */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '14px', marginBottom: '24px' }}>
             {([
-              { label: 'Total Ordenes', value: total, color: '#e8f4fd' },
-              { label: 'Pendientes', value: pendientes, color: '#e67e22' },
-              { label: 'En Proceso', value: enProceso, color: '#D4950A' },
-              { label: 'Criticas', value: criticas, color: '#e74c3c' },
-              { label: 'Hrs Parada Prev.', value: totalHorasParadaPreventivo, color: '#2d9cdb' },
-              { label: 'Hrs Parada Corr.', value: totalHorasParadaCorrectivo, color: '#e67e22' },
+              { label: 'Total Ordenes', value: total, color: 'var(--text-primary)' },
+              { label: 'Pendientes', value: pendientes, color: 'var(--warning)' },
+              { label: 'En Proceso', value: enProceso, color: 'var(--accent)' },
+              { label: 'Criticas', value: criticas, color: 'var(--danger)' },
+              { label: 'Hrs Parada Prev.', value: totalHorasParadaPreventivo, color: 'var(--info)' },
+              { label: 'Hrs Parada Corr.', value: totalHorasParadaCorrectivo, color: 'var(--warning)' },
             ]).map((kpi) => (
               <div key={kpi.label} style={{ ...cardStyle, padding: '16px 18px' }}>
                 <div style={{ fontSize: '24px', fontWeight: 800, color: kpi.color }}>{kpi.value}</div>
-                <div style={{ fontSize: '11px', color: '#7fa8c9', marginTop: '4px' }}>{kpi.label}</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>{kpi.label}</div>
               </div>
             ))}
           </div>
@@ -783,30 +783,30 @@ export default function MaintenancePage() {
           {/* Vessel Downtime Summary */}
           {vesselDowntimeSummary.length > 0 && (
             <div style={{ ...cardStyle, padding: '18px 22px', marginBottom: '24px' }}>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd', marginBottom: '14px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '14px' }}>
                 Resumen de Horas de Parada por Embarcacion
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
                 {vesselDowntimeSummary.map(s => (
                   <div key={s.vessel.id} style={{
-                    background: '#060c1a',
+                    background: 'var(--bg-input)',
                     border: `1px solid ${goldBorder}`,
                     borderRadius: '10px',
                     padding: '14px 16px',
                   }}>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#e8f4fd', marginBottom: '8px' }}>{s.vessel.name}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>{s.vessel.name}</div>
                     <div style={{ display: 'flex', gap: '16px', fontSize: '12px' }}>
                       <div>
-                        <span style={{ color: '#7fa8c9' }}>Prev: </span>
-                        <span style={{ color: '#2d9cdb', fontWeight: 600 }}>{s.preventivo}h</span>
+                        <span style={{ color: 'var(--text-muted)' }}>Prev: </span>
+                        <span style={{ color: 'var(--info)', fontWeight: 600 }}>{s.preventivo}h</span>
                       </div>
                       <div>
-                        <span style={{ color: '#7fa8c9' }}>Corr: </span>
-                        <span style={{ color: '#e67e22', fontWeight: 600 }}>{s.correctivo}h</span>
+                        <span style={{ color: 'var(--text-muted)' }}>Corr: </span>
+                        <span style={{ color: 'var(--warning)', fontWeight: 600 }}>{s.correctivo}h</span>
                       </div>
                       <div>
-                        <span style={{ color: '#7fa8c9' }}>Total: </span>
-                        <span style={{ color: '#e74c3c', fontWeight: 700 }}>{s.total}h</span>
+                        <span style={{ color: 'var(--text-muted)' }}>Total: </span>
+                        <span style={{ color: 'var(--danger)', fontWeight: 700 }}>{s.total}h</span>
                       </div>
                     </div>
                   </div>
@@ -820,7 +820,7 @@ export default function MaintenancePage() {
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
               {tabFilters.map(tab => {
                 const active = statusFilter === tab
-                const color = tab === 'TODOS' ? '#e8f4fd' : statusColors[tab] ?? '#e8f4fd'
+                const color = tab === 'TODOS' ? 'var(--text-primary)' : statusColors[tab] ?? 'var(--text-primary)'
                 return (
                   <button
                     key={tab}
@@ -830,7 +830,7 @@ export default function MaintenancePage() {
                       borderRadius: '8px',
                       border: active ? `1px solid ${color}` : `1px solid ${goldBorder}`,
                       background: active ? `${color}18` : 'transparent',
-                      color: active ? color : '#7fa8c9',
+                      color: active ? color : 'var(--text-secondary)',
                       fontWeight: active ? 700 : 500,
                       fontSize: '12px',
                       cursor: 'pointer',
@@ -858,7 +858,7 @@ export default function MaintenancePage() {
           {filteredOrders.length === 0 ? (
             <div style={{ ...cardStyle, padding: '48px', textAlign: 'center' }}>
               <div style={{ fontSize: '40px', marginBottom: '12px' }}>&#128295;</div>
-              <div style={{ color: '#7fa8c9', fontSize: '14px' }}>No se encontraron ordenes de mantenimiento</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '14px' }}>No se encontraron ordenes de mantenimiento</div>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -878,11 +878,11 @@ export default function MaintenancePage() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
                     <div style={{ flex: 1, minWidth: '200px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '15px', fontWeight: 700, color: '#e8f4fd' }}>{vesselName(order.vesselId, order.vessel)}</span>
+                        <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>{vesselName(order.vesselId, order.vessel)}</span>
                         <span style={{
                           padding: '2px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 600,
                           background: order.type === 'CORRECTIVO' ? 'rgba(231,76,60,0.12)' : 'rgba(127,168,201,0.12)',
-                          color: order.type === 'CORRECTIVO' ? '#e74c3c' : '#7fa8c9',
+                          color: order.type === 'CORRECTIVO' ? 'var(--danger)' : 'var(--text-secondary)',
                           border: order.type === 'CORRECTIVO' ? '1px solid rgba(231,76,60,0.25)' : '1px solid rgba(127,168,201,0.2)',
                         }}>
                           {order.type}
@@ -896,16 +896,16 @@ export default function MaintenancePage() {
                           {order.priority}
                         </span>
                       </div>
-                      <div style={{ fontSize: '13px', color: '#c8dce8', marginBottom: '6px', lineHeight: '1.4' }}>
+                      <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '6px', lineHeight: '1.4' }}>
                         {order.description || 'Sin descripcion'}
                       </div>
-                      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '12px', color: '#7fa8c9' }}>
+                      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '12px', color: 'var(--text-muted)' }}>
                         {order.system && <span>Sistema: {order.system}</span>}
                         {order.technician && <span>Tecnico: {order.technician}</span>}
                         {order.dueDate && <span>Vence: {formatDate(order.dueDate)}</span>}
                         {order.cost != null && <span>Costo: {formatCost(order.cost)}</span>}
                         {order.horasParada != null && order.horasParada > 0 && (
-                          <span style={{ color: '#e67e22' }}>Parada: {order.horasParada}h</span>
+                          <span style={{ color: 'var(--warning)' }}>Parada: {order.horasParada}h</span>
                         )}
                       </div>
                     </div>
@@ -933,11 +933,11 @@ export default function MaintenancePage() {
               /* ── VIEW MODE ── */
               <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '18px', fontWeight: 800, color: '#e8f4fd' }}>{vesselName(selectedOrder.vesselId, selectedOrder.vessel)}</span>
+                  <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>{vesselName(selectedOrder.vesselId, selectedOrder.vessel)}</span>
                   <span style={{
                     padding: '3px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 600,
                     background: selectedOrder.type === 'CORRECTIVO' ? 'rgba(231,76,60,0.12)' : 'rgba(127,168,201,0.12)',
-                    color: selectedOrder.type === 'CORRECTIVO' ? '#e74c3c' : '#7fa8c9',
+                    color: selectedOrder.type === 'CORRECTIVO' ? 'var(--danger)' : 'var(--text-secondary)',
                   }}>{selectedOrder.type}</span>
                 </div>
 
@@ -968,8 +968,8 @@ export default function MaintenancePage() {
                     ...(selectedOrder.horasParada != null ? [['Horas de Parada', `${selectedOrder.horasParada}h`]] : []),
                   ] as [string, string][]).map(([label, value]) => (
                     <div key={label} style={{ padding: '10px 0', borderBottom: `1px solid ${goldBorder}` }}>
-                      <div style={{ fontSize: '11px', color: '#7fa8c9', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</div>
-                      <div style={{ fontSize: '13px', color: '#e8f4fd', lineHeight: '1.5' }}>{value}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</div>
+                      <div style={{ fontSize: '13px', color: 'var(--text-primary)', lineHeight: '1.5' }}>{value}</div>
                     </div>
                   ))}
                 </div>
@@ -977,7 +977,7 @@ export default function MaintenancePage() {
                 {/* Correctivo-specific detail */}
                 {selectedOrder.type === 'CORRECTIVO' && (
                   <div style={{ ...cardStyle, padding: '16px 20px' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#e74c3c', marginBottom: '12px' }}>Analisis Correctivo</div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--danger)', marginBottom: '12px' }}>Analisis Correctivo</div>
                     {([
                       ['Causa', selectedOrder.causa || '\u2014'],
                       ['Causa Raiz', selectedOrder.causaRaiz || '\u2014'],
@@ -986,8 +986,8 @@ export default function MaintenancePage() {
                       ['Equipo Afectado', selectedOrder.equipoAfectado || '\u2014'],
                     ] as [string, string][]).map(([label, value]) => (
                       <div key={label} style={{ padding: '8px 0', borderBottom: `1px solid ${goldBorder}` }}>
-                        <div style={{ fontSize: '11px', color: '#7fa8c9', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</div>
-                        <div style={{ fontSize: '13px', color: '#e8f4fd', lineHeight: '1.5' }}>{value}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</div>
+                        <div style={{ fontSize: '13px', color: 'var(--text-primary)', lineHeight: '1.5' }}>{value}</div>
                       </div>
                     ))}
                   </div>
@@ -996,8 +996,8 @@ export default function MaintenancePage() {
                 {/* Preventivo-specific detail */}
                 {selectedOrder.type === 'PREVENTIVO' && selectedOrder.preventiveTasks && (
                   <div style={{ ...cardStyle, padding: '16px 20px' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#27ae60', marginBottom: '12px' }}>Tareas Preventivas Realizadas</div>
-                    <div style={{ fontSize: '13px', color: '#e8f4fd', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{selectedOrder.preventiveTasks}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--success)', marginBottom: '12px' }}>Tareas Preventivas Realizadas</div>
+                    <div style={{ fontSize: '13px', color: 'var(--text-primary)', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{selectedOrder.preventiveTasks}</div>
                   </div>
                 )}
 
@@ -1084,7 +1084,7 @@ export default function MaintenancePage() {
                 {/* ── CORRECTIVO-specific fields ── */}
                 {orderForm.type === 'CORRECTIVO' && (
                   <div style={{ border: `1px solid rgba(231,76,60,0.2)`, borderRadius: '10px', padding: '16px', background: 'rgba(231,76,60,0.04)' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#e74c3c', marginBottom: '14px' }}>Datos del Correctivo</div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--danger)', marginBottom: '14px' }}>Datos del Correctivo</div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       <div>
@@ -1114,7 +1114,7 @@ export default function MaintenancePage() {
                 {/* ── PREVENTIVO-specific fields ── */}
                 {orderForm.type === 'PREVENTIVO' && (
                   <div style={{ border: '1px solid rgba(39,174,96,0.2)', borderRadius: '10px', padding: '16px', background: 'rgba(39,174,96,0.04)' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#27ae60', marginBottom: '14px' }}>Tareas Preventivas</div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--success)', marginBottom: '14px' }}>Tareas Preventivas</div>
                     <div>
                       <label style={labelStyle}>Descripcion de tareas realizadas</label>
                       <textarea
@@ -1165,11 +1165,11 @@ export default function MaintenancePage() {
           </div>
 
           {programsLoading ? (
-            <div style={{ color: '#7fa8c9', padding: '40px', textAlign: 'center' }}>Cargando programas...</div>
+            <div style={{ color: 'var(--text-muted)', padding: '40px', textAlign: 'center' }}>Cargando programas...</div>
           ) : filteredPrograms.length === 0 ? (
             <div style={{ ...cardStyle, padding: '48px', textAlign: 'center' }}>
               <div style={{ fontSize: '40px', marginBottom: '12px' }}>&#128197;</div>
-              <div style={{ color: '#7fa8c9', fontSize: '14px' }}>No se encontraron programas de mantenimiento preventivo</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '14px' }}>No se encontraron programas de mantenimiento preventivo</div>
             </div>
           ) : (
             (() => {
@@ -1184,7 +1184,7 @@ export default function MaintenancePage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                   {Object.entries(grouped).map(([vName, progs]) => (
                     <div key={vName}>
-                      <div style={{ fontSize: '15px', fontWeight: 700, color: '#D4950A', marginBottom: '12px', paddingLeft: '4px' }}>
+                      <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--accent)', marginBottom: '12px', paddingLeft: '4px' }}>
                         {vName}
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -1192,7 +1192,7 @@ export default function MaintenancePage() {
                           const days = daysUntil(prog.nextDue)
                           const isOverdue = days !== null && days < 0
                           const isNearDue = days !== null && days >= 0 && days <= 7
-                          const dueColor = isOverdue ? '#e74c3c' : isNearDue ? '#e67e22' : '#7fa8c9'
+                          const dueColor = isOverdue ? 'var(--danger)' : isNearDue ? 'var(--warning)' : 'var(--text-secondary)'
 
                           return (
                             <div
@@ -1203,33 +1203,33 @@ export default function MaintenancePage() {
                                 padding: '16px 20px',
                                 cursor: 'pointer',
                                 transition: 'border-color 0.2s',
-                                borderLeft: `3px solid ${programStatusColors[prog.status] || '#7fa8c9'}`,
+                                borderLeft: `3px solid ${programStatusColors[prog.status] || 'var(--text-secondary)'}`,
                               }}
                               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = goldBorderActive }}
-                              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = goldBorder; (e.currentTarget as HTMLElement).style.borderLeftColor = programStatusColors[prog.status] || '#7fa8c9' }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = goldBorder; (e.currentTarget as HTMLElement).style.borderLeftColor = programStatusColors[prog.status] || 'var(--text-secondary)' }}
                             >
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
                                 <div style={{ flex: 1, minWidth: '200px' }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', flexWrap: 'wrap' }}>
-                                    <span style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd' }}>{prog.name}</span>
+                                    <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{prog.name}</span>
                                     <span style={{
                                       padding: '2px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 600,
                                       background: `${programStatusColors[prog.status]}18`,
                                       color: programStatusColors[prog.status],
                                     }}>{prog.status}</span>
                                   </div>
-                                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '12px', color: '#7fa8c9' }}>
+                                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', fontSize: '12px', color: 'var(--text-muted)' }}>
                                     <span>Sistema: {prog.system}</span>
                                     <span>Frecuencia: {prog.frequency}{prog.frequency === 'POR_HORAS' && prog.frequencyHours ? ` (${prog.frequencyHours}h)` : ''}</span>
                                   </div>
                                 </div>
                                 <div style={{ textAlign: 'right' }}>
-                                  <div style={{ fontSize: '11px', color: '#7fa8c9', marginBottom: '2px' }}>Proximo</div>
+                                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '2px' }}>Proximo</div>
                                   <div style={{ fontSize: '13px', fontWeight: 700, color: dueColor }}>
                                     {prog.nextDue ? formatDate(prog.nextDue) : '\u2014'}
                                   </div>
-                                  {isOverdue && <div style={{ fontSize: '10px', color: '#e74c3c', fontWeight: 700, marginTop: '2px' }}>VENCIDO</div>}
-                                  {isNearDue && <div style={{ fontSize: '10px', color: '#e67e22', fontWeight: 700, marginTop: '2px' }}>PROXIMO</div>}
+                                  {isOverdue && <div style={{ fontSize: '10px', color: 'var(--danger)', fontWeight: 700, marginTop: '2px' }}>VENCIDO</div>}
+                                  {isNearDue && <div style={{ fontSize: '10px', color: 'var(--warning)', fontWeight: 700, marginTop: '2px' }}>PROXIMO</div>}
                                 </div>
                               </div>
                             </div>
@@ -1251,7 +1251,7 @@ export default function MaintenancePage() {
             programDrawerMode === 'view' && selectedProgram ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '18px', fontWeight: 800, color: '#e8f4fd' }}>{selectedProgram.name}</span>
+                  <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>{selectedProgram.name}</span>
                   <span style={{
                     padding: '3px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 600,
                     background: `${programStatusColors[selectedProgram.status]}18`,
@@ -1271,16 +1271,16 @@ export default function MaintenancePage() {
                     ['Notas', selectedProgram.notes || '\u2014'],
                   ] as [string, string][]).map(([label, value]) => (
                     <div key={label} style={{ padding: '10px 0', borderBottom: `1px solid ${goldBorder}` }}>
-                      <div style={{ fontSize: '11px', color: '#7fa8c9', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</div>
-                      <div style={{ fontSize: '13px', color: '#e8f4fd', lineHeight: '1.5' }}>{value}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</div>
+                      <div style={{ fontSize: '13px', color: 'var(--text-primary)', lineHeight: '1.5' }}>{value}</div>
                     </div>
                   ))}
                 </div>
 
                 {selectedProgram.tasks && (
                   <div style={{ ...cardStyle, padding: '16px 20px' }}>
-                    <div style={{ fontSize: '11px', color: '#7fa8c9', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Checklist de Tareas</div>
-                    <div style={{ fontSize: '13px', color: '#e8f4fd', lineHeight: '1.7', whiteSpace: 'pre-wrap' }}>{selectedProgram.tasks}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Checklist de Tareas</div>
+                    <div style={{ fontSize: '13px', color: 'var(--text-primary)', lineHeight: '1.7', whiteSpace: 'pre-wrap' }}>{selectedProgram.tasks}</div>
                   </div>
                 )}
 
@@ -1404,11 +1404,11 @@ export default function MaintenancePage() {
           </div>
 
           {equipmentLoading ? (
-            <div style={{ color: '#7fa8c9', padding: '40px', textAlign: 'center' }}>Cargando equipos...</div>
+            <div style={{ color: 'var(--text-muted)', padding: '40px', textAlign: 'center' }}>Cargando equipos...</div>
           ) : filteredEquipment.length === 0 ? (
             <div style={{ ...cardStyle, padding: '48px', textAlign: 'center' }}>
               <div style={{ fontSize: '40px', marginBottom: '12px' }}>&#9881;</div>
-              <div style={{ color: '#7fa8c9', fontSize: '14px' }}>No se encontraron equipos registrados</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '14px' }}>No se encontraron equipos registrados</div>
             </div>
           ) : (
             (() => {
@@ -1422,14 +1422,14 @@ export default function MaintenancePage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                   {Object.entries(grouped).map(([vName, eqs]) => (
                     <div key={vName}>
-                      <div style={{ fontSize: '15px', fontWeight: 700, color: '#D4950A', marginBottom: '12px', paddingLeft: '4px' }}>
+                      <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--accent)', marginBottom: '12px', paddingLeft: '4px' }}>
                         {vName}
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
                         {eqs.map(eq => {
                           const reqService = needsService(eq)
                           const displayStatus = reqService && eq.status === 'OPERATIVO' ? 'REQUIERE_SERVICIO' : eq.status
-                          const stColor = equipmentStatusColors[displayStatus] || '#7fa8c9'
+                          const stColor = equipmentStatusColors[displayStatus] || 'var(--text-secondary)'
 
                           return (
                             <div
@@ -1447,8 +1447,8 @@ export default function MaintenancePage() {
                             >
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                                 <div>
-                                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd', marginBottom: '4px' }}>{eq.name}</div>
-                                  <div style={{ fontSize: '12px', color: '#7fa8c9' }}>
+                                  <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>{eq.name}</div>
+                                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                                     {equipmentTypeLabels[eq.type] || eq.type}
                                     {eq.brand && ` \u2022 ${eq.brand}`}
                                     {eq.model && ` ${eq.model}`}
@@ -1464,27 +1464,27 @@ export default function MaintenancePage() {
                                 </span>
                               </div>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                                <div style={{ fontSize: '20px', fontWeight: 800, color: '#e8f4fd' }}>
+                                <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)' }}>
                                   {eq.currentHours.toLocaleString()}h
                                 </div>
                                 {reqService && (
-                                  <div style={{ fontSize: '10px', color: '#e67e22', fontWeight: 700, background: 'rgba(230,126,34,0.12)', padding: '3px 8px', borderRadius: '6px' }}>
+                                  <div style={{ fontSize: '10px', color: 'var(--warning)', fontWeight: 700, background: 'rgba(230,126,34,0.12)', padding: '3px 8px', borderRadius: '6px' }}>
                                     REQUIERE SERVICIO
                                   </div>
                                 )}
                               </div>
                               {eq.serviceInterval && (
                                 <div style={{ marginTop: '6px' }}>
-                                  <div style={{ height: '4px', background: '#060c1a', borderRadius: '2px', overflow: 'hidden' }}>
+                                  <div style={{ height: '4px', background: 'var(--bg-input)', borderRadius: '2px', overflow: 'hidden' }}>
                                     <div style={{
                                       height: '100%',
                                       borderRadius: '2px',
                                       width: `${Math.min(100, ((eq.currentHours - (eq.lastServiceAt || 0)) / eq.serviceInterval) * 100)}%`,
-                                      background: reqService ? '#e74c3c' : ((eq.currentHours - (eq.lastServiceAt || 0)) / eq.serviceInterval > 0.8 ? '#e67e22' : '#27ae60'),
+                                      background: reqService ? 'var(--danger)' : ((eq.currentHours - (eq.lastServiceAt || 0)) / eq.serviceInterval > 0.8 ? 'var(--warning)' : 'var(--success)'),
                                       transition: 'width 0.3s',
                                     }} />
                                   </div>
-                                  <div style={{ fontSize: '10px', color: '#7fa8c9', marginTop: '3px' }}>
+                                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>
                                     {eq.currentHours - (eq.lastServiceAt || 0)}h / {eq.serviceInterval}h hasta servicio
                                   </div>
                                 </div>
@@ -1508,7 +1508,7 @@ export default function MaintenancePage() {
             equipDrawerMode === 'view' && selectedEquipment ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '18px', fontWeight: 800, color: '#e8f4fd' }}>{selectedEquipment.name}</span>
+                  <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>{selectedEquipment.name}</span>
                   <span style={{
                     padding: '3px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 600,
                     background: `${equipmentStatusColors[selectedEquipment.status]}18`,
@@ -1528,16 +1528,16 @@ export default function MaintenancePage() {
                     ['Notas', selectedEquipment.notes || '\u2014'],
                   ] as [string, string][]).map(([label, value]) => (
                     <div key={label} style={{ padding: '10px 0', borderBottom: `1px solid ${goldBorder}` }}>
-                      <div style={{ fontSize: '11px', color: '#7fa8c9', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</div>
-                      <div style={{ fontSize: '13px', color: '#e8f4fd', lineHeight: '1.5' }}>{value}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</div>
+                      <div style={{ fontSize: '13px', color: 'var(--text-primary)', lineHeight: '1.5' }}>{value}</div>
                     </div>
                   ))}
                 </div>
 
                 {needsService(selectedEquipment) && (
                   <div style={{ background: 'rgba(230,126,34,0.08)', border: '1px solid rgba(230,126,34,0.3)', borderRadius: '10px', padding: '14px 18px' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#e67e22', marginBottom: '4px' }}>Servicio Requerido</div>
-                    <div style={{ fontSize: '12px', color: '#7fa8c9' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--warning)', marginBottom: '4px' }}>Servicio Requerido</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                       Este equipo ha superado el intervalo de servicio. Horas desde ultimo servicio: {selectedEquipment.currentHours - (selectedEquipment.lastServiceAt || 0)}h
                     </div>
                   </div>
@@ -1545,20 +1545,20 @@ export default function MaintenancePage() {
 
                 {/* Hour logs */}
                 <div>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd', marginBottom: '10px' }}>Historial de Lecturas</div>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '10px' }}>Historial de Lecturas</div>
                   {hourLogs.length === 0 ? (
-                    <div style={{ ...cardStyle, padding: '20px', textAlign: 'center', color: '#7fa8c9', fontSize: '13px' }}>
+                    <div style={{ ...cardStyle, padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
                       Sin lecturas registradas
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '200px', overflowY: 'auto' }}>
                       {hourLogs.map((log, idx) => (
-                        <div key={log.id || idx} style={{ background: '#060c1a', border: `1px solid ${goldBorder}`, borderRadius: '8px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div key={log.id || idx} style={{ background: 'var(--bg-input)', border: `1px solid ${goldBorder}`, borderRadius: '8px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <div>
-                            <div style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd' }}>{log.hours.toLocaleString()}h</div>
-                            <div style={{ fontSize: '11px', color: '#7fa8c9' }}>{formatDate(log.readingDate)}</div>
+                            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{log.hours.toLocaleString()}h</div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{formatDate(log.readingDate)}</div>
                           </div>
-                          {log.notes && <div style={{ fontSize: '11px', color: '#7fa8c9', maxWidth: '200px', textAlign: 'right' }}>{log.notes}</div>}
+                          {log.notes && <div style={{ fontSize: '11px', color: 'var(--text-muted)', maxWidth: '200px', textAlign: 'right' }}>{log.notes}</div>}
                         </div>
                       ))}
                     </div>
@@ -1575,9 +1575,9 @@ export default function MaintenancePage() {
               /* ── Add hours form ── */
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div style={{ ...cardStyle, padding: '16px 20px' }}>
-                  <div style={{ fontSize: '13px', color: '#7fa8c9', marginBottom: '4px' }}>Equipo</div>
-                  <div style={{ fontSize: '16px', fontWeight: 700, color: '#e8f4fd' }}>{selectedEquipment.name}</div>
-                  <div style={{ fontSize: '12px', color: '#7fa8c9', marginTop: '4px' }}>Horas actuales: {selectedEquipment.currentHours.toLocaleString()}h</div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '4px' }}>Equipo</div>
+                  <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>{selectedEquipment.name}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>Horas actuales: {selectedEquipment.currentHours.toLocaleString()}h</div>
                 </div>
 
                 <div>

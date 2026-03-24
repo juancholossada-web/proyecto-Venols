@@ -50,24 +50,24 @@ async function api(path: string, opts?: RequestInit) {
 }
 
 /* ─── Styles ─── */
-const card: React.CSSProperties = { background: '#0a1628', border: '1px solid rgba(212,149,10,0.15)', borderRadius: '14px' }
-const goldBorder = 'rgba(212,149,10,0.15)'
+const card: React.CSSProperties = { background: 'var(--bg-surface)', border: '1px solid var(--border-accent)', borderRadius: '12px' }
+const goldBorder = 'var(--border-accent)'
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '8px 10px', background: '#060c1a',
-  border: `1px solid ${goldBorder}`, borderRadius: '8px',
-  color: '#e8f4fd', fontSize: '13px', outline: 'none', boxSizing: 'border-box',
+  width: '100%', padding: '8px 10px', background: 'var(--bg-input)',
+  border: '1px solid var(--border-accent)', borderRadius: '8px',
+  color: 'var(--text-primary)', fontSize: '13px', outline: 'none', boxSizing: 'border-box',
 }
 const selectStyle: React.CSSProperties = { ...inputStyle, appearance: 'none' as const }
 const textareaStyle: React.CSSProperties = { ...inputStyle, resize: 'vertical' as const, minHeight: '48px' }
 const btnPrimary: React.CSSProperties = {
-  padding: '12px 28px', background: 'linear-gradient(135deg, #D4950A, #b8820a)',
-  border: 'none', borderRadius: '8px', color: '#060c1a', fontWeight: 700, fontSize: '14px', cursor: 'pointer',
+  padding: '12px 28px', background: 'var(--accent)',
+  border: 'none', borderRadius: '8px', color: '#080E1A', fontWeight: 700, fontSize: '14px', cursor: 'pointer',
 }
 const btnSecondary: React.CSSProperties = {
   padding: '10px 20px', background: 'transparent', border: `1px solid ${goldBorder}`,
-  borderRadius: '8px', color: '#7fa8c9', fontSize: '13px', cursor: 'pointer',
+  borderRadius: '8px', color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer',
 }
-const labelStyle: React.CSSProperties = { fontSize: '11px', color: '#7fa8c9', marginBottom: '3px', fontWeight: 600 }
+const labelStyle: React.CSSProperties = { fontSize: '11px', color: 'var(--text-muted)', marginBottom: '3px', fontWeight: 600 }
 const fieldWrap: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '2px' }
 
 /* ─── Helpers ─── */
@@ -112,9 +112,9 @@ function generateWhatsAppReport(reports: VesselReport[], dateStr: string): strin
   const monthName = months[Number(month) - 1]
   const formattedDate = `${dayName} ${day} ${monthName} ${year}`
 
-  const statusEmoji: Record<string, string> = {
-    OPERATIVO: '🟢', EN_TRANSITO: '🟡', ATRACADO: '🔵',
-    MANTENIMIENTO: '🔴', INACTIVO: '⚫',
+  const statusPrefix: Record<string, string> = {
+    OPERATIVO: '[OP]', EN_TRANSITO: '[TR]', ATRACADO: '[AT]',
+    MANTENIMIENTO: '[MN]', INACTIVO: '[IN]',
   }
   const statusLbl: Record<string, string> = {
     OPERATIVO: 'Operativo', EN_TRANSITO: 'En tránsito', ATRACADO: 'Atracado',
@@ -123,9 +123,9 @@ function generateWhatsAppReport(reports: VesselReport[], dateStr: string): strin
 
   function vesselBlock(r: VesselReport): string {
     const lines: string[] = []
-    const emoji = statusEmoji[r.status] || '⚪'
+    const prefix = statusPrefix[r.status] || '[--]'
     const stLbl = statusLbl[r.status] || r.status
-    lines.push(`${emoji} *${r.vesselName}*${r.vesselType ? ` — _${r.vesselType}_` : ''}`)
+    lines.push(`${prefix} *${r.vesselName}*${r.vesselType ? ` — _${r.vesselType}_` : ''}`)
     lines.push(`┌ Estado: ${stLbl}`)
     if (r.client)        lines.push(`│ Cliente: ${r.client}`)
     if (r.location)      lines.push(`│ Ubicación: ${r.location}`)
@@ -137,9 +137,9 @@ function generateWhatsAppReport(reports: VesselReport[], dateStr: string): strin
       const pct = r.fuelPercent ? Number(r.fuelPercent) : null
       const lts = r.fuelLiters ? `${Number(r.fuelLiters).toLocaleString('es-VE')} L` : ''
       const bar = pct !== null ? `\n│          ${fuelBar(pct)}` : ''
-      lines.push(`│ ⛽ Combustible: ${lts}${bar}`)
+      lines.push(`│ Combustible: ${lts}${bar}`)
     }
-    if (r.notes)         lines.push(`│ 📝 ${r.notes}`)
+    if (r.notes)         lines.push(`│ Notas: ${r.notes}`)
     lines.push('└─────────────────')
     return lines.join('\n')
   }
@@ -149,20 +149,20 @@ function generateWhatsAppReport(reports: VesselReport[], dateStr: string): strin
   const min  = String(now.getMinutes()).padStart(2,'0')
 
   let txt = ''
-  txt += `📋 *REPORTE DIARIO DE FLOTA*\n`
-  txt += `🗓️ ${formattedDate}   🕐 ${hour}:${min}\n`
-  txt += `🏢 VENOLS C.A.\n`
+  txt += `*REPORTE DIARIO DE FLOTA*\n`
+  txt += `${formattedDate}   ${hour}:${min}\n`
+  txt += `VENOLS C.A.\n`
   txt += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`
 
   if (pesada.length) {
-    txt += `🚢 *FLOTA PESADA* (${pesada.length} unidades)\n`
+    txt += `*FLOTA PESADA* (${pesada.length} unidades)\n`
     txt += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
     txt += pesada.map(vesselBlock).join('\n')
     txt += '\n'
   }
 
   if (liviana.length) {
-    txt += `\n🚤 *FLOTA LIVIANA* (${liviana.length} unidades)\n`
+    txt += `\n*FLOTA LIVIANA* (${liviana.length} unidades)\n`
     txt += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
     txt += liviana.map(vesselBlock).join('\n')
     txt += '\n'
@@ -172,8 +172,8 @@ function generateWhatsAppReport(reports: VesselReport[], dateStr: string): strin
   const totalMaint = reports.filter(r => r.status === 'MANTENIMIENTO').length
   const totalDoc = reports.filter(r => r.status === 'ATRACADO').length
   txt += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
-  txt += `📊 *RESUMEN:* ${reports.length} unidades reportadas\n`
-  txt += `🟢 Operativas: ${totalOp}   🔴 Mantenimiento: ${totalMaint}   🔵 Atracadas: ${totalDoc}\n`
+  txt += `*RESUMEN:* ${reports.length} unidades reportadas\n`
+  txt += `Operativas: ${totalOp}   Mantenimiento: ${totalMaint}   Atracadas: ${totalDoc}\n`
   txt += `━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
   txt += `_Generado por VENOLS ERP_`
   return txt
@@ -399,14 +399,14 @@ export default function DailyReportsPage() {
 
   const filledCount = Object.values(reports).filter(r => r.activity || r.client || r.fuelLiters).length
 
-  if (loading) return <div style={{ color: '#7fa8c9', padding: '40px', textAlign: 'center' }}>Cargando...</div>
+  if (loading) return <div style={{ color: 'var(--text-muted)', padding: '40px', textAlign: 'center' }}>Cargando...</div>
 
   return (
     <div>
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
-        <div style={{ fontSize: '22px', fontWeight: 800, color: '#e8f4fd' }}>Reportes Diarios de Flota</div>
-        <div style={{ fontSize: '13px', color: '#7fa8c9', marginTop: '4px' }}>
+        <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>Reportes Diarios de Flota</div>
+        <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
           {view === 'crear'
             ? `${vessels.length} embarcaciones — ${filledCount} con datos`
             : `${allReports.length} reportes en historial`}
@@ -419,7 +419,7 @@ export default function DailyReportsPage() {
           onClick={() => setView('crear')}
           style={{
             ...btnSecondary,
-            ...(view === 'crear' ? { background: 'linear-gradient(135deg, #D4950A, #b8820a)', color: '#060c1a', fontWeight: 700, border: 'none' } : {}),
+            ...(view === 'crear' ? { background: 'var(--accent)', color: '#080E1A', fontWeight: 700, border: 'none' } : {}),
           }}
         >
           Crear Reporte
@@ -428,7 +428,7 @@ export default function DailyReportsPage() {
           onClick={() => setView('historial')}
           style={{
             ...btnSecondary,
-            ...(view === 'historial' ? { background: 'linear-gradient(135deg, #D4950A, #b8820a)', color: '#060c1a', fontWeight: 700, border: 'none' } : {}),
+            ...(view === 'historial' ? { background: 'var(--accent)', color: '#080E1A', fontWeight: 700, border: 'none' } : {}),
           }}
         >
           Historial
@@ -440,17 +440,17 @@ export default function DailyReportsPage() {
         <div>
           {/* Date display */}
           <div style={{ ...card, padding: '14px 20px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '18px' }}>📅</span>
-            <span style={{ color: '#e8f4fd', fontWeight: 700, fontSize: '15px' }}>
+            <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.3px', flexShrink: 0 }}>HOY</div>
+            <span style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '15px' }}>
               Fecha: {formatDateES(todayStr())}
             </span>
           </div>
 
           {/* Flota Pesada */}
           <div style={{ marginBottom: '28px' }}>
-            <div style={{ fontSize: '16px', fontWeight: 700, color: '#e8f4fd', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>🚢</span> Flota Pesada
-              <span style={{ fontSize: '12px', color: '#7fa8c9', fontWeight: 400 }}>({pesada.length} embarcaciones)</span>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '24px', height: '24px', borderRadius: '5px', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 700, color: 'var(--accent)' }}>FP</div> Flota Pesada
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 400 }}>({pesada.length} embarcaciones)</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {pesada.map(v => (
@@ -461,9 +461,9 @@ export default function DailyReportsPage() {
 
           {/* Flota Liviana */}
           <div style={{ marginBottom: '28px' }}>
-            <div style={{ fontSize: '16px', fontWeight: 700, color: '#e8f4fd', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>🚤</span> Flota Liviana
-              <span style={{ fontSize: '12px', color: '#7fa8c9', fontWeight: 400 }}>({liviana.length} embarcaciones)</span>
+            <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '24px', height: '24px', borderRadius: '5px', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 700, color: 'var(--accent)' }}>FL</div> Flota Liviana
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 400 }}>({liviana.length} embarcaciones)</span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {liviana.map(v => (
@@ -477,7 +477,7 @@ export default function DailyReportsPage() {
             <div style={{
               padding: '12px 18px', borderRadius: '10px', marginBottom: '16px', fontSize: '13px', fontWeight: 600,
               background: message.type === 'ok' ? 'rgba(39,174,96,0.12)' : 'rgba(231,76,60,0.12)',
-              color: message.type === 'ok' ? '#27ae60' : '#e74c3c',
+              color: message.type === 'ok' ? 'var(--success)' : 'var(--danger)',
               border: `1px solid ${message.type === 'ok' ? 'rgba(39,174,96,0.3)' : 'rgba(231,76,60,0.3)'}`,
             }}>
               {message.text}
@@ -487,7 +487,7 @@ export default function DailyReportsPage() {
           {/* Action buttons */}
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
             <button onClick={handleSave} disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.6 : 1 }}>
-              {saving ? 'Guardando...' : '💾 Guardar Reportes'}
+              {saving ? 'Guardando...' : 'Guardar Reportes'}
             </button>
             <button
               onClick={handleCopyTxt}
@@ -495,15 +495,15 @@ export default function DailyReportsPage() {
                 ...btnSecondary,
                 ...(copied ? {
                   background: 'rgba(39,174,96,0.15)',
-                  color: '#27ae60',
+                  color: 'var(--success)',
                   border: '1px solid rgba(39,174,96,0.4)',
                 } : {}),
               }}
             >
-              {copied ? '✅ ¡Copiado!' : '📋 Copiar para WhatsApp'}
+              {copied ? 'Copiado!' : 'Copiar para WhatsApp'}
             </button>
             <button onClick={handleDownloadTxt} style={btnSecondary}>
-              ⬇️ Descargar .txt
+              Descargar .txt
             </button>
           </div>
         </div>
@@ -530,14 +530,14 @@ export default function DailyReportsPage() {
           <div style={{ display: 'flex', gap: '20px', minHeight: '400px' }}>
             {/* Sidebar tree */}
             <div style={{ ...card, padding: '14px', minWidth: '220px', maxWidth: '260px', overflowY: 'auto', maxHeight: '70vh' }}>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#D4950A', marginBottom: '12px' }}>Fechas</div>
-              {histLoading && <div style={{ color: '#7fa8c9', fontSize: '12px' }}>Cargando...</div>}
-              {!histLoading && years.length === 0 && <div style={{ color: '#7fa8c9', fontSize: '12px' }}>Sin reportes</div>}
+              <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--accent)', marginBottom: '12px' }}>Fechas</div>
+              {histLoading && <div style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Cargando...</div>}
+              {!histLoading && years.length === 0 && <div style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Sin reportes</div>}
               {years.map(year => (
                 <div key={year} style={{ marginBottom: '6px' }}>
                   <div
                     onClick={() => setExpandedYears(p => ({ ...p, [year]: !p[year] }))}
-                    style={{ cursor: 'pointer', color: '#e8f4fd', fontWeight: 700, fontSize: '14px', padding: '4px 0', userSelect: 'none' }}
+                    style={{ cursor: 'pointer', color: 'var(--text-primary)', fontWeight: 700, fontSize: '14px', padding: '4px 0', userSelect: 'none' }}
                   >
                     {expandedYears[year] ? '▾' : '▸'} {year}
                   </div>
@@ -547,7 +547,7 @@ export default function DailyReportsPage() {
                       <div key={ym} style={{ marginLeft: '14px', marginBottom: '4px' }}>
                         <div
                           onClick={() => setExpandedMonths(p => ({ ...p, [ym]: !p[ym] }))}
-                          style={{ cursor: 'pointer', color: '#D4950A', fontWeight: 600, fontSize: '13px', padding: '3px 0', userSelect: 'none' }}
+                          style={{ cursor: 'pointer', color: 'var(--accent)', fontWeight: 600, fontSize: '13px', padding: '3px 0', userSelect: 'none' }}
                         >
                           {expandedMonths[ym] ? '▾' : '▸'} {monthNameES(Number(month))}
                         </div>
@@ -557,8 +557,8 @@ export default function DailyReportsPage() {
                             onClick={() => setSelectedDate(day)}
                             style={{
                               marginLeft: '14px', cursor: 'pointer', padding: '4px 8px', borderRadius: '6px',
-                              fontSize: '12px', color: selectedDate === day ? '#060c1a' : '#7fa8c9',
-                              background: selectedDate === day ? 'linear-gradient(135deg, #D4950A, #b8820a)' : 'transparent',
+                              fontSize: '12px', color: selectedDate === day ? '#080E1A' : 'var(--text-secondary)',
+                              background: selectedDate === day ? 'var(--accent)' : 'transparent',
                               fontWeight: selectedDate === day ? 700 : 400,
                               marginBottom: '2px',
                             }}
@@ -576,14 +576,14 @@ export default function DailyReportsPage() {
             {/* Main content area */}
             <div style={{ flex: 1 }}>
               {!selectedDate && (
-                <div style={{ ...card, padding: '40px', textAlign: 'center', color: '#7fa8c9', fontSize: '14px' }}>
+                <div style={{ ...card, padding: '40px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
                   Selecciona una fecha del panel izquierdo para ver los reportes.
                 </div>
               )}
               {selectedDate && (
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
-                    <div style={{ fontSize: '16px', fontWeight: 700, color: '#e8f4fd' }}>
+                    <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>
                       Reportes del {formatDateES(selectedDate)}
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
@@ -598,10 +598,10 @@ export default function DailyReportsPage() {
                         }}
                         style={{
                           ...btnSecondary,
-                          ...(copied ? { background: 'rgba(39,174,96,0.15)', color: '#27ae60', border: '1px solid rgba(39,174,96,0.4)' } : {}),
+                          ...(copied ? { background: 'rgba(39,174,96,0.15)', color: 'var(--success)', border: '1px solid rgba(39,174,96,0.4)' } : {}),
                         }}
                       >
-                        {copied ? '✅ ¡Copiado!' : '📋 Copiar WA'}
+                        {copied ? 'Copiado!' : 'Copiar WA'}
                       </button>
                       <button
                         onClick={() => {
@@ -610,7 +610,7 @@ export default function DailyReportsPage() {
                         }}
                         style={btnSecondary}
                       >
-                        ⬇️ Descargar .txt
+                        Descargar .txt
                       </button>
                     </div>
                   </div>
@@ -618,8 +618,8 @@ export default function DailyReportsPage() {
                   {/* Pesada section */}
                   {selectedPesada.length > 0 && (
                     <div style={{ marginBottom: '20px' }}>
-                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span>🚢</span> Flota Pesada
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ width: '20px', height: '20px', borderRadius: '4px', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '7px', fontWeight: 700, color: 'var(--accent)' }}>FP</div> Flota Pesada
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         {selectedPesada.map(r => <HistoryReportCard key={r.id} report={r} />)}
@@ -630,8 +630,8 @@ export default function DailyReportsPage() {
                   {/* Liviana section */}
                   {selectedLiviana.length > 0 && (
                     <div style={{ marginBottom: '20px' }}>
-                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span>🚤</span> Flota Liviana
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ width: '20px', height: '20px', borderRadius: '4px', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '7px', fontWeight: 700, color: 'var(--accent)' }}>FL</div> Flota Liviana
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         {selectedLiviana.map(r => <HistoryReportCard key={r.id} report={r} />)}
@@ -640,7 +640,7 @@ export default function DailyReportsPage() {
                   )}
 
                   {selectedReports.length === 0 && (
-                    <div style={{ ...card, padding: '20px', textAlign: 'center', color: '#7fa8c9', fontSize: '13px' }}>
+                    <div style={{ ...card, padding: '20px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
                       No hay reportes para esta fecha.
                     </div>
                   )}
@@ -673,7 +673,7 @@ function VesselReportCard({
     <div style={{
       ...card,
       padding: '16px 20px',
-      borderLeft: hasData ? '3px solid #D4950A' : '3px solid transparent',
+      borderLeft: hasData ? '3px solid var(--accent)' : '3px solid transparent',
     }}>
       {/* Header row */}
       <div
@@ -681,18 +681,18 @@ function VesselReportCard({
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '16px' }}>{vessel.fleetType === 'PESADA' ? '🚢' : '🚤'}</span>
-          <span style={{ color: '#e8f4fd', fontWeight: 700, fontSize: '15px' }}>{vessel.name}</span>
+          <div style={{ width: '24px', height: '24px', borderRadius: '5px', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 700, color: 'var(--accent)', flexShrink: 0 }}>{vessel.fleetType === 'PESADA' ? 'FP' : 'FL'}</div>
+          <span style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '15px' }}>{vessel.name}</span>
           {vessel.vesselType && (
-            <span style={{ color: '#7fa8c9', fontSize: '12px' }}>({vessel.vesselType})</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>({vessel.vesselType})</span>
           )}
           {hasData && (
-            <span style={{ fontSize: '10px', color: '#27ae60', background: 'rgba(39,174,96,0.12)', padding: '2px 8px', borderRadius: '10px', fontWeight: 600 }}>
+            <span style={{ fontSize: '10px', color: 'var(--success)', background: 'rgba(39,174,96,0.12)', padding: '2px 8px', borderRadius: '10px', fontWeight: 600 }}>
               Con datos
             </span>
           )}
         </div>
-        <span style={{ color: '#7fa8c9', fontSize: '18px', transition: 'transform 0.2s', transform: expanded ? 'rotate(180deg)' : 'rotate(0)' }}>▾</span>
+        <span style={{ color: 'var(--text-muted)', fontSize: '18px', transition: 'transform 0.2s', transform: expanded ? 'rotate(180deg)' : 'rotate(0)' }}>▾</span>
       </div>
 
       {/* Expanded form */}
@@ -782,18 +782,18 @@ function VesselReportCard({
 /* ═════════════════════ HISTORY REPORT CARD ═════════════════════ */
 function HistoryReportCard({ report }: { report: DailyReport }) {
   const statusColor: Record<string, string> = {
-    OPERATIVO: '#27ae60', EN_TRANSITO: '#D4950A', ATRACADO: '#7fa8c9',
-    MANTENIMIENTO: '#e74c3c', INACTIVO: '#555e6e',
+    OPERATIVO: 'var(--success)', EN_TRANSITO: 'var(--accent)', ATRACADO: 'var(--text-secondary)',
+    MANTENIMIENTO: 'var(--danger)', INACTIVO: 'var(--text-muted)',
   }
-  const color = statusColor[report.vesselStatus] || '#7fa8c9'
+  const color = statusColor[report.vesselStatus] || 'var(--text-secondary)'
 
   return (
     <div style={{ ...card, padding: '14px 18px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ color: '#e8f4fd', fontWeight: 700, fontSize: '14px' }}>{report.vessel?.name || 'Embarcación'}</span>
+          <span style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '14px' }}>{report.vessel?.name || 'Embarcación'}</span>
           {report.vessel?.vesselType && (
-            <span style={{ color: '#7fa8c9', fontSize: '11px' }}>({report.vessel.vesselType})</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>({report.vessel.vesselType})</span>
           )}
         </div>
         <span style={{
@@ -806,30 +806,30 @@ function HistoryReportCard({ report }: { report: DailyReport }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '8px', fontSize: '12px' }}>
         {report.client && (
-          <div><span style={{ color: '#7fa8c9' }}>Cliente:</span> <span style={{ color: '#e8f4fd' }}>{report.client}</span></div>
+          <div><span style={{ color: 'var(--text-muted)' }}>Cliente:</span> <span style={{ color: 'var(--text-primary)' }}>{report.client}</span></div>
         )}
         {report.activity && (
-          <div style={{ gridColumn: '1 / -1' }}><span style={{ color: '#7fa8c9' }}>Actividad:</span> <span style={{ color: '#e8f4fd' }}>{report.activity}</span></div>
+          <div style={{ gridColumn: '1 / -1' }}><span style={{ color: 'var(--text-muted)' }}>Actividad:</span> <span style={{ color: 'var(--text-primary)' }}>{report.activity}</span></div>
         )}
-        <div><span style={{ color: '#7fa8c9' }}>Capitán:</span> <span style={{ color: '#e8f4fd' }}>{report.captain}</span></div>
-        <div><span style={{ color: '#7fa8c9' }}>Marino:</span> <span style={{ color: '#e8f4fd' }}>{report.marineOnDuty}</span></div>
+        <div><span style={{ color: 'var(--text-muted)' }}>Capitán:</span> <span style={{ color: 'var(--text-primary)' }}>{report.captain}</span></div>
+        <div><span style={{ color: 'var(--text-muted)' }}>Marino:</span> <span style={{ color: 'var(--text-primary)' }}>{report.marineOnDuty}</span></div>
         {report.additionalCrew && (
-          <div><span style={{ color: '#7fa8c9' }}>Personal:</span> <span style={{ color: '#e8f4fd' }}>{report.additionalCrew}</span></div>
+          <div><span style={{ color: 'var(--text-muted)' }}>Personal:</span> <span style={{ color: 'var(--text-primary)' }}>{report.additionalCrew}</span></div>
         )}
         {(report.fuelLiters != null || report.fuelPercent != null) && (
           <div>
-            <span style={{ color: '#7fa8c9' }}>Combustible:</span>{' '}
-            <span style={{ color: '#e8f4fd' }}>
+            <span style={{ color: 'var(--text-muted)' }}>Combustible:</span>{' '}
+            <span style={{ color: 'var(--text-primary)' }}>
               {report.fuelLiters != null ? `${numberWithDots(report.fuelLiters)} Lts` : ''}
               {report.fuelPercent != null ? ` (${report.fuelPercent}%)` : ''}
             </span>
           </div>
         )}
         {report.location && (
-          <div><span style={{ color: '#7fa8c9' }}>Ubicación:</span> <span style={{ color: '#e8f4fd' }}>{report.location}</span></div>
+          <div><span style={{ color: 'var(--text-muted)' }}>Ubicación:</span> <span style={{ color: 'var(--text-primary)' }}>{report.location}</span></div>
         )}
         {report.notes && (
-          <div style={{ gridColumn: '1 / -1' }}><span style={{ color: '#7fa8c9' }}>Notas:</span> <span style={{ color: '#e8f4fd' }}>{report.notes}</span></div>
+          <div style={{ gridColumn: '1 / -1' }}><span style={{ color: 'var(--text-muted)' }}>Notas:</span> <span style={{ color: 'var(--text-primary)' }}>{report.notes}</span></div>
         )}
       </div>
     </div>

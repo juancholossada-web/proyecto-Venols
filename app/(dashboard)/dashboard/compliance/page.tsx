@@ -47,14 +47,14 @@ const DOC_TYPE_LABELS: Record<string, string> = {
 }
 
 const DOC_TYPE_COLORS: Record<string, { color: string; bg: string }> = {
-  MARPOL:  { color: '#3498db', bg: 'rgba(52,152,219,0.12)' },
+  MARPOL:  { color: 'var(--info)', bg: 'rgba(52,152,219,0.12)' },
   ISM_SMC: { color: '#9b59b6', bg: 'rgba(155,89,182,0.12)' },
-  ISPS:    { color: '#e67e22', bg: 'rgba(230,126,34,0.12)' },
-  CLASS:   { color: '#1abc9c', bg: 'rgba(26,188,156,0.12)' },
-  PANDI:   { color: '#2ecc71', bg: 'rgba(46,204,113,0.12)' },
-  IOPP:    { color: '#e74c3c', bg: 'rgba(231,76,60,0.12)' },
-  SOPEP:   { color: '#f39c12', bg: 'rgba(243,156,18,0.12)' },
-  COF:     { color: '#D4950A', bg: 'rgba(212,149,10,0.12)' },
+  ISPS:    { color: 'var(--warning)', bg: 'rgba(230,126,34,0.12)' },
+  CLASS:   { color: 'var(--success)', bg: 'rgba(26,188,156,0.12)' },
+  PANDI:   { color: 'var(--success)', bg: 'rgba(46,204,113,0.12)' },
+  IOPP:    { color: 'var(--danger)', bg: 'rgba(231,76,60,0.12)' },
+  SOPEP:   { color: 'var(--warning)', bg: 'rgba(243,156,18,0.12)' },
+  COF:     { color: 'var(--accent)', bg: 'rgba(212,149,10,0.12)' },
 }
 
 const emptyForm: DocForm = {
@@ -74,23 +74,23 @@ async function api(path: string, opts?: RequestInit) {
 
 /* ─── Styles ─── */
 const cardStyle: React.CSSProperties = {
-  background: '#0a1628', border: '1px solid rgba(212,149,10,0.15)', borderRadius: '14px', padding: '20px',
+  background: 'var(--bg-surface)', border: '1px solid var(--border-accent)', borderRadius: '12px', padding: '20px',
 }
-const goldBorder = 'rgba(212,149,10,0.15)'
+const goldBorder = 'var(--border-accent)'
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '9px 12px', background: '#060c1a', border: `1px solid ${goldBorder}`,
-  borderRadius: '8px', color: '#e8f4fd', fontSize: '13px', outline: 'none', boxSizing: 'border-box',
+  width: '100%', padding: '9px 12px', background: 'var(--bg-input)', border: '1px solid var(--border-accent)',
+  borderRadius: '8px', color: 'var(--text-primary)', fontSize: '13px', outline: 'none', boxSizing: 'border-box',
 }
 const selectStyle: React.CSSProperties = { ...inputStyle, appearance: 'none' as const, cursor: 'pointer' }
 const btnPrimary: React.CSSProperties = {
-  padding: '10px 20px', background: 'linear-gradient(135deg, #D4950A, #b8820a)', border: 'none',
-  borderRadius: '8px', color: '#060c1a', fontWeight: 700, fontSize: '13px', cursor: 'pointer',
+  padding: '10px 20px', background: 'var(--accent)', border: 'none',
+  borderRadius: '8px', color: '#080E1A', fontWeight: 700, fontSize: '13px', cursor: 'pointer',
 }
 const btnSecondary: React.CSSProperties = {
-  padding: '8px 14px', background: 'transparent', border: `1px solid ${goldBorder}`,
-  borderRadius: '8px', color: '#7fa8c9', fontSize: '12px', cursor: 'pointer',
+  padding: '8px 14px', background: 'transparent', border: '1px solid var(--border-accent)',
+  borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '12px', cursor: 'pointer',
 }
-const labelStyle: React.CSSProperties = { display: 'block', fontSize: '12px', color: '#7fa8c9', marginBottom: '5px', fontWeight: 600 }
+const labelStyle: React.CSSProperties = { display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '5px', fontWeight: 600 }
 
 /* ─── Helpers ─── */
 function daysUntil(dateStr: string): number {
@@ -102,10 +102,10 @@ function daysUntil(dateStr: string): number {
 }
 
 function expirationColor(days: number): { color: string; bg: string; label: string } {
-  if (days < 0) return { color: '#ff4757', bg: 'rgba(255,71,87,0.15)', label: 'Vencido' }
-  if (days <= 30) return { color: '#ff6b6b', bg: 'rgba(255,107,107,0.12)', label: `${days}d` }
-  if (days <= 90) return { color: '#ffa502', bg: 'rgba(255,165,2,0.12)', label: `${days}d` }
-  return { color: '#2ed573', bg: 'rgba(46,213,115,0.12)', label: `${days}d` }
+  if (days < 0) return { color: 'var(--danger)', bg: 'rgba(255,71,87,0.15)', label: 'Vencido' }
+  if (days <= 30) return { color: 'var(--danger)', bg: 'rgba(255,107,107,0.12)', label: `${days}d` }
+  if (days <= 90) return { color: 'var(--warning)', bg: 'rgba(255,165,2,0.12)', label: `${days}d` }
+  return { color: 'var(--success)', bg: 'rgba(46,213,115,0.12)', label: `${days}d` }
 }
 
 function fmtDate(dateStr: string): string {
@@ -205,7 +205,7 @@ export default function CompliancePage() {
   /* ─── Render ─── */
   if (loading) {
     return (
-      <div style={{ color: '#7fa8c9', padding: '40px', textAlign: 'center', fontSize: '14px' }}>
+      <div style={{ color: 'var(--text-muted)', padding: '40px', textAlign: 'center', fontSize: '14px' }}>
         Cargando documentos de compliance...
       </div>
     )
@@ -216,8 +216,8 @@ export default function CompliancePage() {
       {/* ── Header ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px' }}>
         <div>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: '#e8f4fd' }}>Compliance y Documentacion</div>
-          <div style={{ fontSize: '13px', color: '#7fa8c9', marginTop: '4px' }}>
+          <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>Compliance y Documentacion</div>
+          <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
             Gestion de documentos regulatorios maritimos — MARPOL, ISM, ISPS y mas
           </div>
         </div>
@@ -236,12 +236,12 @@ export default function CompliancePage() {
           <span style={{ fontSize: '22px' }}>{vencidos > 0 ? '\u26A0' : '\u23F0'}</span>
           <div>
             {vencidos > 0 && (
-              <div style={{ color: '#ff4757', fontSize: '13px', fontWeight: 700 }}>
+              <div style={{ color: 'var(--danger)', fontSize: '13px', fontWeight: 700 }}>
                 {vencidos} documento{vencidos !== 1 ? 's' : ''} vencido{vencidos !== 1 ? 's' : ''} — requiere atencion inmediata
               </div>
             )}
             {porVencer > 0 && (
-              <div style={{ color: '#ffa502', fontSize: '13px', fontWeight: 600, marginTop: vencidos > 0 ? '4px' : 0 }}>
+              <div style={{ color: 'var(--warning)', fontSize: '13px', fontWeight: 600, marginTop: vencidos > 0 ? '4px' : 0 }}>
                 {porVencer} documento{porVencer !== 1 ? 's' : ''} por vencer en los proximos 30 dias
               </div>
             )}
@@ -252,23 +252,14 @@ export default function CompliancePage() {
       {/* ── KPI Cards ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
         {[
-          { label: 'Total Documentos', value: total, color: '#D4950A', icon: '\uD83D\uDCC4' },
-          { label: 'Vigentes', value: vigentes, color: '#2ed573', icon: '\u2705' },
-          { label: 'Por Vencer (30d)', value: porVencer, color: '#ffa502', icon: '\u23F3' },
-          { label: 'Vencidos', value: vencidos, color: '#ff4757', icon: '\u274C' },
+          { label: 'Total Documentos', value: total, color: 'var(--accent)' },
+          { label: 'Vigentes', value: vigentes, color: 'var(--success)' },
+          { label: 'Por Vencer (30d)', value: porVencer, color: 'var(--warning)' },
+          { label: 'Vencidos', value: vencidos, color: 'var(--danger)' },
         ].map(kpi => (
-          <div key={kpi.label} style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{
-              width: '44px', height: '44px', borderRadius: '10px',
-              background: `${kpi.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '20px',
-            }}>
-              {kpi.icon}
-            </div>
-            <div>
-              <div style={{ fontSize: '22px', fontWeight: 800, color: kpi.color }}>{kpi.value}</div>
-              <div style={{ fontSize: '11px', color: '#7fa8c9' }}>{kpi.label}</div>
-            </div>
+          <div key={kpi.label} style={{ ...cardStyle, borderTop: `2px solid ${kpi.color}` }}>
+            <div style={{ fontSize: '26px', fontWeight: 700, color: kpi.color, marginBottom: '4px' }}>{kpi.value}</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{kpi.label}</div>
           </div>
         ))}
       </div>
@@ -304,7 +295,7 @@ export default function CompliancePage() {
             Limpiar filtros
           </button>
         )}
-        <div style={{ marginLeft: 'auto', fontSize: '12px', color: '#7fa8c9' }}>
+        <div style={{ marginLeft: 'auto', fontSize: '12px', color: 'var(--text-muted)' }}>
           {filtered.length} documento{filtered.length !== 1 ? 's' : ''}
         </div>
       </div>
@@ -313,7 +304,7 @@ export default function CompliancePage() {
       {Object.keys(grouped).length === 0 ? (
         <div style={{ ...cardStyle, textAlign: 'center', padding: '60px 20px' }}>
           <div style={{ fontSize: '40px', marginBottom: '12px', opacity: 0.5 }}>{'\uD83D\uDCC2'}</div>
-          <div style={{ color: '#7fa8c9', fontSize: '14px' }}>No se encontraron documentos de compliance</div>
+          <div style={{ color: 'var(--text-muted)', fontSize: '14px' }}>No se encontraron documentos de compliance</div>
           <button onClick={openNewForm} style={{ ...btnPrimary, marginTop: '16px' }}>+ Agregar primer documento</button>
         </div>
       ) : (
@@ -323,10 +314,10 @@ export default function CompliancePage() {
             <div style={{
               display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', paddingLeft: '4px',
             }}>
-              <span style={{ fontSize: '16px' }}>{'\uD83D\uDEA2'}</span>
-              <span style={{ fontSize: '15px', fontWeight: 700, color: '#e8f4fd' }}>{group.vesselName}</span>
+              <div style={{ width: '22px', height: '22px', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 700, color: 'var(--accent)', flexShrink: 0 }}>VE</div>
+              <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{group.vesselName}</span>
               <span style={{
-                fontSize: '11px', color: '#7fa8c9', background: 'rgba(127,168,201,0.1)',
+                fontSize: '11px', color: 'var(--text-muted)', background: 'rgba(127,168,201,0.1)',
                 padding: '2px 8px', borderRadius: '10px',
               }}>
                 {group.docs.length} doc{group.docs.length !== 1 ? 's' : ''}
@@ -340,7 +331,7 @@ export default function CompliancePage() {
                   <tr style={{ borderBottom: `1px solid ${goldBorder}` }}>
                     {['Documento', 'Tipo', 'No. Documento', 'Emitido por', 'Emision', 'Vencimiento', 'Estado'].map(h => (
                       <th key={h} style={{
-                        padding: '12px 14px', textAlign: 'left', color: '#7fa8c9', fontSize: '11px',
+                        padding: '12px 14px', textAlign: 'left', color: 'var(--text-muted)', fontSize: '11px',
                         fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px',
                       }}>
                         {h}
@@ -352,7 +343,7 @@ export default function CompliancePage() {
                   {group.docs.map(doc => {
                     const days = daysUntil(doc.expiresAt)
                     const exp = expirationColor(days)
-                    const typeConf = DOC_TYPE_COLORS[doc.type] || { color: '#7fa8c9', bg: 'rgba(127,168,201,0.1)' }
+                    const typeConf = DOC_TYPE_COLORS[doc.type] || { color: 'var(--text-muted)', bg: 'rgba(127,168,201,0.1)' }
                     return (
                       <tr
                         key={doc.id}
@@ -364,7 +355,7 @@ export default function CompliancePage() {
                         onMouseEnter={e => (e.currentTarget.style.background = 'rgba(212,149,10,0.04)')}
                         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                       >
-                        <td style={{ padding: '11px 14px', color: '#e8f4fd', fontWeight: 600 }}>{doc.name}</td>
+                        <td style={{ padding: '11px 14px', color: 'var(--text-primary)', fontWeight: 600 }}>{doc.name}</td>
                         <td style={{ padding: '11px 14px' }}>
                           <span style={{
                             display: 'inline-block', padding: '3px 10px', borderRadius: '6px', fontSize: '11px',
@@ -373,12 +364,12 @@ export default function CompliancePage() {
                             {DOC_TYPE_LABELS[doc.type] || doc.type}
                           </span>
                         </td>
-                        <td style={{ padding: '11px 14px', color: '#7fa8c9', fontFamily: 'monospace', fontSize: '12px' }}>
+                        <td style={{ padding: '11px 14px', color: 'var(--text-muted)', fontFamily: 'monospace', fontSize: '12px' }}>
                           {doc.documentNumber || '—'}
                         </td>
-                        <td style={{ padding: '11px 14px', color: '#7fa8c9' }}>{doc.issuedBy}</td>
-                        <td style={{ padding: '11px 14px', color: '#7fa8c9', fontSize: '12px' }}>{fmtDate(doc.issuedAt)}</td>
-                        <td style={{ padding: '11px 14px', color: '#7fa8c9', fontSize: '12px' }}>{fmtDate(doc.expiresAt)}</td>
+                        <td style={{ padding: '11px 14px', color: 'var(--text-muted)' }}>{doc.issuedBy}</td>
+                        <td style={{ padding: '11px 14px', color: 'var(--text-muted)', fontSize: '12px' }}>{fmtDate(doc.issuedAt)}</td>
+                        <td style={{ padding: '11px 14px', color: 'var(--text-muted)', fontSize: '12px' }}>{fmtDate(doc.expiresAt)}</td>
                         <td style={{ padding: '11px 14px' }}>
                           <span style={{
                             display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 10px',
@@ -415,15 +406,15 @@ export default function CompliancePage() {
             onClick={e => e.stopPropagation()}
             style={{
               position: 'fixed', top: 0, right: 0, bottom: 0, width: '480px',
-              background: '#0d1b2a', borderLeft: '1px solid rgba(212,149,10,0.2)',
+              background: 'var(--bg-elevated)', borderLeft: '1px solid rgba(212,149,10,0.2)',
               overflowY: 'auto', padding: '28px',
             }}
           >
             {/* Drawer header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: '#e8f4fd' }}>Detalle de Documento</div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>Detalle de Documento</div>
               <button onClick={closeDetail} style={{
-                background: 'none', border: 'none', color: '#7fa8c9', fontSize: '20px', cursor: 'pointer',
+                background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '20px', cursor: 'pointer',
               }}>{'\u2715'}</button>
             </div>
 
@@ -462,22 +453,22 @@ export default function CompliancePage() {
                 { label: 'Notas', value: selectedDoc.notes || 'Sin notas' },
               ].map(row => (
                 <div key={row.label} style={{
-                  padding: '12px 16px', background: '#060c1a', borderRadius: '10px',
+                  padding: '12px 16px', background: 'var(--bg-input)', borderRadius: '10px',
                   border: `1px solid ${goldBorder}`,
                 }}>
-                  <div style={{ fontSize: '11px', color: '#7fa8c9', marginBottom: '4px', fontWeight: 600, textTransform: 'uppercase' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px', fontWeight: 600, textTransform: 'uppercase' }}>
                     {row.label}
                   </div>
                   {row.isBadge ? (
                     <span style={{
                       display: 'inline-block', padding: '3px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700,
-                      color: (DOC_TYPE_COLORS[selectedDoc.type] || { color: '#7fa8c9' }).color,
+                      color: (DOC_TYPE_COLORS[selectedDoc.type] || { color: 'var(--text-muted)' }).color,
                       background: (DOC_TYPE_COLORS[selectedDoc.type] || { bg: 'rgba(127,168,201,0.1)' }).bg,
                     }}>
                       {row.value}
                     </span>
                   ) : (
-                    <div style={{ fontSize: '14px', color: '#e8f4fd', fontWeight: 500 }}>{row.value}</div>
+                    <div style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 500 }}>{row.value}</div>
                   )}
                 </div>
               ))}
@@ -503,15 +494,15 @@ export default function CompliancePage() {
             onClick={e => e.stopPropagation()}
             style={{
               position: 'fixed', top: 0, right: 0, bottom: 0, width: '500px',
-              background: '#0d1b2a', borderLeft: '1px solid rgba(212,149,10,0.2)',
+              background: 'var(--bg-elevated)', borderLeft: '1px solid rgba(212,149,10,0.2)',
               overflowY: 'auto', padding: '28px',
             }}
           >
             {/* Form header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: '#e8f4fd' }}>Nuevo Documento</div>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>Nuevo Documento</div>
               <button onClick={closeForm} style={{
-                background: 'none', border: 'none', color: '#7fa8c9', fontSize: '20px', cursor: 'pointer',
+                background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '20px', cursor: 'pointer',
               }}>{'\u2715'}</button>
             </div>
 

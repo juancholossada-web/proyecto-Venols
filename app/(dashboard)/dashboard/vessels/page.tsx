@@ -25,29 +25,35 @@ type DrawerView = 'modules' | 'reports' | 'fuel-list' | 'fuel-form' | 'maint-lis
 
 /* ─── Config ─── */
 const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
-  OPERATIVO:     { label: 'Operativo',     color: '#27ae60', bg: 'rgba(39,174,96,0.12)' },
-  EN_TRANSITO:   { label: 'En tránsito',   color: '#D4950A', bg: 'rgba(212,149,10,0.12)' },
-  ATRACADO:      { label: 'Atracado',      color: '#7fa8c9', bg: 'rgba(127,168,201,0.12)' },
-  MANTENIMIENTO: { label: 'Mantenimiento', color: '#e74c3c', bg: 'rgba(231,76,60,0.12)' },
-  INACTIVO:      { label: 'Inactivo',      color: '#555e6e', bg: 'rgba(85,94,110,0.12)' },
+  OPERATIVO:     { label: 'Operativo',     color: 'var(--success)', bg: 'rgba(39,174,96,0.12)' },
+  EN_TRANSITO:   { label: 'En tránsito',   color: 'var(--accent)', bg: 'rgba(212,149,10,0.12)' },
+  ATRACADO:      { label: 'Atracado',      color: 'var(--text-secondary)', bg: 'rgba(127,168,201,0.12)' },
+  MANTENIMIENTO: { label: 'Mantenimiento', color: 'var(--danger)', bg: 'rgba(231,76,60,0.12)' },
+  INACTIVO:      { label: 'Inactivo',      color: 'var(--text-muted)', bg: 'rgba(71,100,126,0.12)' },
 }
-const fleetIcon = (ft: string) => ft === 'PESADA' ? '🚢' : '🚤'
+const fleetIcon = (ft: string) => ft === 'PESADA' ? 'PS' : 'LV'
 
 /* ─── API helper ─── */
 function getToken() { return localStorage.getItem('token') || '' }
 async function api(path: string, opts?: RequestInit) {
   const res = await fetch(path, { ...opts, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}`, ...opts?.headers } })
+  if (res.status === 401) {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    window.location.href = '/login'
+    throw new Error('Sesión expirada')
+  }
   if (!res.ok) throw new Error(`API ${res.status}`)
   return res.json()
 }
 
 /* ─── Styles ─── */
-const card = { background: '#0a1628', border: '1px solid rgba(212,149,10,0.15)', borderRadius: '14px' }
-const goldBorder = 'rgba(212,149,10,0.15)'
-const goldBorderActive = 'rgba(212,149,10,0.5)'
-const inputStyle: React.CSSProperties = { width: '100%', padding: '9px 12px', background: '#060c1a', border: `1px solid ${goldBorder}`, borderRadius: '8px', color: '#e8f4fd', fontSize: '13px', outline: 'none' }
-const btnPrimary: React.CSSProperties = { padding: '10px 20px', background: 'linear-gradient(135deg, #D4950A, #b8820a)', border: 'none', borderRadius: '8px', color: '#060c1a', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }
-const btnSecondary: React.CSSProperties = { padding: '8px 14px', background: 'transparent', border: `1px solid ${goldBorder}`, borderRadius: '8px', color: '#7fa8c9', fontSize: '12px', cursor: 'pointer' }
+const card = { background: 'var(--bg-surface)', border: '1px solid var(--border-accent)', borderRadius: '12px' }
+const goldBorder = 'var(--border-accent)'
+const goldBorderActive = 'var(--border-accent-strong)'
+const inputStyle: React.CSSProperties = { width: '100%', padding: '9px 12px', background: 'var(--bg-input)', border: '1px solid var(--border-accent)', borderRadius: '8px', color: 'var(--text-primary)', fontSize: '13px', outline: 'none' }
+const btnPrimary: React.CSSProperties = { padding: '10px 20px', background: 'var(--accent)', border: 'none', borderRadius: '8px', color: '#080E1A', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }
+const btnSecondary: React.CSSProperties = { padding: '8px 14px', background: 'transparent', border: '1px solid var(--border-accent)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '12px', cursor: 'pointer' }
 
 /* ═════════════════════ MAIN PAGE ═════════════════════ */
 export default function VesselsPage() {
@@ -68,14 +74,14 @@ export default function VesselsPage() {
   function openVessel(v: Vessel) { setSelectedVessel(v); setDrawerView('modules') }
   function closeDrawer() { setSelectedVessel(null) }
 
-  if (loading) return <div style={{ color: '#7fa8c9', padding: '40px', textAlign: 'center' }}>Cargando flota...</div>
+  if (loading) return <div style={{ color: 'var(--text-secondary)', padding: '40px', textAlign: 'center' }}>Cargando flota...</div>
 
   return (
     <div style={{ position: 'relative' }}>
       {/* Header */}
       <div style={{ marginBottom: '28px' }}>
-        <div style={{ fontSize: '22px', fontWeight: 800, color: '#e8f4fd' }}>Embarcaciones</div>
-        <div style={{ fontSize: '13px', color: '#7fa8c9', marginTop: '4px' }}>
+        <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>Embarcaciones</div>
+        <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
           Gestion de flota — {vessels.length} embarcaciones registradas
         </div>
       </div>
@@ -84,13 +90,13 @@ export default function VesselsPage() {
       <div style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
         {([null, 'PESADA', 'LIVIANA'] as const).map(ft => {
           const active = activeFleet === ft
-          const label = ft === null ? 'Toda la Flota' : ft === 'PESADA' ? `🚢 Flota Pesada (${pesada.length})` : `🚤 Flota Liviana (${liviana.length})`
+          const label = ft === null ? 'Toda la Flota' : ft === 'PESADA' ? `Flota Pesada (${pesada.length})` : `Flota Liviana (${liviana.length})`
           return (
             <button key={String(ft)} onClick={() => setActiveFleet(ft)} style={{
               padding: '8px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
               border: `1px solid ${active ? goldBorderActive : goldBorder}`,
               background: active ? 'rgba(212,149,10,0.12)' : 'transparent',
-              color: active ? '#D4950A' : '#7fa8c9',
+              color: active ? 'var(--accent)' : 'var(--text-secondary)',
             }}>
               {label}
             </button>
@@ -101,19 +107,19 @@ export default function VesselsPage() {
       {/* Fleet sections */}
       {activeFleet === null ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-          {[{ key: 'PESADA' as const, label: 'Flota Pesada', icon: '🚢', desc: 'Buques de gran calado para operaciones offshore', list: pesada },
-            { key: 'LIVIANA' as const, label: 'Flota Liviana', icon: '🚤', desc: 'Lanchas para transporte de personal y operaciones costeras', list: liviana }]
+          {[{ key: 'PESADA' as const, label: 'Flota Pesada', tag: 'PS', desc: 'Buques de gran calado para operaciones offshore', list: pesada },
+            { key: 'LIVIANA' as const, label: 'Flota Liviana', tag: 'LV', desc: 'Lanchas para transporte de personal y operaciones costeras', list: liviana }]
             .map(fleet => (
             <div key={fleet.key}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span style={{ fontSize: '20px' }}>{fleet.icon}</span>
+                  <div style={{ width: '30px', height: '30px', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.5px' }}>{fleet.tag}</div>
                   <div>
-                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#e8f4fd' }}>{fleet.label}</div>
-                    <div style={{ fontSize: '11px', color: '#7fa8c9' }}>{fleet.desc}</div>
+                    <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>{fleet.label}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{fleet.desc}</div>
                   </div>
                 </div>
-                <button onClick={() => setActiveFleet(fleet.key)} style={{ fontSize: '11px', color: '#D4950A', cursor: 'pointer', background: 'none', border: 'none' }}>Ver detalle →</button>
+                <button onClick={() => setActiveFleet(fleet.key)} style={{ fontSize: '11px', color: 'var(--accent)', cursor: 'pointer', background: 'none', border: 'none' }}>Ver detalle</button>
               </div>
               <VesselGrid vessels={fleet.list} onSelect={openVessel} />
             </div>
@@ -140,17 +146,17 @@ function VesselGrid({ vessels, onSelect }: { vessels: Vessel[]; onSelect: (v: Ve
         return (
           <div key={vessel.id} onClick={() => onSelect(vessel)}
             style={{ ...card, padding: '20px', cursor: 'pointer', transition: 'border-color 0.2s, box-shadow 0.2s' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(212,149,10,0.4)'; e.currentTarget.style.boxShadow = '0 0 20px rgba(212,149,10,0.08)' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = goldBorder; e.currentTarget.style.boxShadow = 'none' }}>
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-accent-strong)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-accent)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
-              <div style={{ width: '48px', height: '48px', background: 'rgba(212,149,10,0.1)', border: '1px solid rgba(212,149,10,0.2)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>
+              <div style={{ width: '44px', height: '44px', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.5px' }}>
                 {fleetIcon(vessel.fleetType)}
               </div>
               <span style={{ fontSize: '11px', fontWeight: 600, color: st.color, background: st.bg, padding: '4px 10px', borderRadius: '20px' }}>{st.label}</span>
             </div>
-            <div style={{ fontSize: '15px', fontWeight: 700, color: '#e8f4fd', marginBottom: '4px' }}>{vessel.name}</div>
-            <div style={{ fontSize: '12px', color: '#7fa8c9' }}>{vessel.vesselType}</div>
-            {vessel.matricula && <div style={{ marginTop: '8px', fontSize: '11px', color: 'rgba(212,149,10,0.5)', fontFamily: 'monospace' }}>MAT: {vessel.matricula}</div>}
+            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>{vessel.name}</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{vessel.vesselType}</div>
+            {vessel.matricula && <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--accent)', fontFamily: 'monospace', opacity: 0.6 }}>MAT: {vessel.matricula}</div>}
           </div>
         )
       })}
@@ -204,9 +210,9 @@ function VesselDrawer({ vessel, view, setView, onClose }: {
       {/* Backdrop */}
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, backdropFilter: 'blur(4px)' }} />
       {/* Panel */}
-      <div style={{ position: 'fixed', top: 0, right: 0, width: '520px', maxWidth: '90vw', height: '100vh', background: '#0a1628', borderLeft: '1px solid rgba(212,149,10,0.2)', zIndex: 1001, display: 'flex', flexDirection: 'column', animation: 'slideIn 0.25s ease' }}>
+      <div style={{ position: 'fixed', top: 0, right: 0, width: '520px', maxWidth: '90vw', height: '100vh', background: 'var(--bg-surface)', borderLeft: '1px solid rgba(212,149,10,0.2)', zIndex: 1001, display: 'flex', flexDirection: 'column', animation: 'slideIn 0.25s ease' }}>
         {/* Toast */}
-        {toast && <div style={{ position: 'absolute', top: '12px', left: '50%', transform: 'translateX(-50%)', background: '#27ae60', color: 'white', padding: '8px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, zIndex: 10 }}>{toast}</div>}
+        {toast && <div style={{ position: 'absolute', top: '12px', left: '50%', transform: 'translateX(-50%)', background: 'var(--success)', color: 'white', padding: '8px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, zIndex: 10 }}>{toast}</div>}
 
         {/* Header */}
         <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(212,149,10,0.15)', flexShrink: 0 }}>
@@ -214,24 +220,24 @@ function VesselDrawer({ vessel, view, setView, onClose }: {
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ width: '44px', height: '44px', background: 'rgba(212,149,10,0.1)', border: '1px solid rgba(212,149,10,0.2)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>{fleetIcon(vessel.fleetType)}</div>
               <div>
-                <div style={{ fontSize: '17px', fontWeight: 700, color: '#e8f4fd' }}>{vessel.name}</div>
-                <div style={{ fontSize: '12px', color: '#7fa8c9' }}>{vessel.vesselType} — {vessel.fleetType === 'PESADA' ? 'Flota Pesada' : 'Flota Liviana'}</div>
+                <div style={{ fontSize: '17px', fontWeight: 700, color: 'var(--text-primary)' }}>{vessel.name}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{vessel.vesselType} — {vessel.fleetType === 'PESADA' ? 'Flota Pesada' : 'Flota Liviana'}</div>
               </div>
             </div>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#7fa8c9', fontSize: '20px', cursor: 'pointer', padding: '4px 8px' }}>✕</button>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '20px', cursor: 'pointer', padding: '4px 8px' }}>✕</button>
           </div>
           {/* Vessel meta row */}
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '11px', fontWeight: 600, color: st.color, background: st.bg, padding: '3px 10px', borderRadius: '20px' }}>{st.label}</span>
-            {vessel.matricula && <span style={{ fontSize: '11px', color: '#D4950A', fontFamily: 'monospace', background: 'rgba(212,149,10,0.08)', padding: '3px 10px', borderRadius: '20px' }}>MAT: {vessel.matricula}</span>}
-            {vessel.homePort && <span style={{ fontSize: '11px', color: '#7fa8c9', background: 'rgba(127,168,201,0.08)', padding: '3px 10px', borderRadius: '20px' }}>{vessel.homePort}</span>}
+            {vessel.matricula && <span style={{ fontSize: '11px', color: 'var(--accent)', fontFamily: 'monospace', background: 'rgba(212,149,10,0.08)', padding: '3px 10px', borderRadius: '20px' }}>MAT: {vessel.matricula}</span>}
+            {vessel.homePort && <span style={{ fontSize: '11px', color: 'var(--text-secondary)', background: 'rgba(127,168,201,0.08)', padding: '3px 10px', borderRadius: '20px' }}>{vessel.homePort}</span>}
           </div>
           {/* Breadcrumb */}
           <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '14px', fontSize: '12px' }}>
             {breadcrumb.map((b, i) => (
               <span key={b.view}>
                 {i > 0 && <span style={{ color: 'rgba(212,149,10,0.3)', margin: '0 4px' }}>/</span>}
-                <button onClick={() => navigateTo(b.view)} style={{ background: 'none', border: 'none', color: i === breadcrumb.length - 1 ? '#D4950A' : '#7fa8c9', cursor: 'pointer', padding: 0, fontSize: '12px', fontWeight: i === breadcrumb.length - 1 ? 600 : 400 }}>{b.label}</button>
+                <button onClick={() => navigateTo(b.view)} style={{ background: 'none', border: 'none', color: i === breadcrumb.length - 1 ? 'var(--accent)' : 'var(--text-secondary)', cursor: 'pointer', padding: 0, fontSize: '12px', fontWeight: i === breadcrumb.length - 1 ? 600 : 400 }}>{b.label}</button>
               </span>
             ))}
           </div>
@@ -257,10 +263,10 @@ function VesselDrawer({ vessel, view, setView, onClose }: {
 /* ─── Modules View ─── */
 function ModulesView({ onNavigate }: { onNavigate: (v: DrawerView) => void }) {
   const modules = [
-    { id: 'reports' as const, icon: '📋', label: 'Reportes', desc: 'Combustible, mantenimiento y estado', active: true },
-    { id: 'docs' as const, icon: '📄', label: 'Documentos', desc: 'Certificados y permisos', active: false },
-    { id: 'history' as const, icon: '🕐', label: 'Historial', desc: 'Registro de operaciones', active: false },
-    { id: 'map' as const, icon: '🗺️', label: 'Posicion AIS', desc: 'Ubicacion GPS en tiempo real', active: false },
+    { id: 'reports' as const, icon: 'RPT', label: 'Reportes', desc: 'Combustible, mantenimiento y estado', active: true },
+    { id: 'docs' as const, icon: 'DOC', label: 'Documentos', desc: 'Certificados y permisos', active: false },
+    { id: 'history' as const, icon: 'HST', label: 'Historial', desc: 'Registro de operaciones', active: false },
+    { id: 'map' as const, icon: 'AIS', label: 'Posicion AIS', desc: 'Ubicacion GPS en tiempo real', active: false },
   ]
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -273,9 +279,9 @@ function ModulesView({ onNavigate }: { onNavigate: (v: DrawerView) => void }) {
           }}
           onMouseEnter={e => m.active && (e.currentTarget.style.borderColor = 'rgba(212,149,10,0.4)')}
           onMouseLeave={e => (e.currentTarget.style.borderColor = goldBorder)}>
-          <div style={{ fontSize: '28px', marginBottom: '10px' }}>{m.icon}</div>
-          <div style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd', marginBottom: '4px' }}>{m.label}</div>
-          <div style={{ fontSize: '11px', color: '#7fa8c9' }}>{m.desc}</div>
+          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.5px', marginBottom: '10px' }}>{m.icon}</div>
+          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>{m.label}</div>
+          <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{m.desc}</div>
           {!m.active && <div style={{ fontSize: '9px', color: 'rgba(212,149,10,0.4)', marginTop: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>Proximamente</div>}
         </div>
       ))}
@@ -286,24 +292,24 @@ function ModulesView({ onNavigate }: { onNavigate: (v: DrawerView) => void }) {
 /* ─── Reports Menu ─── */
 function ReportsMenu({ onNavigate }: { onNavigate: (v: DrawerView) => void }) {
   const types = [
-    { view: 'fuel-list' as const, icon: '⛽', label: 'Reporte de Combustible', desc: 'Nivel de combustible, consumo, operador y ubicacion', color: '#e67e22' },
-    { view: 'maint-list' as const, icon: '🔧', label: 'Reporte de Mantenimiento', desc: 'Tipo de trabajo, tecnico, repuestos, costos y estado', color: '#e74c3c' },
-    { view: 'status-list' as const, icon: '📍', label: 'Reporte de Estado', desc: 'Ubicacion, actividad, cliente, capitan, marino en guardia', color: '#2d9cdb' },
+    { view: 'fuel-list' as const, tag: 'CMB', label: 'Reporte de Combustible', desc: 'Nivel de combustible, consumo, operador y ubicacion', color: 'var(--warning)' },
+    { view: 'maint-list' as const, tag: 'MNT', label: 'Reporte de Mantenimiento', desc: 'Tipo de trabajo, tecnico, repuestos, costos y estado', color: 'var(--danger)' },
+    { view: 'status-list' as const, tag: 'EST', label: 'Reporte de Estado', desc: 'Ubicacion, actividad, cliente, capitan, marino en guardia', color: 'var(--info)' },
   ]
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      <div style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd', marginBottom: '4px' }}>Selecciona tipo de reporte</div>
+      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>Selecciona tipo de reporte</div>
       {types.map(t => (
         <div key={t.view} onClick={() => onNavigate(t.view)}
-          style={{ ...card, padding: '18px 20px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', borderLeft: `3px solid ${t.color}`, transition: 'border-color 0.2s' }}
-          onMouseEnter={e => (e.currentTarget.style.borderColor = t.color)}
-          onMouseLeave={e => (e.currentTarget.style.borderColor = goldBorder)}>
-          <div style={{ fontSize: '28px', width: '44px', textAlign: 'center' }}>{t.icon}</div>
+          style={{ ...card, padding: '16px 18px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '14px', borderLeft: `2px solid ${t.color}`, transition: 'border-color 0.15s' }}
+          onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-accent-strong)')}
+          onMouseLeave={e => (e.currentTarget.style.borderColor = t.color)}>
+          <div style={{ width: '38px', height: '38px', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: t.color, letterSpacing: '0.5px', flexShrink: 0 }}>{t.tag}</div>
           <div>
-            <div style={{ fontSize: '14px', fontWeight: 600, color: '#e8f4fd' }}>{t.label}</div>
-            <div style={{ fontSize: '11px', color: '#7fa8c9', marginTop: '2px' }}>{t.desc}</div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{t.label}</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{t.desc}</div>
           </div>
-          <div style={{ marginLeft: 'auto', color: '#D4950A', fontSize: '16px' }}>→</div>
+          <div style={{ marginLeft: 'auto', color: 'var(--accent)', fontSize: '14px' }}>›</div>
         </div>
       ))}
     </div>
@@ -322,18 +328,18 @@ function FuelListView({ reports, loading, onNew }: { reports: FuelReport[]; load
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd' }}>Reportes de Combustible</div>
+        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Reportes de Combustible</div>
         <button onClick={onNew} style={btnPrimary}>+ Nuevo Reporte</button>
       </div>
-      {loading ? <div style={{ color: '#7fa8c9', textAlign: 'center', padding: '30px' }}>Cargando...</div>
+      {loading ? <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '30px' }}>Cargando...</div>
         : reports.length === 0 ? <EmptyState label="combustible" />
         : reports.map(r => (
           <div key={r.id} style={{ ...card, padding: '16px', marginBottom: '10px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: '#e8f4fd' }}>⛽ {r.fuelLevel} {r.fuelUnit}</span>
-              <span style={{ fontSize: '11px', color: '#7fa8c9', fontFamily: 'monospace' }}>{fmtDate(r.date)}</span>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>Combustible: {r.fuelLevel} {r.fuelUnit}</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{fmtDate(r.date)}</span>
             </div>
-            <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: '#7fa8c9' }}>
+            <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: 'var(--text-muted)' }}>
               {r.consumption != null && <span>Consumo: {r.consumption} {r.fuelUnit}</span>}
               {r.location && <span>Ubicacion: {r.location}</span>}
               {r.operator && <span>Op: {r.operator}</span>}
@@ -357,7 +363,7 @@ function FuelForm({ vesselId, onSaved, saving, setSaving }: { vesselId: string; 
   }
   return (
     <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      <div style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd' }}>Nuevo Reporte de Combustible</div>
+      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Nuevo Reporte de Combustible</div>
       <Field label="Fecha y hora"><input type="datetime-local" value={form.date} onChange={e => set('date', e.target.value)} style={inputStyle} required /></Field>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
         <Field label="Nivel de combustible"><input type="number" step="0.1" value={form.fuelLevel} onChange={e => set('fuelLevel', e.target.value)} style={inputStyle} required placeholder="Ej: 2500" /></Field>
@@ -376,23 +382,23 @@ function FuelForm({ vesselId, onSaved, saving, setSaving }: { vesselId: string; 
 
 /* ═══════ MAINTENANCE ═══════ */
 function MaintListView({ reports, loading, onNew }: { reports: MaintenanceReport[]; loading: boolean; onNew: () => void }) {
-  const statusColors: Record<string, string> = { PENDIENTE: '#e67e22', EN_PROCESO: '#D4950A', COMPLETADO: '#27ae60' }
+  const statusColors: Record<string, string> = { PENDIENTE: 'var(--warning)', EN_PROCESO: 'var(--accent)', COMPLETADO: 'var(--success)' }
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd' }}>Reportes de Mantenimiento</div>
+        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Reportes de Mantenimiento</div>
         <button onClick={onNew} style={btnPrimary}>+ Nuevo Reporte</button>
       </div>
-      {loading ? <div style={{ color: '#7fa8c9', textAlign: 'center', padding: '30px' }}>Cargando...</div>
+      {loading ? <div style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '30px' }}>Cargando...</div>
         : reports.length === 0 ? <EmptyState label="mantenimiento" />
         : reports.map(r => (
           <div key={r.id} style={{ ...card, padding: '16px', marginBottom: '10px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: '#e8f4fd' }}>🔧 {r.type}</span>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: statusColors[r.status] || '#7fa8c9', background: 'rgba(212,149,10,0.08)', padding: '2px 10px', borderRadius: '12px' }}>{r.status}</span>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{r.type}</span>
+              <span style={{ fontSize: '11px', fontWeight: 600, color: statusColors[r.status] || 'var(--text-secondary)', background: 'rgba(212,149,10,0.08)', padding: '2px 10px', borderRadius: '12px' }}>{r.status}</span>
             </div>
-            <div style={{ fontSize: '12px', color: '#e8f4fd', marginBottom: '6px' }}>{r.description}</div>
-            <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: '#7fa8c9' }}>
+            <div style={{ fontSize: '12px', color: 'var(--text-primary)', marginBottom: '6px' }}>{r.description}</div>
+            <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: 'var(--text-secondary)' }}>
               <span>{fmtDate(r.date)}</span>
               {r.technician && <span>Tecnico: {r.technician}</span>}
               {r.cost != null && <span>Costo: ${r.cost.toLocaleString()}</span>}
@@ -416,7 +422,7 @@ function MaintForm({ vesselId, onSaved, saving, setSaving }: { vesselId: string;
   }
   return (
     <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      <div style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd' }}>Nuevo Reporte de Mantenimiento</div>
+      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Nuevo Reporte de Mantenimiento</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
         <Field label="Fecha"><input type="datetime-local" value={form.date} onChange={e => set('date', e.target.value)} style={inputStyle} required /></Field>
         <Field label="Tipo"><select value={form.type} onChange={e => set('type', e.target.value)} style={inputStyle}><option>Preventivo</option><option>Correctivo</option><option>Emergencia</option><option>Clasificacion</option></select></Field>
@@ -442,21 +448,21 @@ function StatusListView({ reports, loading, onNew }: { reports: StatusReport[]; 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd' }}>Reportes de Estado</div>
+        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Reportes de Estado</div>
         <button onClick={onNew} style={btnPrimary}>+ Nuevo Reporte</button>
       </div>
-      {loading ? <div style={{ color: '#7fa8c9', textAlign: 'center', padding: '30px' }}>Cargando...</div>
+      {loading ? <div style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '30px' }}>Cargando...</div>
         : reports.length === 0 ? <EmptyState label="estado" />
         : reports.map(r => {
           const st = statusConfig[r.vesselStatus] || statusConfig.INACTIVO
           return (
             <div key={r.id} style={{ ...card, padding: '16px', marginBottom: '10px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: '#e8f4fd' }}>📍 {r.location}</span>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{r.location}</span>
                 <span style={{ fontSize: '11px', fontWeight: 600, color: st.color, background: st.bg, padding: '2px 10px', borderRadius: '12px' }}>{st.label}</span>
               </div>
-              <div style={{ fontSize: '12px', color: '#e8f4fd', marginBottom: '6px' }}>{r.activity}</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', fontSize: '11px', color: '#7fa8c9' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-primary)', marginBottom: '6px' }}>{r.activity}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', fontSize: '11px', color: 'var(--text-secondary)' }}>
                 <span>Capitan: {r.captain}</span>
                 <span>Marino: {r.marineOnDuty}</span>
                 {r.client && <span>Cliente: {r.client}</span>}
@@ -486,11 +492,11 @@ function StatusForm({ vessel, onSaved, saving, setSaving }: { vessel: Vessel; on
   }
   return (
     <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      <div style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd' }}>Nuevo Reporte de Estado</div>
+      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Nuevo Reporte de Estado</div>
       {vessel.matricula && (
-        <div style={{ ...card, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '3px solid #D4950A' }}>
-          <span style={{ fontSize: '11px', color: '#7fa8c9' }}>Matricula:</span>
-          <span style={{ fontSize: '13px', fontWeight: 700, color: '#D4950A', fontFamily: 'monospace' }}>{vessel.matricula}</span>
+        <div style={{ ...card, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '3px solid var(--accent)' }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Matricula:</span>
+          <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--accent)', fontFamily: 'monospace' }}>{vessel.matricula}</span>
           <span style={{ fontSize: '10px', color: 'rgba(127,168,201,0.4)', marginLeft: 'auto' }}>Campo fijo</span>
         </div>
       )}
@@ -524,15 +530,15 @@ function StatusForm({ vessel, onSaved, saving, setSaving }: { vessel: Vessel; on
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#7fa8c9', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '5px' }}>{label}</label>
+      <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '5px' }}>{label}</label>
       {children}
     </div>
   )
 }
 function EmptyState({ label }: { label: string }) {
   return (
-    <div style={{ textAlign: 'center', padding: '40px 20px', color: '#7fa8c9' }}>
-      <div style={{ fontSize: '32px', marginBottom: '12px', opacity: 0.4 }}>📋</div>
+    <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-secondary)' }}>
+      <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--accent-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: 'var(--accent)', opacity: 0.4, margin: '0 auto 12px', letterSpacing: '0.5px' }}>—</div>
       <div style={{ fontSize: '14px', marginBottom: '4px' }}>No hay reportes de {label}</div>
       <div style={{ fontSize: '12px', opacity: 0.6 }}>Crea el primer reporte con el boton de arriba</div>
     </div>

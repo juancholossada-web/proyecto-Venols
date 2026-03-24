@@ -27,10 +27,10 @@ const emptyForm: FormData = {
 
 /* ─── Config ─── */
 const statusConfig: Record<VoyageStatusKey, { label: string; color: string; bg: string }> = {
-  PLANIFICADO: { label: 'Planificado', color: '#2d9cdb', bg: 'rgba(45,156,219,0.12)' },
-  EN_CURSO:    { label: 'En Curso',    color: '#D4950A', bg: 'rgba(212,149,10,0.12)' },
-  COMPLETADO:  { label: 'Completado',  color: '#27ae60', bg: 'rgba(39,174,96,0.12)' },
-  CANCELADO:   { label: 'Cancelado',   color: '#e74c3c', bg: 'rgba(231,76,60,0.12)' },
+  PLANIFICADO: { label: 'Planificado', color: 'var(--info)', bg: 'var(--info-dim)' },
+  EN_CURSO:    { label: 'En Curso',    color: 'var(--accent)', bg: 'rgba(212,149,10,0.12)' },
+  COMPLETADO:  { label: 'Completado',  color: 'var(--success)', bg: 'rgba(39,174,96,0.12)' },
+  CANCELADO:   { label: 'Cancelado',   color: 'var(--danger)', bg: 'rgba(231,76,60,0.12)' },
 }
 const statusKeys: (VoyageStatusKey | 'TODOS')[] = ['TODOS', 'PLANIFICADO', 'EN_CURSO', 'COMPLETADO', 'CANCELADO']
 const statusLabels: Record<string, string> = {
@@ -52,23 +52,23 @@ async function api<T = any>(path: string, opts?: RequestInit): Promise<T> {
 }
 
 /* ─── Styles ─── */
-const card: React.CSSProperties = { background: '#0a1628', border: '1px solid rgba(212,149,10,0.15)', borderRadius: '14px' }
-const goldBorder = 'rgba(212,149,10,0.15)'
-const goldBorderActive = 'rgba(212,149,10,0.5)'
+const card: React.CSSProperties = { background: 'var(--bg-surface)', border: '1px solid var(--border-accent)', borderRadius: '12px' }
+const goldBorder = 'var(--border-accent)'
+const goldBorderActive = 'var(--border-accent-strong)'
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '9px 12px', background: '#060c1a', border: `1px solid ${goldBorder}`,
-  borderRadius: '8px', color: '#e8f4fd', fontSize: '13px', outline: 'none', boxSizing: 'border-box',
+  width: '100%', padding: '9px 12px', background: 'var(--bg-input)', border: '1px solid var(--border-accent)',
+  borderRadius: '8px', color: 'var(--text-primary)', fontSize: '13px', outline: 'none', boxSizing: 'border-box',
 }
 const selectStyle: React.CSSProperties = { ...inputStyle, appearance: 'none' as const, cursor: 'pointer' }
 const btnPrimary: React.CSSProperties = {
-  padding: '10px 20px', background: 'linear-gradient(135deg, #D4950A, #b8820a)', border: 'none',
-  borderRadius: '8px', color: '#060c1a', fontWeight: 700, fontSize: '13px', cursor: 'pointer',
+  padding: '10px 20px', background: 'var(--accent)', border: 'none',
+  borderRadius: '8px', color: '#080E1A', fontWeight: 700, fontSize: '13px', cursor: 'pointer',
 }
 const btnSecondary: React.CSSProperties = {
-  padding: '8px 14px', background: 'transparent', border: `1px solid ${goldBorder}`,
-  borderRadius: '8px', color: '#7fa8c9', fontSize: '12px', cursor: 'pointer',
+  padding: '8px 14px', background: 'transparent', border: '1px solid var(--border-accent)',
+  borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '12px', cursor: 'pointer',
 }
-const labelStyle: React.CSSProperties = { fontSize: '12px', fontWeight: 600, color: '#7fa8c9', marginBottom: '4px', display: 'block' }
+const labelStyle: React.CSSProperties = { fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }
 
 /* ─── Helpers ─── */
 function fmtDate(d: string | null | undefined): string {
@@ -122,10 +122,10 @@ export default function RoutesPage() {
   const planificados = voyages.filter(v => v.status === 'PLANIFICADO').length
 
   const kpis = [
-    { label: 'Total Viajes', value: total, color: '#e8f4fd', icon: '\u2693' },
-    { label: 'En Curso', value: enCurso, color: '#D4950A', icon: '\u{1F6A2}' },
-    { label: 'Completados', value: completados, color: '#27ae60', icon: '\u2705' },
-    { label: 'Planificados', value: planificados, color: '#2d9cdb', icon: '\u{1F4CB}' },
+    { label: 'Total Viajes', value: total, color: 'var(--text-primary)', tag: 'TOT' },
+    { label: 'En Curso', value: enCurso, color: 'var(--accent)', tag: 'ENC' },
+    { label: 'Completados', value: completados, color: 'var(--success)', tag: 'CPL' },
+    { label: 'Planificados', value: planificados, color: 'var(--info)', tag: 'PLN' },
   ]
 
   /* ─── Drawer actions ─── */
@@ -166,7 +166,7 @@ export default function RoutesPage() {
   /* ─── Loading state ─── */
   if (loading) {
     return (
-      <div style={{ color: '#7fa8c9', padding: '60px', textAlign: 'center', fontSize: '14px' }}>
+      <div style={{ color: 'var(--text-muted)', padding: '60px', textAlign: 'center', fontSize: '14px' }}>
         Cargando viajes...
       </div>
     )
@@ -178,8 +178,8 @@ export default function RoutesPage() {
       {toast && (
         <div style={{
           position: 'fixed', top: '24px', right: '24px', zIndex: 9999, padding: '12px 24px',
-          background: '#0a1628', border: '1px solid rgba(212,149,10,0.4)', borderRadius: '10px',
-          color: '#e8f4fd', fontSize: '13px', fontWeight: 600, boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+          background: 'var(--bg-surface)', border: '1px solid rgba(212,149,10,0.4)', borderRadius: '10px',
+          color: 'var(--text-primary)', fontSize: '13px', fontWeight: 600, boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
           animation: 'fadeIn 0.3s ease',
         }}>
           {toast}
@@ -189,8 +189,8 @@ export default function RoutesPage() {
       {/* ── Header ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
         <div>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: '#e8f4fd' }}>Rutas & Viajes</div>
-          <div style={{ fontSize: '13px', color: '#7fa8c9', marginTop: '4px' }}>
+          <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>Rutas & Viajes</div>
+          <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
             Gesti\u00f3n de viajes y operaciones mar\u00edtimas — {total} viajes registrados
           </div>
         </div>
@@ -203,17 +203,18 @@ export default function RoutesPage() {
           <div key={kpi.label} style={{ ...card, padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
-                <div style={{ fontSize: '11px', color: '#7fa8c9', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
                   {kpi.label}
                 </div>
                 <div style={{ fontSize: '28px', fontWeight: 800, color: kpi.color }}>{kpi.value}</div>
               </div>
               <div style={{
-                width: '42px', height: '42px', background: 'rgba(212,149,10,0.08)',
-                border: '1px solid rgba(212,149,10,0.15)', borderRadius: '12px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px',
+                width: '36px', height: '36px', background: 'var(--accent-dim)',
+                border: '1px solid var(--border-accent)', borderRadius: '8px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '10px', fontWeight: 700, color: kpi.color, letterSpacing: '0.5px',
               }}>
-                {kpi.icon}
+                {kpi.tag}
               </div>
             </div>
           </div>
@@ -233,7 +234,7 @@ export default function RoutesPage() {
                 padding: '8px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
                 border: `1px solid ${active ? goldBorderActive : goldBorder}`,
                 background: active ? 'rgba(212,149,10,0.12)' : 'transparent',
-                color: active ? '#D4950A' : '#7fa8c9',
+                color: active ? 'var(--accent)' : 'var(--text-secondary)',
                 transition: 'all 0.2s ease',
               }}
             >
@@ -252,7 +253,7 @@ export default function RoutesPage() {
                 {['N\u00b0 Viaje', 'Embarcaci\u00f3n', 'Ruta', 'Carga', 'Cliente', 'Estado', 'Salida', 'Llegada'].map(h => (
                   <th key={h} style={{
                     padding: '14px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700,
-                    color: '#7fa8c9', textTransform: 'uppercase', letterSpacing: '0.5px',
+                    color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px',
                     whiteSpace: 'nowrap',
                   }}>
                     {h}
@@ -263,7 +264,7 @@ export default function RoutesPage() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#7fa8c9' }}>
+                  <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
                     No se encontraron viajes{activeTab !== 'TODOS' ? ` con estado "${statusLabels[activeTab]}"` : ''}
                   </td>
                 </tr>
@@ -278,21 +279,21 @@ export default function RoutesPage() {
                       onMouseEnter={e => { e.currentTarget.style.background = 'rgba(212,149,10,0.04)' }}
                       onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
                     >
-                      <td style={{ padding: '14px 16px', fontWeight: 700, color: '#D4950A', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '14px 16px', fontWeight: 700, color: 'var(--accent)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
                         {voyage.voyageNumber}
                       </td>
-                      <td style={{ padding: '14px 16px', color: '#e8f4fd', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '14px 16px', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
                         {voyage.vessel?.name || '—'}
                       </td>
-                      <td style={{ padding: '14px 16px', color: '#e8f4fd', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '14px 16px', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
                         <span>{voyage.origin}</span>
-                        <span style={{ color: '#D4950A', margin: '0 6px' }}>\u2192</span>
+                        <span style={{ color: 'var(--accent)', margin: '0 6px' }}>\u2192</span>
                         <span>{voyage.destination}</span>
                       </td>
-                      <td style={{ padding: '14px 16px', color: '#7fa8c9', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '14px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                         {voyage.cargoType ? `${voyage.cargoType}${voyage.cargoTons ? ` \u00b7 ${voyage.cargoTons.toLocaleString()} t` : ''}` : '—'}
                       </td>
-                      <td style={{ padding: '14px 16px', color: '#e8f4fd', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '14px 16px', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
                         {voyage.client?.name || '—'}
                       </td>
                       <td style={{ padding: '14px 16px' }}>
@@ -303,10 +304,10 @@ export default function RoutesPage() {
                           {st.label}
                         </span>
                       </td>
-                      <td style={{ padding: '14px 16px', color: '#7fa8c9', whiteSpace: 'nowrap', fontSize: '12px' }}>
+                      <td style={{ padding: '14px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap', fontSize: '12px' }}>
                         {fmtDate(voyage.departureAt)}
                       </td>
-                      <td style={{ padding: '14px 16px', color: '#7fa8c9', whiteSpace: 'nowrap', fontSize: '12px' }}>
+                      <td style={{ padding: '14px 16px', color: 'var(--text-muted)', whiteSpace: 'nowrap', fontSize: '12px' }}>
                         {fmtDate(voyage.arrivalAt)}
                       </td>
                     </tr>
@@ -399,7 +400,7 @@ function VoyageDrawer({ voyage, mode, vessels, clients, onClose, onSave, onEdit 
       }}
     >
       <div style={{
-        width: '520px', maxWidth: '100vw', height: '100%', background: '#0a1628',
+        width: '520px', maxWidth: '100vw', height: '100%', background: 'var(--bg-surface)',
         borderLeft: `1px solid ${goldBorder}`, display: 'flex', flexDirection: 'column',
         animation: 'slideIn 0.3s ease', boxShadow: '-8px 0 40px rgba(0,0,0,0.4)',
         overflowY: 'auto',
@@ -408,12 +409,12 @@ function VoyageDrawer({ voyage, mode, vessels, clients, onClose, onSave, onEdit 
         <div style={{
           padding: '20px 24px', borderBottom: `1px solid ${goldBorder}`,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          position: 'sticky', top: 0, background: '#0a1628', zIndex: 2,
+          position: 'sticky', top: 0, background: 'var(--bg-surface)', zIndex: 2,
         }}>
           <div>
-            <div style={{ fontSize: '16px', fontWeight: 800, color: '#e8f4fd' }}>{title}</div>
+            <div style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)' }}>{title}</div>
             {voyage && mode === 'view' && (
-              <div style={{ fontSize: '12px', color: '#D4950A', fontFamily: 'monospace', marginTop: '2px' }}>
+              <div style={{ fontSize: '12px', color: 'var(--accent)', fontFamily: 'monospace', marginTop: '2px' }}>
                 {voyage.voyageNumber}
               </div>
             )}
@@ -424,7 +425,7 @@ function VoyageDrawer({ voyage, mode, vessels, clients, onClose, onSave, onEdit 
             )}
             <button onClick={onClose} style={{
               width: '32px', height: '32px', borderRadius: '8px', border: `1px solid ${goldBorder}`,
-              background: 'transparent', color: '#7fa8c9', fontSize: '18px', cursor: 'pointer',
+              background: 'transparent', color: 'var(--text-muted)', fontSize: '18px', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
               \u00d7
@@ -608,7 +609,7 @@ function VoyageDetail({ voyage }: { voyage: Voyage }) {
     {
       title: 'Informaci\u00f3n General',
       rows: [
-        { label: 'N\u00b0 de Viaje', value: <span style={{ fontFamily: 'monospace', color: '#D4950A', fontWeight: 700 }}>{voyage.voyageNumber}</span> },
+        { label: 'N\u00b0 de Viaje', value: <span style={{ fontFamily: 'monospace', color: 'var(--accent)', fontWeight: 700 }}>{voyage.voyageNumber}</span> },
         {
           label: 'Estado',
           value: (
@@ -660,7 +661,7 @@ function VoyageDetail({ voyage }: { voyage: Voyage }) {
       {sections.map(section => (
         <div key={section.title}>
           <div style={{
-            fontSize: '11px', fontWeight: 700, color: '#D4950A', textTransform: 'uppercase',
+            fontSize: '11px', fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase',
             letterSpacing: '0.8px', marginBottom: '12px', paddingBottom: '8px',
             borderBottom: `1px solid ${goldBorder}`,
           }}>
@@ -670,9 +671,9 @@ function VoyageDetail({ voyage }: { voyage: Voyage }) {
             {section.rows.map((row, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 {row.label && (
-                  <span style={{ fontSize: '13px', color: '#7fa8c9' }}>{row.label}</span>
+                  <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{row.label}</span>
                 )}
-                <span style={{ fontSize: '13px', color: '#e8f4fd', textAlign: 'right', maxWidth: row.label ? '60%' : '100%', wordBreak: 'break-word' }}>
+                <span style={{ fontSize: '13px', color: 'var(--text-primary)', textAlign: 'right', maxWidth: row.label ? '60%' : '100%', wordBreak: 'break-word' }}>
                   {row.value}
                 </span>
               </div>

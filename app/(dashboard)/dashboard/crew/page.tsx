@@ -24,15 +24,15 @@ type DrawerView = 'detail' | 'certs' | 'cert-form' | 'assigns' | 'assign-form' |
 
 /* ─── Config ─── */
 const statusCfg: Record<string, { label: string; color: string; bg: string }> = {
-  ACTIVO:     { label: 'Activo',     color: '#27ae60', bg: 'rgba(39,174,96,0.12)' },
-  INACTIVO:   { label: 'Inactivo',   color: '#555e6e', bg: 'rgba(85,94,110,0.12)' },
-  LICENCIA:   { label: 'Licencia',   color: '#e67e22', bg: 'rgba(230,126,34,0.12)' },
-  VACACIONES: { label: 'Vacaciones', color: '#2d9cdb', bg: 'rgba(45,156,219,0.12)' },
-  RETIRADO:   { label: 'Retirado',   color: '#e74c3c', bg: 'rgba(231,76,60,0.12)' },
+  ACTIVO:     { label: 'Activo',     color: 'var(--success)', bg: 'rgba(39,174,96,0.12)' },
+  INACTIVO:   { label: 'Inactivo',   color: 'var(--text-muted)', bg: 'rgba(71,100,126,0.12)' },
+  LICENCIA:   { label: 'Licencia',   color: 'var(--warning)', bg: 'rgba(230,126,34,0.12)' },
+  VACACIONES: { label: 'Vacaciones', color: 'var(--info)', bg: 'var(--info-dim)' },
+  RETIRADO:   { label: 'Retirado',   color: 'var(--danger)', bg: 'rgba(231,76,60,0.12)' },
 }
 const positionIcons: Record<string, string> = {
-  'Capitan': '⚓', 'Jefe de Maquinas': '🔧', 'Marinero': '🚢',
-  'Tecnico Mecanico': '🛠️', 'Tecnico Electricista': '⚡',
+  'Capitan': 'CAP', 'Jefe de Maquinas': 'JMQ', 'Marinero': 'MAR',
+  'Tecnico Mecanico': 'TMC', 'Tecnico Electricista': 'TEC',
 }
 
 /* ─── API helper ─── */
@@ -44,10 +44,10 @@ async function api(path: string, opts?: RequestInit) {
 }
 
 /* ─── Styles ─── */
-const card: React.CSSProperties = { background: '#0a1628', border: '1px solid rgba(212,149,10,0.15)', borderRadius: '14px' }
-const goldBorder = 'rgba(212,149,10,0.15)'
-const inputStyle: React.CSSProperties = { width: '100%', padding: '9px 12px', background: '#060c1a', border: `1px solid ${goldBorder}`, borderRadius: '8px', color: '#e8f4fd', fontSize: '13px', outline: 'none' }
-const btnPrimary: React.CSSProperties = { padding: '10px 20px', background: 'linear-gradient(135deg, #D4950A, #b8820a)', border: 'none', borderRadius: '8px', color: '#060c1a', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }
+const card: React.CSSProperties = { background: 'var(--bg-surface)', border: '1px solid var(--border-accent)', borderRadius: '12px' }
+const goldBorder = 'var(--border-accent)'
+const inputStyle: React.CSSProperties = { width: '100%', padding: '9px 12px', background: 'var(--bg-input)', border: '1px solid var(--border-accent)', borderRadius: '8px', color: 'var(--text-primary)', fontSize: '13px', outline: 'none' }
+const btnPrimary: React.CSSProperties = { padding: '10px 20px', background: 'var(--accent)', border: 'none', borderRadius: '8px', color: '#080E1A', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }
 
 /* ═════════════════════ MAIN PAGE ═════════════════════ */
 export default function CrewPage() {
@@ -91,18 +91,18 @@ export default function CrewPage() {
   }).length
   const assigned = employees.filter(e => e.assignments.length > 0).length
 
-  if (loading) return <div style={{ color: '#7fa8c9', padding: '40px', textAlign: 'center' }}>Cargando personal...</div>
+  if (loading) return <div style={{ color: 'var(--text-muted)', padding: '40px', textAlign: 'center' }}>Cargando personal...</div>
 
   return (
     <div>
       {/* Toast */}
-      {toast && <div style={{ position: 'fixed', top: '20px', right: '20px', background: '#27ae60', color: 'white', padding: '10px 24px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, zIndex: 2000 }}>{toast}</div>}
+      {toast && <div style={{ position: 'fixed', top: '20px', right: '20px', background: 'var(--success)', color: 'white', padding: '10px 24px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, zIndex: 2000 }}>{toast}</div>}
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: '#e8f4fd' }}>Personal y Tripulacion</div>
-          <div style={{ fontSize: '13px', color: '#7fa8c9', marginTop: '4px' }}>Gestion de empleados, certificaciones y asignaciones</div>
+          <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>Personal y Tripulacion</div>
+          <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>Gestion de empleados, certificaciones y asignaciones</div>
         </div>
         <button onClick={() => { setSelectedEmp(null); setDrawerView('new-employee'); setSelectedEmp({} as Employee) }} style={btnPrimary}>+ Nuevo Empleado</button>
       </div>
@@ -110,15 +110,15 @@ export default function CrewPage() {
       {/* KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '24px' }}>
         {[
-          { icon: '👥', value: employees.length, label: 'Total personal', color: '#D4950A' },
-          { icon: '✅', value: activos, label: 'Activos', color: '#27ae60' },
-          { icon: '🚢', value: assigned, label: 'Embarcados', color: '#2d9cdb' },
-          { icon: '⚠️', value: expiringSoon, label: 'Cert. por vencer', color: expiringSoon > 0 ? '#e74c3c' : '#27ae60' },
+          { tag: 'TOT', value: employees.length, label: 'Total personal', color: 'var(--accent)' },
+          { tag: 'ACT', value: activos, label: 'Activos', color: 'var(--success)' },
+          { tag: 'EMB', value: assigned, label: 'Embarcados', color: 'var(--info)' },
+          { tag: 'VEN', value: expiringSoon, label: 'Cert. por vencer', color: expiringSoon > 0 ? 'var(--danger)' : 'var(--success)' },
         ].map(k => (
           <div key={k.label} style={{ ...card, padding: '16px 20px', borderTop: `2px solid ${k.color}` }}>
-            <div style={{ fontSize: '20px', marginBottom: '6px' }}>{k.icon}</div>
-            <div style={{ fontFamily: 'monospace', fontSize: '24px', fontWeight: 700, color: '#e8f4fd' }}>{k.value}</div>
-            <div style={{ fontSize: '10px', color: '#7fa8c9', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' }}>{k.label}</div>
+            <div style={{ fontSize: '10px', fontWeight: 700, color: k.color, letterSpacing: '1px', marginBottom: '8px', fontFamily: 'monospace' }}>{k.tag}</div>
+            <div style={{ fontFamily: 'monospace', fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)' }}>{k.value}</div>
+            <div style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' }}>{k.label}</div>
           </div>
         ))}
       </div>
@@ -138,7 +138,7 @@ export default function CrewPage() {
           <thead>
             <tr style={{ background: 'rgba(212,149,10,0.06)' }}>
               {['', 'Nombre', 'Cedula', 'Cargo', 'Embarcacion', 'Certificaciones', 'Estado'].map(h => (
-                <th key={h} style={{ padding: '12px 14px', textAlign: 'left', color: '#7fa8c9', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700, borderBottom: `1px solid ${goldBorder}` }}>{h}</th>
+                <th key={h} style={{ padding: '12px 14px', textAlign: 'left', color: 'var(--text-secondary)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700, borderBottom: `1px solid ${goldBorder}` }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -146,7 +146,7 @@ export default function CrewPage() {
             {filtered.map(emp => {
               const st = statusCfg[emp.status] || statusCfg.INACTIVO
               const activeAssign = emp.assignments.find(a => a.status === 'ACTIVO')
-              const icon = positionIcons[emp.position] || '👤'
+              const icon = positionIcons[emp.position] || 'USR'
               const certCount = emp.certifications.length
               const expiring = emp.certifications.filter(c => {
                 const diff = (new Date(c.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
@@ -156,21 +156,21 @@ export default function CrewPage() {
                 <tr key={emp.id} onClick={() => openEmployee(emp)} style={{ cursor: 'pointer', borderBottom: `1px solid rgba(212,149,10,0.06)` }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(212,149,10,0.04)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                  <td style={{ padding: '12px 14px', fontSize: '18px', width: '40px', textAlign: 'center' }}>{icon}</td>
+                  <td style={{ padding: '12px 14px', width: '40px', textAlign: 'center' }}><div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.3px' }}>{icon}</div></td>
                   <td style={{ padding: '12px 14px' }}>
-                    <div style={{ fontWeight: 600, color: '#e8f4fd' }}>{emp.firstName} {emp.lastName}</div>
-                    {emp.phone && <div style={{ fontSize: '11px', color: '#7fa8c9' }}>{emp.phone}</div>}
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{emp.firstName} {emp.lastName}</div>
+                    {emp.phone && <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{emp.phone}</div>}
                   </td>
-                  <td style={{ padding: '12px 14px', color: '#7fa8c9', fontFamily: 'monospace', fontSize: '12px' }}>{emp.nationalId}</td>
-                  <td style={{ padding: '12px 14px', color: '#e8f4fd' }}>{emp.position}</td>
+                  <td style={{ padding: '12px 14px', color: 'var(--text-secondary)', fontFamily: 'monospace', fontSize: '12px' }}>{emp.nationalId}</td>
+                  <td style={{ padding: '12px 14px', color: 'var(--text-primary)' }}>{emp.position}</td>
                   <td style={{ padding: '12px 14px' }}>
                     {activeAssign
-                      ? <span style={{ fontSize: '12px', color: '#D4950A' }}>{activeAssign.vessel.name}</span>
+                      ? <span style={{ fontSize: '12px', color: 'var(--accent)' }}>{activeAssign.vessel.name}</span>
                       : <span style={{ fontSize: '11px', color: 'rgba(127,168,201,0.4)' }}>Sin asignar</span>}
                   </td>
                   <td style={{ padding: '12px 14px' }}>
-                    <span style={{ fontSize: '12px', color: '#7fa8c9' }}>{certCount}</span>
-                    {expiring > 0 && <span style={{ fontSize: '10px', color: '#e74c3c', marginLeft: '6px' }}>({expiring} por vencer)</span>}
+                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{certCount}</span>
+                    {expiring > 0 && <span style={{ fontSize: '10px', color: 'var(--danger)', marginLeft: '6px' }}>({expiring} por vencer)</span>}
                   </td>
                   <td style={{ padding: '12px 14px' }}>
                     <span style={{ fontSize: '11px', fontWeight: 600, color: st.color, background: st.bg, padding: '3px 10px', borderRadius: '20px' }}>{st.label}</span>
@@ -179,7 +179,7 @@ export default function CrewPage() {
               )
             })}
             {filtered.length === 0 && (
-              <tr><td colSpan={7} style={{ padding: '30px', textAlign: 'center', color: '#7fa8c9' }}>No se encontraron empleados</td></tr>
+              <tr><td colSpan={7} style={{ padding: '30px', textAlign: 'center', color: 'var(--text-secondary)' }}>No se encontraron empleados</td></tr>
             )}
           </tbody>
         </table>
@@ -216,36 +216,36 @@ function CrewDrawer({ employee, vessels, view, setView, onClose, onRefresh, show
   return (
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, backdropFilter: 'blur(4px)' }} />
-      <div style={{ position: 'fixed', top: 0, right: 0, width: '560px', maxWidth: '92vw', height: '100vh', background: '#0a1628', borderLeft: '1px solid rgba(212,149,10,0.2)', zIndex: 1001, display: 'flex', flexDirection: 'column', animation: 'slideIn 0.25s ease' }}>
+      <div style={{ position: 'fixed', top: 0, right: 0, width: '560px', maxWidth: '92vw', height: '100vh', background: 'var(--bg-surface)', borderLeft: '1px solid rgba(212,149,10,0.2)', zIndex: 1001, display: 'flex', flexDirection: 'column', animation: 'slideIn 0.25s ease' }}>
 
         {/* Header */}
         <div style={{ padding: '20px 24px', borderBottom: `1px solid ${goldBorder}`, flexShrink: 0 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ width: '44px', height: '44px', background: 'rgba(212,149,10,0.1)', border: '1px solid rgba(212,149,10,0.2)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
-                {isNew ? '👤' : (positionIcons[employee.position] || '👤')}
+              <div style={{ width: '44px', height: '44px', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.5px' }}>
+                {isNew ? 'USR' : (positionIcons[employee.position] || 'USR')}
               </div>
               <div>
-                <div style={{ fontSize: '17px', fontWeight: 700, color: '#e8f4fd' }}>
+                <div style={{ fontSize: '17px', fontWeight: 700, color: 'var(--text-primary)' }}>
                   {isNew ? 'Nuevo Empleado' : `${employee.firstName} ${employee.lastName}`}
                 </div>
-                {!isNew && <div style={{ fontSize: '12px', color: '#7fa8c9' }}>{employee.position} — {employee.nationalId}</div>}
+                {!isNew && <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{employee.position} — {employee.nationalId}</div>}
               </div>
             </div>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#7fa8c9', fontSize: '20px', cursor: 'pointer', padding: '4px 8px' }}>✕</button>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '20px', cursor: 'pointer', padding: '4px 8px' }}>✕</button>
           </div>
           {!isNew && (
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '11px', fontWeight: 600, color: st.color, background: st.bg, padding: '3px 10px', borderRadius: '20px' }}>{st.label}</span>
-              {activeAssign && <span style={{ fontSize: '11px', color: '#D4950A', background: 'rgba(212,149,10,0.08)', padding: '3px 10px', borderRadius: '20px' }}>{activeAssign.vessel.name} — {activeAssign.role}</span>}
-              {employee.seafarerBook && <span style={{ fontSize: '11px', color: '#7fa8c9', fontFamily: 'monospace', background: 'rgba(127,168,201,0.08)', padding: '3px 10px', borderRadius: '20px' }}>LM: {employee.seafarerBook}</span>}
+              {activeAssign && <span style={{ fontSize: '11px', color: 'var(--accent)', background: 'rgba(212,149,10,0.08)', padding: '3px 10px', borderRadius: '20px' }}>{activeAssign.vessel.name} — {activeAssign.role}</span>}
+              {employee.seafarerBook && <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: 'monospace', background: 'rgba(127,168,201,0.08)', padding: '3px 10px', borderRadius: '20px' }}>LM: {employee.seafarerBook}</span>}
             </div>
           )}
           <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '12px', fontSize: '12px' }}>
             {breadcrumb.map((b, i) => (
               <span key={b.view}>
                 {i > 0 && <span style={{ color: 'rgba(212,149,10,0.3)', margin: '0 4px' }}>/</span>}
-                <button onClick={() => setView(b.view)} style={{ background: 'none', border: 'none', color: i === breadcrumb.length - 1 ? '#D4950A' : '#7fa8c9', cursor: 'pointer', padding: 0, fontSize: '12px', fontWeight: i === breadcrumb.length - 1 ? 600 : 400 }}>{b.label}</button>
+                <button onClick={() => setView(b.view)} style={{ background: 'none', border: 'none', color: i === breadcrumb.length - 1 ? 'var(--accent)' : 'var(--text-secondary)', cursor: 'pointer', padding: 0, fontSize: '12px', fontWeight: i === breadcrumb.length - 1 ? 600 : 400 }}>{b.label}</button>
               </span>
             ))}
           </div>
@@ -274,7 +274,7 @@ function DetailView({ employee, setView }: { employee: Employee; setView: (v: Dr
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Info grid */}
       <div style={{ ...card, padding: '18px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 700, color: '#7fa8c9', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>Informacion Personal</div>
+        <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>Informacion Personal</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '13px' }}>
           <InfoRow label="Nombre" value={`${e.firstName} ${e.lastName}`} />
           <InfoRow label="Cedula" value={e.nationalId} />
@@ -291,15 +291,15 @@ function DetailView({ employee, setView }: { employee: Employee; setView: (v: Dr
 
       {/* Module cards */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-        <ModuleCard icon="📜" label="Certificaciones" count={e.certifications.length} warning={e.certifications.filter(c => { const d = (new Date(c.expiresAt).getTime() - Date.now()) / 86400000; return d > 0 && d <= 30 }).length} onClick={() => setView('certs')} />
-        <ModuleCard icon="🚢" label="Asignaciones" count={e.assignments.length} onClick={() => setView('assigns')} />
-        <ModuleCard icon="✏️" label="Editar datos" onClick={() => setView('edit')} />
+        <ModuleCard icon="CRT" label="Certificaciones" count={e.certifications.length} warning={e.certifications.filter(c => { const d = (new Date(c.expiresAt).getTime() - Date.now()) / 86400000; return d > 0 && d <= 30 }).length} onClick={() => setView('certs')} />
+        <ModuleCard icon="EMB" label="Asignaciones" count={e.assignments.length} onClick={() => setView('assigns')} />
+        <ModuleCard icon="EDT" label="Editar datos" onClick={() => setView('edit')} />
       </div>
 
       {/* Quick certs preview */}
       {e.certifications.length > 0 && (
         <div style={{ ...card, padding: '16px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: '#7fa8c9', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>Certificaciones</div>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>Certificaciones</div>
           {e.certifications.slice(0, 3).map(c => {
             const days = Math.ceil((new Date(c.expiresAt).getTime() - Date.now()) / 86400000)
             const expired = days <= 0
@@ -307,10 +307,10 @@ function DetailView({ employee, setView }: { employee: Employee; setView: (v: Dr
             return (
               <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(212,149,10,0.06)' }}>
                 <div>
-                  <div style={{ fontSize: '13px', color: '#e8f4fd', fontWeight: 500 }}>{c.name}</div>
-                  <div style={{ fontSize: '11px', color: '#7fa8c9' }}>{c.issuedBy} — {c.number}</div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: 500 }}>{c.name}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{c.issuedBy} — {c.number}</div>
                 </div>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: expired ? '#e74c3c' : warning ? '#e67e22' : '#27ae60', background: expired ? 'rgba(231,76,60,0.12)' : warning ? 'rgba(230,126,34,0.12)' : 'rgba(39,174,96,0.12)', padding: '3px 10px', borderRadius: '20px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 600, color: expired ? 'var(--danger)' : warning ? 'var(--warning)' : 'var(--success)', background: expired ? 'rgba(231,76,60,0.12)' : warning ? 'rgba(230,126,34,0.12)' : 'rgba(39,174,96,0.12)', padding: '3px 10px', borderRadius: '20px' }}>
                   {expired ? 'Vencida' : warning ? `${days}d restantes` : `Vigente`}
                 </span>
               </div>
@@ -327,7 +327,7 @@ function CertsView({ certs, onNew }: { certs: Certification[]; onNew: () => void
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd' }}>Certificaciones</div>
+        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Certificaciones</div>
         <button onClick={onNew} style={btnPrimary}>+ Nueva Certificacion</button>
       </div>
       {certs.length === 0
@@ -337,14 +337,14 @@ function CertsView({ certs, onNew }: { certs: Certification[]; onNew: () => void
             const expired = days <= 0
             const warning = days > 0 && days <= 30
             return (
-              <div key={c.id} style={{ ...card, padding: '16px', marginBottom: '10px', borderLeft: `3px solid ${expired ? '#e74c3c' : warning ? '#e67e22' : '#27ae60'}` }}>
+              <div key={c.id} style={{ ...card, padding: '16px', marginBottom: '10px', borderLeft: `3px solid ${expired ? 'var(--danger)' : warning ? 'var(--warning)' : 'var(--success)'}` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#e8f4fd' }}>{c.name}</span>
-                  <span style={{ fontSize: '11px', fontWeight: 600, color: expired ? '#e74c3c' : warning ? '#e67e22' : '#27ae60' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{c.name}</span>
+                  <span style={{ fontSize: '11px', fontWeight: 600, color: expired ? 'var(--danger)' : warning ? 'var(--warning)' : 'var(--success)' }}>
                     {expired ? `Vencida hace ${Math.abs(days)}d` : `${days}d restantes`}
                   </span>
                 </div>
-                <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: '#7fa8c9', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: 'var(--text-secondary)', flexWrap: 'wrap' }}>
                   <span>Tipo: {c.type}</span>
                   <span>Emitido: {c.issuedBy}</span>
                   {c.number && <span>N: {c.number}</span>}
@@ -370,7 +370,7 @@ function CertForm({ employeeId, onSaved, saving, setSaving }: { employeeId: stri
   }
   return (
     <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      <div style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd' }}>Nueva Certificacion</div>
+      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Nueva Certificacion</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
         <Field label="Tipo"><select value={form.type} onChange={e => set('type', e.target.value)} style={inputStyle}>
           <option value="STCW">STCW</option><option value="BST">BST (Basic Safety)</option><option value="GMDSS">GMDSS</option>
@@ -395,22 +395,22 @@ function CertForm({ employeeId, onSaved, saving, setSaving }: { employeeId: stri
 
 /* ─── Assignments ─── */
 function AssignsView({ assignments, onNew }: { assignments: Assignment[]; onNew: () => void }) {
-  const stColors: Record<string, string> = { ACTIVO: '#27ae60', COMPLETADO: '#7fa8c9', CANCELADO: '#e74c3c' }
+  const stColors: Record<string, string> = { ACTIVO: 'var(--success)', COMPLETADO: 'var(--text-secondary)', CANCELADO: 'var(--danger)' }
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd' }}>Historial de Asignaciones</div>
+        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Historial de Asignaciones</div>
         <button onClick={onNew} style={btnPrimary}>+ Nueva Asignacion</button>
       </div>
       {assignments.length === 0
         ? <EmptyState label="asignaciones" />
         : assignments.map(a => (
-            <div key={a.id} style={{ ...card, padding: '16px', marginBottom: '10px', borderLeft: `3px solid ${stColors[a.status] || '#7fa8c9'}` }}>
+            <div key={a.id} style={{ ...card, padding: '16px', marginBottom: '10px', borderLeft: `3px solid ${stColors[a.status] || 'var(--text-secondary)'}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: '#e8f4fd' }}>{a.vessel.name}</span>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: stColors[a.status] || '#7fa8c9' }}>{a.status}</span>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{a.vessel.name}</span>
+                <span style={{ fontSize: '11px', fontWeight: 600, color: stColors[a.status] || 'var(--text-secondary)' }}>{a.status}</span>
               </div>
-              <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: '#7fa8c9' }}>
+              <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: 'var(--text-secondary)' }}>
                 <span>Rol: {a.role}</span>
                 <span>Desde: {fmtDate(a.startDate)}</span>
                 {a.endDate && <span>Hasta: {fmtDate(a.endDate)}</span>}
@@ -434,7 +434,7 @@ function AssignForm({ employeeId, vessels, onSaved, saving, setSaving }: { emplo
   }
   return (
     <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      <div style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd' }}>Nueva Asignacion</div>
+      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Nueva Asignacion</div>
       <Field label="Embarcacion">
         <select value={form.vesselId} onChange={e => set('vesselId', e.target.value)} style={inputStyle} required>
           {vessels.map(v => <option key={v.id} value={v.id}>{v.name} ({v.fleetType})</option>)}
@@ -477,7 +477,7 @@ function EmployeeForm({ employee, onSaved, saving, setSaving }: { employee?: Emp
   }
   return (
     <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      <div style={{ fontSize: '14px', fontWeight: 700, color: '#e8f4fd' }}>{isEdit ? 'Editar Empleado' : 'Nuevo Empleado'}</div>
+      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{isEdit ? 'Editar Empleado' : 'Nuevo Empleado'}</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
         <Field label="Nombre"><input value={form.firstName} onChange={e => set('firstName', e.target.value)} style={inputStyle} required /></Field>
         <Field label="Apellido"><input value={form.lastName} onChange={e => set('lastName', e.target.value)} style={inputStyle} required /></Field>
@@ -523,23 +523,23 @@ function EmployeeForm({ employee, onSaved, saving, setSaving }: { employee?: Emp
 
 /* ─── Shared components ─── */
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div><label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#7fa8c9', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '5px' }}>{label}</label>{children}</div>
+  return <div><label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '5px' }}>{label}</label>{children}</div>
 }
 function InfoRow({ label, value }: { label: string; value: string }) {
-  return <div><div style={{ fontSize: '10px', color: '#7fa8c9', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</div><div style={{ fontSize: '13px', color: '#e8f4fd', fontWeight: 500 }}>{value}</div></div>
+  return <div><div style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</div><div style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: 500 }}>{value}</div></div>
 }
 function EmptyState({ label }: { label: string }) {
-  return <div style={{ textAlign: 'center', padding: '40px 20px', color: '#7fa8c9' }}><div style={{ fontSize: '32px', marginBottom: '12px', opacity: 0.4 }}>📋</div><div style={{ fontSize: '14px' }}>No hay {label} registradas</div></div>
+  return <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-secondary)' }}><div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', marginBottom: '12px', opacity: 0.4, fontFamily: 'monospace' }}>—</div><div style={{ fontSize: '14px' }}>No hay {label} registradas</div></div>
 }
 function ModuleCard({ icon, label, count, warning, onClick }: { icon: string; label: string; count?: number; warning?: number; onClick: () => void }) {
   return (
     <div onClick={onClick} style={{ ...card, padding: '16px', cursor: 'pointer', textAlign: 'center', transition: 'border-color 0.2s' }}
       onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(212,149,10,0.4)')}
       onMouseLeave={e => (e.currentTarget.style.borderColor = goldBorder)}>
-      <div style={{ fontSize: '24px', marginBottom: '6px' }}>{icon}</div>
-      <div style={{ fontSize: '12px', fontWeight: 600, color: '#e8f4fd' }}>{label}</div>
-      {count != null && <div style={{ fontSize: '11px', color: '#7fa8c9', marginTop: '2px' }}>{count} registros</div>}
-      {warning != null && warning > 0 && <div style={{ fontSize: '10px', color: '#e74c3c', marginTop: '2px' }}>{warning} por vencer</div>}
+      <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.5px', margin: '0 auto 8px' }}>{icon}</div>
+      <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>{label}</div>
+      {count != null && <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>{count} registros</div>}
+      {warning != null && warning > 0 && <div style={{ fontSize: '10px', color: 'var(--danger)', marginTop: '2px' }}>{warning} por vencer</div>}
     </div>
   )
 }

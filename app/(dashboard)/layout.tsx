@@ -30,8 +30,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (loading) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#070f1e', color: '#D4950A', fontSize: '16px', fontFamily: 'system-ui' }}>
-        🚢 Cargando VENOLS ERP...
+      <div className="h-screen flex flex-col items-center justify-center bg-surface gap-4">
+        <span className="material-symbols-outlined text-amber-500 text-5xl animate-pulse">anchor</span>
+        <p className="text-[13px] text-slate-600 tracking-widest uppercase font-mono">
+          Cargando VENOLS ERP…
+        </p>
       </div>
     )
   }
@@ -39,11 +42,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!user) return null
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#070f1e', fontFamily: 'system-ui, sans-serif' }}>
+    <div className="flex flex-col h-screen bg-surface font-body overflow-hidden">
       <Header user={user} />
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div className="flex flex-1 overflow-hidden">
         <Sidebar userRole={user.role} />
-        <main style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+        <main className="flex-1 overflow-y-auto bg-surface p-8">
           {children}
         </main>
       </div>

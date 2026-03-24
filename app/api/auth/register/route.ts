@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { promises as dns } from 'dns'
 import { prisma } from '@/lib/prisma'
 import { hashPassword, validatePasswordStrength } from '@/lib/bcrypt'
-import { signToken, hashToken } from '@/lib/jwt'
+import { generateOTP, hashOTP, otpExpiresAt } from '@/lib/otp'
+import { sendOTPEmail } from '@/lib/email'
 import { z } from 'zod'
 
 const RegisterSchema = z.object({
-  email: z.string().email('Email inválido').toLowerCase(),
+  email: z.string().email('Formato de email inválido').toLowerCase().trim(),
   password: z.string().min(8, 'Contraseña muy corta'),
   firstName: z.string().min(2).max(50).trim(),
   lastName: z.string().min(2).max(50).trim(),
@@ -13,20 +15,43 @@ const RegisterSchema = z.object({
   role: z.enum(['ADMIN', 'OPERATOR', 'TECHNICIAN']).optional().default('OPERATOR'),
 })
 
+/** Verifica que el dominio del email tenga registros MX válidos */
+async function domainHasMXRecords(email: string): Promise<boolean> {
+  try {
+    const domain = email.split('@')[1]
+    const records = await dns.resolveMx(domain)
+    return Array.isArray(records) && records.length > 0
+  } catch {
+    return false
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
 
+    // 1. Validar formato con Zod
     const validation = RegisterSchema.safeParse(body)
     if (!validation.success) {
+      const firstError = validation.error.issues[0]
       return NextResponse.json(
-        { error: 'Datos inválidos', details: validation.error.flatten() },
+        { error: firstError.message ?? 'Datos inválidos' },
         { status: 400 }
       )
     }
 
     const { email, password, firstName, lastName, phone, role } = validation.data
 
+    // 2. Validar dominio con registros MX
+    const mxValid = await domainHasMXRecords(email)
+    if (!mxValid) {
+      return NextResponse.json(
+        { error: 'Correo no válido. El dominio no existe o no puede recibir emails.' },
+        { status: 400 }
+      )
+    }
+
+    // 3. Validar fortaleza de contraseña
     const passwordCheck = validatePasswordStrength(password)
     if (!passwordCheck.valid) {
       return NextResponse.json(
@@ -35,50 +60,54 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // 4. Verificar si el email ya está registrado como usuario activo
     const existingUser = await prisma.user.findUnique({ where: { email } })
     if (existingUser) {
-      return NextResponse.json({ error: 'No se pudo crear la cuenta' }, { status: 409 })
+      return NextResponse.json(
+        { error: 'Este correo ya está registrado' },
+        { status: 409 }
+      )
     }
 
+    // 5. Generar OTP y guardar registro pendiente
+    const otp = generateOTP()
     const hashedPassword = await hashPassword(password)
+    const expiresAt = otpExpiresAt(10) // 10 minutos
 
-    const { user, accessToken } = await prisma.$transaction(async (tx) => {
-      const newUser = await tx.user.create({
-        data: { email, password: hashedPassword, firstName, lastName, phone, role },
-        select: { id: true, email: true, firstName: true, lastName: true, role: true, createdAt: true },
-      })
-
-      const sessionId = crypto.randomUUID()
-      const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000)
-      const token = signToken({ sub: newUser.id, email: newUser.email, role: newUser.role, sessionId })
-
-      await tx.session.create({
-        data: {
-          id: sessionId,
-          userId: newUser.id,
-          tokenHash: hashToken(token),
-          ipAddress: req.headers.get('x-forwarded-for') || '',
-          userAgent: req.headers.get('user-agent') || '',
-          expiresAt,
-        },
-      })
-
-      await tx.auditLog.create({
-        data: {
-          userId: newUser.id,
-          action: 'USER_REGISTERED',
-          entity: 'User',
-          entityId: newUser.id,
-          ipAddress: req.headers.get('x-forwarded-for') || '',
-        },
-      })
-
-      return { user: newUser, accessToken: token }
+    // Upsert: si ya tenía un intento previo, lo reemplaza (permite reenvío del código)
+    await prisma.pendingRegistration.upsert({
+      where: { email },
+      create: {
+        email,
+        hashedPassword,
+        firstName,
+        lastName,
+        phone,
+        role,
+        otpHash: hashOTP(otp),
+        expiresAt,
+      },
+      update: {
+        hashedPassword,
+        firstName,
+        lastName,
+        phone,
+        role,
+        otpHash: hashOTP(otp),
+        expiresAt,
+        attempts: 0,
+      },
     })
 
+    // 6. Enviar email con el código OTP
+    await sendOTPEmail({ to: email, firstName, otp })
+
     return NextResponse.json(
-      { message: 'Usuario registrado exitosamente', user, accessToken },
-      { status: 201 }
+      {
+        message: 'Código de verificación enviado. Revisa tu correo.',
+        expiresInMinutes: 10,
+      },
+      { status: 200 }
     )
   } catch (error) {
     console.error('[REGISTER ERROR]', error)

@@ -41,28 +41,28 @@ async function api(path: string, opts?: RequestInit) {
 
 /* ─── Styles ─── */
 const card: React.CSSProperties = {
-  background: '#0a1628',
-  border: '1px solid rgba(212,149,10,0.15)',
-  borderRadius: '14px',
+  background: 'var(--bg-surface)',
+  border: '1px solid var(--border-accent)',
+  borderRadius: '12px',
 }
-const goldBorder = 'rgba(212,149,10,0.15)'
+const goldBorder = 'var(--border-accent)'
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '9px 12px',
-  background: '#060c1a',
-  border: `1px solid ${goldBorder}`,
+  background: 'var(--bg-input)',
+  border: '1px solid var(--border-accent)',
   borderRadius: '8px',
-  color: '#e8f4fd',
+  color: 'var(--text-primary)',
   fontSize: '13px',
   outline: 'none',
   boxSizing: 'border-box',
 }
 const btnPrimary: React.CSSProperties = {
   padding: '10px 20px',
-  background: 'linear-gradient(135deg, #D4950A, #b8820a)',
+  background: 'var(--accent)',
   border: 'none',
   borderRadius: '8px',
-  color: '#060c1a',
+  color: '#080E1A',
   fontWeight: 700,
   fontSize: '13px',
   cursor: 'pointer',
@@ -70,9 +70,9 @@ const btnPrimary: React.CSSProperties = {
 const btnSecondary: React.CSSProperties = {
   padding: '10px 20px',
   background: 'transparent',
-  border: `1px solid ${goldBorder}`,
+  border: '1px solid var(--border-accent)',
   borderRadius: '8px',
-  color: '#7fa8c9',
+  color: 'var(--text-secondary)',
   fontWeight: 600,
   fontSize: '13px',
   cursor: 'pointer',
@@ -80,18 +80,18 @@ const btnSecondary: React.CSSProperties = {
 const labelStyle: React.CSSProperties = {
   display: 'block',
   fontSize: '12px',
-  color: '#7fa8c9',
+  color: 'var(--text-muted)',
   marginBottom: '4px',
   fontWeight: 600,
 }
 
 /* ─── Fuel type badge colors ─── */
 const fuelColors: Record<string, { color: string; bg: string }> = {
-  HFO:    { color: '#e74c3c', bg: 'rgba(231,76,60,0.12)' },
-  IFO380: { color: '#e67e22', bg: 'rgba(230,126,34,0.12)' },
-  VLSFO:  { color: '#2d9cdb', bg: 'rgba(45,156,219,0.12)' },
-  MDO:    { color: '#27ae60', bg: 'rgba(39,174,96,0.12)' },
-  MGO:    { color: '#D4950A', bg: 'rgba(212,149,10,0.12)' },
+  HFO:    { color: 'var(--danger)', bg: 'rgba(231,76,60,0.12)' },
+  IFO380: { color: 'var(--warning)', bg: 'rgba(230,126,34,0.12)' },
+  VLSFO:  { color: 'var(--info)', bg: 'var(--info-dim)' },
+  MDO:    { color: 'var(--success)', bg: 'rgba(39,174,96,0.12)' },
+  MGO:    { color: 'var(--accent)', bg: 'rgba(212,149,10,0.12)' },
   LSMGO:  { color: '#9b59b6', bg: 'rgba(155,89,182,0.12)' },
 }
 
@@ -208,7 +208,7 @@ export default function FuelPage() {
   /* ─── Render ─── */
   if (loading) {
     return (
-      <div style={{ color: '#7fa8c9', padding: '40px', textAlign: 'center' }}>
+      <div style={{ color: 'var(--text-muted)', padding: '40px', textAlign: 'center' }}>
         Cargando registros de combustible...
       </div>
     )
@@ -219,7 +219,7 @@ export default function FuelPage() {
       {/* Toast */}
       {toast && (
         <div style={{
-          position: 'fixed', top: '20px', right: '20px', background: '#27ae60',
+          position: 'fixed', top: '20px', right: '20px', background: 'var(--success)',
           color: 'white', padding: '12px 24px', borderRadius: '8px', fontSize: '13px',
           fontWeight: 600, zIndex: 2000, boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
         }}>
@@ -230,10 +230,10 @@ export default function FuelPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800, color: '#e8f4fd' }}>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800, color: 'var(--text-primary)' }}>
             Control de Combustible
           </h1>
-          <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#7fa8c9' }}>
+          <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
             Gestion de consumo, abastecimiento y ROB de la flota
           </p>
         </div>
@@ -244,52 +244,52 @@ export default function FuelPage() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
         {/* Total Registros */}
         <div style={{ ...card, padding: '20px' }}>
-          <div style={{ fontSize: '12px', color: '#7fa8c9', fontWeight: 600, marginBottom: '8px' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>
             TOTAL REGISTROS
           </div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: '#D4950A' }}>
+          <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--accent)' }}>
             {totalRegistros}
           </div>
-          <div style={{ fontSize: '11px', color: '#556680', marginTop: '4px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
             registros en el sistema
           </div>
         </div>
 
         {/* ROB Promedio */}
         <div style={{ ...card, padding: '20px' }}>
-          <div style={{ fontSize: '12px', color: '#7fa8c9', fontWeight: 600, marginBottom: '8px' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>
             ROB PROMEDIO FLOTA
           </div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: '#e8f4fd' }}>
+          <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)' }}>
             {fmtNum(avgRob, 1)}
           </div>
-          <div style={{ fontSize: '11px', color: '#556680', marginTop: '4px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
             toneladas metricas
           </div>
         </div>
 
         {/* Ultimo Abastecimiento */}
         <div style={{ ...card, padding: '20px' }}>
-          <div style={{ fontSize: '12px', color: '#7fa8c9', fontWeight: 600, marginBottom: '8px' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>
             ULTIMO ABASTECIMIENTO
           </div>
-          <div style={{ fontSize: '18px', fontWeight: 700, color: '#27ae60' }}>
+          <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--success)' }}>
             {lastBunker ? fmtNum(lastBunker.bunkerReceived) + ' MT' : '—'}
           </div>
-          <div style={{ fontSize: '11px', color: '#556680', marginTop: '4px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
             {lastBunker ? `${lastBunker.vessel.name} - ${fmtDate(lastBunker.date)}` : 'Sin abastecimientos'}
           </div>
         </div>
 
         {/* Mayor Consumo */}
         <div style={{ ...card, padding: '20px' }}>
-          <div style={{ fontSize: '12px', color: '#7fa8c9', fontWeight: 600, marginBottom: '8px' }}>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>
             MAYOR CONSUMO
           </div>
-          <div style={{ fontSize: '18px', fontWeight: 700, color: '#e74c3c' }}>
+          <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--danger)' }}>
             {maxConsumo ? fmtNum(maxConsumo.consumed) + ' MT' : '—'}
           </div>
-          <div style={{ fontSize: '11px', color: '#556680', marginTop: '4px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
             {maxConsumo ? `${maxConsumo.vessel.name} - ${maxConsumo.fuelType}` : 'Sin datos de consumo'}
           </div>
         </div>
@@ -297,7 +297,7 @@ export default function FuelPage() {
 
       {/* Filter */}
       <div style={{ ...card, padding: '16px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <span style={{ fontSize: '13px', color: '#7fa8c9', fontWeight: 600 }}>Filtrar por embarcacion:</span>
+        <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 600 }}>Filtrar por embarcacion:</span>
         <select
           value={vesselFilter}
           onChange={e => { setVesselFilter(e.target.value); setLoading(true) }}
@@ -312,7 +312,7 @@ export default function FuelPage() {
             <option key={v.id} value={v.id}>{v.name}</option>
           ))}
         </select>
-        <div style={{ marginLeft: 'auto', fontSize: '12px', color: '#556680' }}>
+        <div style={{ marginLeft: 'auto', fontSize: '12px', color: 'var(--text-muted)' }}>
           Mostrando {logs.length} registro{logs.length !== 1 ? 's' : ''}
         </div>
       </div>
@@ -325,7 +325,7 @@ export default function FuelPage() {
               <tr style={{ borderBottom: `1px solid ${goldBorder}` }}>
                 {['Fecha', 'Embarcacion', 'Tipo Combustible', 'ROB (MT)', 'Consumido (MT)', 'Recibido (MT)', 'Proveedor', 'Ubicacion'].map(h => (
                   <th key={h} style={{
-                    textAlign: 'left', padding: '14px 16px', color: '#7fa8c9',
+                    textAlign: 'left', padding: '14px 16px', color: 'var(--text-muted)',
                     fontWeight: 700, fontSize: '11px', textTransform: 'uppercase',
                     letterSpacing: '0.5px',
                   }}>
@@ -337,13 +337,13 @@ export default function FuelPage() {
             <tbody>
               {logs.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', padding: '40px', color: '#556680' }}>
+                  <td colSpan={8} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
                     No se encontraron registros de combustible
                   </td>
                 </tr>
               ) : (
                 logs.map(log => {
-                  const fc = fuelColors[log.fuelType] || { color: '#7fa8c9', bg: 'rgba(127,168,201,0.12)' }
+                  const fc = fuelColors[log.fuelType] || { color: 'var(--text-muted)', bg: 'rgba(127,168,201,0.12)' }
                   return (
                     <tr
                       key={log.id}
@@ -356,10 +356,10 @@ export default function FuelPage() {
                       onMouseEnter={e => (e.currentTarget.style.background = 'rgba(212,149,10,0.04)')}
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                     >
-                      <td style={{ padding: '12px 16px', color: '#e8f4fd', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '12px 16px', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
                         {fmtDate(log.date)}
                       </td>
-                      <td style={{ padding: '12px 16px', color: '#e8f4fd', fontWeight: 600 }}>
+                      <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 600 }}>
                         {log.vessel.name}
                       </td>
                       <td style={{ padding: '12px 16px' }}>
@@ -370,19 +370,19 @@ export default function FuelPage() {
                           {log.fuelType}
                         </span>
                       </td>
-                      <td style={{ padding: '12px 16px', color: '#D4950A', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+                      <td style={{ padding: '12px 16px', color: 'var(--accent)', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
                         {fmtNum(log.rob)}
                       </td>
-                      <td style={{ padding: '12px 16px', color: log.consumed ? '#e74c3c' : '#556680', fontVariantNumeric: 'tabular-nums' }}>
+                      <td style={{ padding: '12px 16px', color: log.consumed ? 'var(--danger)' : 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
                         {fmtNum(log.consumed)}
                       </td>
-                      <td style={{ padding: '12px 16px', color: log.bunkerReceived ? '#27ae60' : '#556680', fontVariantNumeric: 'tabular-nums' }}>
+                      <td style={{ padding: '12px 16px', color: log.bunkerReceived ? 'var(--success)' : 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
                         {fmtNum(log.bunkerReceived)}
                       </td>
-                      <td style={{ padding: '12px 16px', color: '#7fa8c9' }}>
+                      <td style={{ padding: '12px 16px', color: 'var(--text-muted)' }}>
                         {log.supplier || '—'}
                       </td>
-                      <td style={{ padding: '12px 16px', color: '#7fa8c9' }}>
+                      <td style={{ padding: '12px 16px', color: 'var(--text-muted)' }}>
                         {log.operationAt}
                       </td>
                     </tr>
@@ -408,7 +408,7 @@ export default function FuelPage() {
           {/* Panel */}
           <div style={{
             position: 'fixed', top: 0, right: 0, bottom: 0, width: '520px',
-            background: '#0a1628', borderLeft: `1px solid ${goldBorder}`,
+            background: 'var(--bg-surface)', borderLeft: `1px solid ${goldBorder}`,
             zIndex: 1001, overflowY: 'auto', padding: '28px',
             boxShadow: '-8px 0 40px rgba(0,0,0,0.5)',
           }}>
@@ -417,7 +417,7 @@ export default function FuelPage() {
               onClick={closeDrawer}
               style={{
                 position: 'absolute', top: '16px', right: '16px', background: 'none',
-                border: 'none', color: '#7fa8c9', fontSize: '22px', cursor: 'pointer',
+                border: 'none', color: 'var(--text-muted)', fontSize: '22px', cursor: 'pointer',
                 lineHeight: 1, padding: '4px',
               }}
             >
@@ -444,16 +444,16 @@ export default function FuelPage() {
 
 /* ═══════════════════════ DETAIL VIEW ═══════════════════════ */
 function DetailView({ log }: { log: FuelLog }) {
-  const fc = fuelColors[log.fuelType] || { color: '#7fa8c9', bg: 'rgba(127,168,201,0.12)' }
+  const fc = fuelColors[log.fuelType] || { color: 'var(--text-muted)', bg: 'rgba(127,168,201,0.12)' }
 
   const fields: { label: string; value: string | number | null; color?: string }[] = [
     { label: 'Embarcacion', value: log.vessel.name },
     { label: 'Fecha', value: fmtDate(log.date) },
     { label: 'Tipo Combustible', value: log.fuelType },
     { label: 'Ubicacion', value: log.operationAt },
-    { label: 'ROB (MT)', value: fmtNum(log.rob), color: '#D4950A' },
-    { label: 'Consumido (MT)', value: fmtNum(log.consumed), color: '#e74c3c' },
-    { label: 'Recibido (MT)', value: fmtNum(log.bunkerReceived), color: '#27ae60' },
+    { label: 'ROB (MT)', value: fmtNum(log.rob), color: 'var(--accent)' },
+    { label: 'Consumido (MT)', value: fmtNum(log.consumed), color: 'var(--danger)' },
+    { label: 'Recibido (MT)', value: fmtNum(log.bunkerReceived), color: 'var(--success)' },
     { label: 'Precio (USD/MT)', value: log.price ? fmtNum(log.price) : '—' },
     { label: 'Proveedor', value: log.supplier || '—' },
     { label: 'BDN', value: log.bdn || '—' },
@@ -472,7 +472,7 @@ function DetailView({ log }: { log: FuelLog }) {
           <span role="img" aria-label="fuel">&#9981;</span>
         </div>
         <div>
-          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#e8f4fd' }}>
+          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>
             Detalle de Registro
           </h2>
           <span style={{
@@ -489,10 +489,10 @@ function DetailView({ log }: { log: FuelLog }) {
           <div key={f.label} style={{
             ...card, padding: '14px',
           }}>
-            <div style={{ fontSize: '11px', color: '#556680', fontWeight: 600, marginBottom: '4px', textTransform: 'uppercase' }}>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px', textTransform: 'uppercase' }}>
               {f.label}
             </div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: f.color || '#e8f4fd' }}>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: f.color || 'var(--text-primary)' }}>
               {f.value}
             </div>
           </div>
@@ -501,16 +501,16 @@ function DetailView({ log }: { log: FuelLog }) {
 
       {log.notes && (
         <div style={{ ...card, padding: '14px', marginTop: '16px' }}>
-          <div style={{ fontSize: '11px', color: '#556680', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase' }}>
             Notas
           </div>
-          <div style={{ fontSize: '13px', color: '#e8f4fd', lineHeight: 1.5 }}>
+          <div style={{ fontSize: '13px', color: 'var(--text-primary)', lineHeight: 1.5 }}>
             {log.notes}
           </div>
         </div>
       )}
 
-      <div style={{ marginTop: '16px', fontSize: '11px', color: '#556680', textAlign: 'right' }}>
+      <div style={{ marginTop: '16px', fontSize: '11px', color: 'var(--text-muted)', textAlign: 'right' }}>
         Creado: {fmtDate(log.createdAt)} | Actualizado: {fmtDate(log.updatedAt)}
       </div>
     </div>
@@ -528,7 +528,7 @@ function FormView({ form, vessels, saving, onChange, onSubmit, onCancel }: {
 }) {
   return (
     <div>
-      <h2 style={{ margin: '0 0 20px', fontSize: '18px', fontWeight: 800, color: '#e8f4fd' }}>
+      <h2 style={{ margin: '0 0 20px', fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>
         Nuevo Registro de Combustible
       </h2>
 

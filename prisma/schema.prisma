@@ -7,6 +7,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model PendingRegistration {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  hashedPassword String
+  firstName      String
+  lastName       String
+  phone          String?
+  role           Role     @default(OPERATOR)
+  otpHash        String
+  expiresAt      DateTime
+  attempts       Int      @default(0)
+  createdAt      DateTime @default(now())
+
+  @@index([email])
+  @@index([expiresAt])
+  @@map("pending_registrations")
+}
+
 model User {
   id            String     @id @default(cuid())
   email         String     @unique
