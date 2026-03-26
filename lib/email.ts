@@ -12,10 +12,15 @@ export async function sendOTPEmail(params: {
 }): Promise<void> {
   const { to, firstName, otp } = params
 
+  // En desarrollo sin dominio verificado, Resend solo permite enviar al email
+  // del propietario de la cuenta. RESEND_TEST_EMAIL redirige todos los emails.
+  const recipient = process.env.RESEND_TEST_EMAIL ?? to
+  const isDev = !!process.env.RESEND_TEST_EMAIL
+
   const { error } = await resend.emails.send({
     from: FROM_ADDRESS,
-    to,
-    subject: `${otp} es tu código de verificación — ${APP_NAME}`,
+    to: recipient,
+    subject: `${otp} es tu código de verificación — ${APP_NAME}${isDev ? ` [DEV → ${to}]` : ''}`,
     html: buildOTPEmailHTML({ firstName, otp }),
   })
 

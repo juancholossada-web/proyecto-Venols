@@ -15,14 +15,21 @@ const RegisterSchema = z.object({
   role: z.enum(['ADMIN', 'OPERATOR_HEAVY', 'OPERATOR_LIGHT', 'STANDARD']).optional().default('STANDARD'),
 })
 
-/** Verifica que el dominio del email tenga registros MX válidos */
+/** Verifica que el dominio del email tenga registros MX válidos (timeout 3s) */
 async function domainHasMXRecords(email: string): Promise<boolean> {
   try {
     const domain = email.split('@')[1]
-    const records = await dns.resolveMx(domain)
+    const records = await Promise.race([
+      dns.resolveMx(domain),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('DNS timeout')), 3000)
+      ),
+    ])
     return Array.isArray(records) && records.length > 0
-  } catch {
-    return false
+  } catch (err) {
+    // En dev puede fallar por DNS local — logueamos pero no bloqueamos
+    console.warn('[REGISTER] MX lookup failed, skipping validation:', (err as Error).message)
+    return true
   }
 }
 

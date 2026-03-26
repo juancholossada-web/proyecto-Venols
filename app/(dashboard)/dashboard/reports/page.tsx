@@ -1,15 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { api } from '@/lib/api-client'
 
 type Vessel = { id: string; name: string; fleetType: string }
-
-function getToken() { return localStorage.getItem('token') || '' }
-async function api(path: string) {
-  const res = await fetch(path, { headers: { Authorization: `Bearer ${getToken()}` } })
-  if (!res.ok) throw new Error(`API ${res.status}`)
-  return res.json()
-}
 
 const card: React.CSSProperties = { background: 'var(--bg-surface)', border: '1px solid var(--border-accent)', borderRadius: '12px' }
 const btnPrimary: React.CSSProperties = { padding: '10px 20px', background: 'var(--accent)', border: 'none', borderRadius: '8px', color: '#080E1A', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }
@@ -58,7 +52,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Report type selector */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginBottom: '24px' }}>
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3.5 mb-6">
         {reportTypes.map(r => (
           <div key={r.id} onClick={() => { setSelectedReport(r.id); setData(null) }}
             style={{ ...card, padding: '18px', cursor: 'pointer', borderLeft: `3px solid ${selectedReport === r.id ? r.color : 'transparent'}`, transition: 'all 0.2s', opacity: selectedReport && selectedReport !== r.id ? 0.5 : 1 }}

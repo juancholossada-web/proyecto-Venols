@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { api } from '@/lib/api-client'
 
 /* ─── Types ─── */
 type Vessel = { id: string; name: string }
@@ -143,20 +144,6 @@ const equipmentTypeLabels: Record<string, string> = {
   OTRO: 'Otro',
 }
 
-/* ─── API helper ─── */
-function getToken() { return localStorage.getItem('token') || '' }
-async function api(path: string, opts?: RequestInit) {
-  const res = await fetch(path, {
-    ...opts,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${getToken()}`,
-      ...opts?.headers,
-    },
-  })
-  if (!res.ok) throw new Error(`API ${res.status}`)
-  return res.json()
-}
 
 /* ─── Styles ─── */
 const goldBorder = 'var(--border-accent)'
@@ -1650,7 +1637,7 @@ export default function MaintenancePage() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <div>
                     <label style={labelStyle}>Horas Actuales</label>
                     <input type="number" value={equipForm.currentHours ?? 0} onChange={e => updateEquipForm('currentHours', parseFloat(e.target.value) || 0)} style={inputStyle} placeholder="0" min="0" />

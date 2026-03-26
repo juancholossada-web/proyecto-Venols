@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { api } from '@/lib/api-client'
 
 /* ─── Types ─── */
 type Vessel = { id: string; name: string }
@@ -28,16 +29,6 @@ type DrawerMode = 'detail' | 'new'
 
 const FUEL_TYPES = ['HFO', 'IFO380', 'VLSFO', 'MDO', 'MGO', 'LSMGO'] as const
 
-/* ─── API helper ─── */
-function getToken() { return localStorage.getItem('token') || '' }
-async function api(path: string, opts?: RequestInit) {
-  const res = await fetch(path, {
-    ...opts,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}`, ...opts?.headers },
-  })
-  if (!res.ok) throw new Error(`API ${res.status}`)
-  return res.json()
-}
 
 /* ─── Styles ─── */
 const card: React.CSSProperties = {
@@ -241,7 +232,7 @@ export default function FuelPage() {
       </div>
 
       {/* KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
         {/* Total Registros */}
         <div style={{ ...card, padding: '20px' }}>
           <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>
@@ -407,7 +398,7 @@ export default function FuelPage() {
           />
           {/* Panel */}
           <div style={{
-            position: 'fixed', top: 0, right: 0, bottom: 0, width: '520px',
+            position: 'fixed', top: 0, right: 0, bottom: 0, width: '520px', maxWidth: '100vw',
             background: 'var(--bg-surface)', borderLeft: `1px solid ${goldBorder}`,
             zIndex: 1001, overflowY: 'auto', padding: '28px',
             boxShadow: '-8px 0 40px rgba(0,0,0,0.5)',
@@ -586,7 +577,7 @@ function FormView({ form, vessels, saving, onChange, onSubmit, onCancel }: {
         </div>
 
         {/* ROB + Consumed + Received */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <div>
             <label style={labelStyle}>ROB (MT) *</label>
             <input

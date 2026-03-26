@@ -120,7 +120,8 @@ model Vessel {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
-  tankCapacityLiters Float?
+  tankCapacityLiters      Float?
+  waterTankCapacityLiters Float?
 
   fuelReports        FuelReport[]
   maintenanceReports MaintenanceReport[]
@@ -591,9 +592,11 @@ model DailyReport {
   captain         String
   marineOnDuty    String
   personnel       String?
-  fuelLevelLiters Float?
-  fuelPercentage  Float?
-  vesselStatus    VesselStatus
+  fuelLevelLiters     Float?
+  fuelPercentage      Float?
+  waterOnBoardLiters  Float?
+  waterOnBoardPercent Float?
+  vesselStatus        VesselStatus
   notes           String?
   createdBy       String?
   createdAt       DateTime     @default(now())

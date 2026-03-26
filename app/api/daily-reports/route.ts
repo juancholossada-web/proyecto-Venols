@@ -1,44 +1,21 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { withAuth, AuthenticatedRequest } from '@/lib/auth-middleware'
+import { withAuth, AuthenticatedRequest, getFleetFilter, WRITE_ROLES } from '@/lib/auth-middleware'
+import { listReports, createReport } from '@/lib/services/daily-report.service'
 
 export const GET = withAuth(async (req: AuthenticatedRequest) => {
   const { searchParams } = new URL(req.url)
-  const vesselId = searchParams.get('vesselId')
-  const date = searchParams.get('date')
-  const from = searchParams.get('from')
-  const to = searchParams.get('to')
-  const where: any = {}
-  if (vesselId) where.vesselId = vesselId
-  if (date) {
-    const d = new Date(date)
-    where.date = { gte: d, lt: new Date(d.getTime() + 86400000) }
-  } else if (from || to) {
-    where.date = {}
-    if (from) where.date.gte = new Date(from)
-    if (to) where.date.lte = new Date(to)
-  }
-  const reports = await prisma.dailyReport.findMany({
-    where,
-    include: { vessel: { select: { id: true, name: true, fleetType: true, tankCapacityLiters: true } } },
-    orderBy: { date: 'desc' },
+  const reports = await listReports({
+    vesselId:    searchParams.get('vesselId'),
+    date:        searchParams.get('date'),
+    from:        searchParams.get('from'),
+    to:          searchParams.get('to'),
+    fleetFilter: getFleetFilter(req.user!.role),
   })
   return NextResponse.json(reports)
 })
 
 export const POST = withAuth(async (req: AuthenticatedRequest) => {
   const body = await req.json()
-  const report = await prisma.dailyReport.create({
-    data: {
-      vesselId: body.vesselId, date: new Date(body.date),
-      client: body.client || null, activity: body.activity || null,
-      location: body.location || null, captain: body.captain || null,
-      marineOnDuty: body.marineOnDuty || null, personnel: body.personnel || null,
-      fuelLevelLiters: body.fuelLevelLiters ? parseFloat(body.fuelLevelLiters) : null,
-      fuelPercentage: body.fuelPercentage ? parseFloat(body.fuelPercentage) : null,
-      vesselStatus: body.vesselStatus || null, notes: body.notes || null,
-      createdBy: body.createdBy || null,
-    },
-  })
+  const report = await createReport(body)
   return NextResponse.json(report, { status: 201 })
-}, ['ADMIN', 'OPERATOR', 'TECHNICIAN'])
+}, WRITE_ROLES)

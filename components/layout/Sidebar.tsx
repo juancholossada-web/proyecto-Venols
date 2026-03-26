@@ -3,17 +3,8 @@
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 
-type NavItem = {
-  href: string
-  icon: string
-  label: string
-  roles: string[]
-}
-type NavGroup = {
-  section: string
-  items: NavItem[]
-  roles: string[] // qué roles ven este grupo
-}
+type NavItem  = { href: string; icon: string; label: string; roles: string[] }
+type NavGroup = { section: string; items: NavItem[]; roles: string[] }
 
 const ALL_OPS = ['ADMIN', 'OPERATOR_HEAVY', 'OPERATOR_LIGHT']
 const ALL     = ['ADMIN', 'OPERATOR_HEAVY', 'OPERATOR_LIGHT', 'STANDARD']
@@ -25,7 +16,7 @@ const navGroups: NavGroup[] = [
     items: [
       { href: '/dashboard',          icon: 'dashboard',       label: 'Dashboard',     roles: ALL },
       { href: '/dashboard/vessels',  icon: 'directions_boat', label: 'Embarcaciones', roles: ALL },
-      { href: '/dashboard/crew',     icon: 'groups',          label: 'Personal',      roles: ['ADMIN', 'OPERATOR_HEAVY', 'OPERATOR_LIGHT'] },
+      { href: '/dashboard/crew',     icon: 'groups',          label: 'Personal',      roles: ALL_OPS },
     ],
   },
   {
@@ -43,9 +34,9 @@ const navGroups: NavGroup[] = [
     section: 'Mantenimiento',
     roles: ALL_OPS,
     items: [
-      { href: '/dashboard/maintenance', icon: 'build',          label: 'Mantenimiento', roles: ALL_OPS },
-      { href: '/dashboard/compliance',  icon: 'verified_user',  label: 'Compliance',    roles: ['ADMIN', 'OPERATOR_HEAVY', 'OPERATOR_LIGHT'] },
-      { href: '/dashboard/reports',     icon: 'analytics',      label: 'Reportes',      roles: ALL },
+      { href: '/dashboard/maintenance', icon: 'build',         label: 'Mantenimiento', roles: ALL_OPS },
+      { href: '/dashboard/compliance',  icon: 'verified_user', label: 'Compliance',    roles: ALL_OPS },
+      { href: '/dashboard/reports',     icon: 'analytics',     label: 'Reportes',      roles: ALL },
     ],
   },
   {
@@ -57,28 +48,33 @@ const navGroups: NavGroup[] = [
   },
 ]
 
-/** Etiqueta y color por rol */
 const ROLE_BADGE: Record<string, { label: string; color: string }> = {
-  ADMIN:          { label: 'Administrador',       color: '#ef4444' },
-  OPERATOR_HEAVY: { label: 'Op. Flota Pesada',    color: '#f59e0b' },
-  OPERATOR_LIGHT: { label: 'Op. Flota Liviana',   color: '#3b82f6' },
-  STANDARD:       { label: 'Estándar',            color: '#6b7280' },
+  ADMIN:          { label: 'Administrador',     color: '#ef4444' },
+  OPERATOR_HEAVY: { label: 'Op. Flota Pesada',  color: '#f59e0b' },
+  OPERATOR_LIGHT: { label: 'Op. Flota Liviana', color: '#3b82f6' },
+  STANDARD:       { label: 'Estándar',          color: '#6b7280' },
 }
 
-export default function Sidebar({ userRole }: { userRole: string }) {
+interface SidebarProps {
+  userRole: string
+  isOpen: boolean
+  onClose: () => void
+}
+
+export default function Sidebar({ userRole, isOpen, onClose }: SidebarProps) {
   const pathname = usePathname()
   const badge    = ROLE_BADGE[userRole] ?? { label: userRole, color: '#6b7280' }
 
   return (
-    <aside className="w-72 flex-shrink-0 bg-[#161c26] border-r border-white/5 flex flex-col overflow-y-auto">
-      {/* Logo */}
-      <div className="p-6 border-b border-white/5">
-        <h2 className="text-amber-500 font-black text-2xl tracking-tighter">VENOLS</h2>
-        <p className="text-[10px] text-slate-600 uppercase tracking-widest mt-0.5">ERP Maritime</p>
-      </div>
+    <aside className={[
+      'w-64 flex-shrink-0 bg-[#161c26] border-r border-white/5 flex flex-col overflow-y-auto',
+      'fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-in-out',
+      isOpen ? 'translate-x-0' : '-translate-x-full',
+      'lg:relative lg:inset-auto lg:translate-x-0 lg:z-auto',
+    ].join(' ')}>
 
-      {/* Rol activo */}
-      <div className="px-4 py-3 border-b border-white/5">
+      {/* Top bar: role badge + close button (mobile) */}
+      <div className="px-4 py-3.5 border-b border-white/5 flex items-center justify-between gap-2">
         <span style={{
           display: 'inline-flex', alignItems: 'center', gap: '6px',
           padding: '4px 10px', borderRadius: '20px',
@@ -89,6 +85,14 @@ export default function Sidebar({ userRole }: { userRole: string }) {
           <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: badge.color, flexShrink: 0 }} />
           {badge.label}
         </span>
+
+        <button
+          onClick={onClose}
+          className="lg:hidden p-1.5 rounded-lg text-slate-600 hover:text-slate-300 hover:bg-white/5 transition-colors flex-shrink-0"
+          aria-label="Cerrar menú"
+        >
+          <span className="material-symbols-outlined text-[20px]">close</span>
+        </button>
       </div>
 
       {/* Nav */}
@@ -110,6 +114,7 @@ export default function Sidebar({ userRole }: { userRole: string }) {
                       <Link
                         key={item.href}
                         href={item.href}
+                        onClick={onClose}
                         className={[
                           'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium tracking-wide uppercase transition-all',
                           isActive
@@ -131,7 +136,7 @@ export default function Sidebar({ userRole }: { userRole: string }) {
       </nav>
 
       {/* Footer */}
-      <div className="px-6 py-4 border-t border-white/5">
+      <div className="px-5 py-4 border-t border-white/5">
         <p className="text-[9px] text-slate-700 font-mono">VENOLS ERP · v2.0.0</p>
       </div>
     </aside>

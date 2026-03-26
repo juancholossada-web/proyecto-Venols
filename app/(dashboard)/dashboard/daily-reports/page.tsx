@@ -1,24 +1,31 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { api } from '@/lib/api-client'
 
 /* ─── Types ─── */
 type Vessel = {
   id: string; name: string; fleetType: 'PESADA' | 'LIVIANA'; vesselType: string
   status: string; matricula?: string; captain?: string; marineOnDuty?: string
-  tankCapacityLiters?: number
+  tankCapacityLiters?: number; waterTankCapacityLiters?: number
 }
 type VesselReport = {
   vesselId: string; vesselName: string; fleetType: 'PESADA' | 'LIVIANA'; vesselType: string
   client: string; status: string; activity: string; captain: string; marineOnDuty: string
-  additionalCrew: string; fuelLiters: string; fuelPercent: string; location: string; notes: string
+  additionalCrew: string; fuelLiters: string; fuelPercent: string
+  waterLiters: string; waterPercent: string
+  location: string; notes: string
 }
 type DailyReport = {
   id: string; vesselId: string; date: string; client?: string; vesselStatus: string
-  activity: string; captain: string; marineOnDuty: string; additionalCrew?: string
-  fuelLiters?: number; fuelPercent?: number; location?: string; notes?: string
-  vessel?: { name: string; fleetType: string; vesselType: string }
+  activity: string; captain: string; marineOnDuty: string; personnel?: string
+  fuelLevelLiters?: number; fuelPercentage?: number
+  waterOnBoardLiters?: number; waterOnBoardPercent?: number
+  location?: string; notes?: string
+  vessel?: { name: string; fleetType: string; vesselType: string; tankCapacityLiters?: number; waterTankCapacityLiters?: number }
 }
+type Client = { id: string; name: string }
+type Employee = { id: string; firstName: string; lastName: string; position: string; status: string }
 
 type View = 'crear' | 'historial'
 
@@ -38,16 +45,6 @@ const statusLabel: Record<string, string> = {
 const PESADA_NAMES = ['El Porteño I', 'El Masco VIII', 'Molleja Lake', 'Zapara Island']
 const LIVIANA_NAMES = ['Blohm', 'Jackie', 'Anabella', 'La Magdalena I']
 
-/* ─── API helper ─── */
-function getToken() { return localStorage.getItem('token') || '' }
-async function api(path: string, opts?: RequestInit) {
-  const res = await fetch(path, {
-    ...opts,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}`, ...opts?.headers },
-  })
-  if (!res.ok) throw new Error(`API ${res.status}`)
-  return res.json()
-}
 
 /* ─── Styles ─── */
 const card: React.CSSProperties = { background: 'var(--bg-surface)', border: '1px solid var(--border-accent)', borderRadius: '12px' }
@@ -56,6 +53,10 @@ const inputStyle: React.CSSProperties = {
   width: '100%', padding: '8px 10px', background: 'var(--bg-input)',
   border: '1px solid var(--border-accent)', borderRadius: '8px',
   color: 'var(--text-primary)', fontSize: '13px', outline: 'none', boxSizing: 'border-box',
+}
+const inputReadOnly: React.CSSProperties = {
+  ...inputStyle, opacity: 0.7, cursor: 'not-allowed',
+  background: 'rgba(255,255,255,0.03)',
 }
 const selectStyle: React.CSSProperties = { ...inputStyle, appearance: 'none' as const }
 const textareaStyle: React.CSSProperties = { ...inputStyle, resize: 'vertical' as const, minHeight: '48px' }
@@ -85,13 +86,17 @@ function monthNameES(m: number) {
 function numberWithDots(n: number) {
   return n.toLocaleString('es-VE')
 }
+function calcPercent(liters: string, capacity?: number): string {
+  if (!capacity || !liters || isNaN(Number(liters))) return ''
+  return String(Math.round((Number(liters) / capacity) * 100))
+}
 
 function makeEmptyReport(v: Vessel): VesselReport {
   return {
     vesselId: v.id, vesselName: v.name, fleetType: v.fleetType, vesselType: v.vesselType,
     client: '', status: v.status || 'OPERATIVO', activity: '', captain: v.captain || '',
     marineOnDuty: v.marineOnDuty || '', additionalCrew: '', fuelLiters: '', fuelPercent: '',
-    location: '', notes: '',
+    waterLiters: '', waterPercent: '', location: '', notes: '',
   }
 }
 
@@ -137,7 +142,11 @@ function generateWhatsAppReport(reports: VesselReport[], dateStr: string): strin
       const pct = r.fuelPercent ? Number(r.fuelPercent) : null
       const lts = r.fuelLiters ? `${Number(r.fuelLiters).toLocaleString('es-VE')} L` : ''
       const bar = pct !== null ? `\n│          ${fuelBar(pct)}` : ''
-      lines.push(`│ Combustible: ${lts}${bar}`)
+      lines.push(`│ Combustible: ${lts}${r.fuelPercent ? ` (${r.fuelPercent}%)` : ''}${bar}`)
+    }
+    if (r.fleetType === 'PESADA' && (r.waterLiters || r.waterPercent)) {
+      const wLts = r.waterLiters ? `${Number(r.waterLiters).toLocaleString('es-VE')} L` : ''
+      lines.push(`│ Agua a bordo: ${wLts}${r.waterPercent ? ` (${r.waterPercent}%)` : ''}`)
     }
     if (r.notes)         lines.push(`│ Notas: ${r.notes}`)
     lines.push('└─────────────────')
@@ -190,9 +199,11 @@ function generateWhatsAppFromDailyReports(reports: DailyReport[], dateStr: strin
     activity: r.activity,
     captain: r.captain,
     marineOnDuty: r.marineOnDuty,
-    additionalCrew: r.additionalCrew || '',
-    fuelLiters: r.fuelLiters != null ? String(r.fuelLiters) : '',
-    fuelPercent: r.fuelPercent != null ? String(r.fuelPercent) : '',
+    additionalCrew: r.personnel || '',
+    fuelLiters: r.fuelLevelLiters != null ? String(r.fuelLevelLiters) : '',
+    fuelPercent: r.fuelPercentage != null ? String(r.fuelPercentage) : '',
+    waterLiters: r.waterOnBoardLiters != null ? String(r.waterOnBoardLiters) : '',
+    waterPercent: r.waterOnBoardPercent != null ? String(r.waterOnBoardPercent) : '',
     location: r.location || '',
     notes: r.notes || '',
   }))
@@ -244,6 +255,18 @@ export default function DailyReportsPage() {
   const [message, setMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
   const [copied, setCopied] = useState(false)
 
+  // WhatsApp state
+  const [waModalOpen, setWaModalOpen] = useState(false)
+  const [waStatus, setWaStatus] = useState<'idle' | 'loading' | 'qr' | 'connected'>('idle')
+  const [waQr, setWaQr] = useState<string | null>(null)
+  const [waSending, setWaSending] = useState(false)
+  const [waMessage, setWaMessage] = useState<{ type: 'ok' | 'err'; text: string } | null>(null)
+  const [waGroups, setWaGroups] = useState<{ id: string; name: string }[]>([])
+  const [waGroupId, setWaGroupId] = useState('')
+
+  const [clients, setClients] = useState<Client[]>([])
+  const [employees, setEmployees] = useState<Employee[]>([])
+
   // Historial state
   const [allReports, setAllReports] = useState<DailyReport[]>([])
   const [histLoading, setHistLoading] = useState(false)
@@ -262,6 +285,20 @@ export default function DailyReportsPage() {
       setReports(recs)
     } catch { /* ignore */ }
     finally { setLoading(false) }
+  }, [])
+
+  const loadClients = useCallback(async () => {
+    try {
+      const data = await api('/api/clients')
+      setClients(Array.isArray(data) ? data : [])
+    } catch { /* ignore */ }
+  }, [])
+
+  const loadEmployees = useCallback(async () => {
+    try {
+      const data = await api('/api/crew?status=ACTIVO')
+      setEmployees(Array.isArray(data) ? data : [])
+    } catch { /* ignore */ }
   }, [])
 
   const loadHistory = useCallback(async () => {
@@ -284,7 +321,11 @@ export default function DailyReportsPage() {
     finally { setHistLoading(false) }
   }, [histFrom, histTo])
 
-  useEffect(() => { loadVessels() }, [loadVessels])
+  useEffect(() => {
+    loadVessels()
+    loadClients()
+    loadEmployees()
+  }, [loadVessels, loadClients, loadEmployees])
   useEffect(() => { if (view === 'historial') loadHistory() }, [view, loadHistory])
 
   /* Vessel classification */
@@ -305,11 +346,18 @@ export default function DailyReportsPage() {
   function updateField(vesselId: string, field: keyof VesselReport, value: string) {
     setReports(prev => {
       const r = { ...prev[vesselId], [field]: value }
-      // Auto-calculate fuel percent
+      const vessel = vessels.find(v => v.id === vesselId)
+
+      // Auto-calculate fuel percent when capacity is known
       if (field === 'fuelLiters') {
-        const vessel = vessels.find(v => v.id === vesselId)
-        if (vessel?.tankCapacityLiters && value) {
-          r.fuelPercent = String(Math.round((Number(value) / vessel.tankCapacityLiters) * 100))
+        if (vessel?.tankCapacityLiters) {
+          r.fuelPercent = calcPercent(value, vessel.tankCapacityLiters)
+        }
+      }
+      // Auto-calculate water percent when capacity is known
+      if (field === 'waterLiters') {
+        if (vessel?.waterTankCapacityLiters) {
+          r.waterPercent = calcPercent(value, vessel.waterTankCapacityLiters)
         }
       }
       return { ...prev, [vesselId]: r }
@@ -336,9 +384,11 @@ export default function DailyReportsPage() {
             activity: r.activity,
             captain: r.captain,
             marineOnDuty: r.marineOnDuty,
-            additionalCrew: r.additionalCrew || undefined,
-            fuelLiters: r.fuelLiters ? Number(r.fuelLiters) : undefined,
-            fuelPercent: r.fuelPercent ? Number(r.fuelPercent) : undefined,
+            personnel: r.additionalCrew || undefined,
+            fuelLevelLiters: r.fuelLiters ? Number(r.fuelLiters) : undefined,
+            fuelPercentage: r.fuelPercent ? Number(r.fuelPercent) : undefined,
+            waterOnBoardLiters: r.waterLiters ? Number(r.waterLiters) : undefined,
+            waterOnBoardPercent: r.waterPercent ? Number(r.waterPercent) : undefined,
             location: r.location || undefined,
             notes: r.notes || undefined,
           }),
@@ -371,6 +421,68 @@ export default function DailyReportsPage() {
       setTimeout(() => setCopied(false), 3000)
     } else {
       setMessage({ type: 'err', text: 'No se pudo copiar. Usa el botón de descarga.' })
+    }
+  }
+
+  /* ─── WhatsApp send ─── */
+  async function pollWaStatus() {
+    const res = await fetch('/api/whatsapp/status')
+    const data = await res.json()
+    setWaStatus(data.status)
+    if (data.qr) setWaQr(data.qr)
+    return data.status
+  }
+
+  async function handleOpenWaModal() {
+    const txt = getFilledTxt()
+    if (!txt) return
+    setWaModalOpen(true)
+    setWaMessage(null)
+    setWaGroups([])
+    setWaGroupId('')
+    setWaStatus('loading')
+    setWaQr(null)
+
+    const status = await pollWaStatus()
+    if (status === 'connected') {
+      const res = await fetch('/api/whatsapp/groups')
+      const groups = await res.json()
+      if (Array.isArray(groups)) setWaGroups(groups)
+      return
+    }
+    // Poll every 3s until connected or QR appears
+    const interval = setInterval(async () => {
+      const s = await pollWaStatus()
+      if (s === 'connected') {
+        clearInterval(interval)
+        const res = await fetch('/api/whatsapp/groups')
+        const groups = await res.json()
+        if (Array.isArray(groups)) setWaGroups(groups)
+      }
+    }, 3000)
+    // Stop polling when modal closes (cleanup via timeout safety)
+    setTimeout(() => clearInterval(interval), 120000)
+  }
+
+  async function handleSendWhatsApp() {
+    const txt = getFilledTxt()
+    if (!txt) return
+    if (!waGroupId) { setWaMessage({ type: 'err', text: 'Selecciona un grupo.' }); return }
+    setWaSending(true)
+    setWaMessage(null)
+    try {
+      const res = await fetch('/api/whatsapp/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: txt, groupId: waGroupId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error desconocido')
+      setWaMessage({ type: 'ok', text: 'Reporte enviado exitosamente al grupo.' })
+    } catch (err: unknown) {
+      setWaMessage({ type: 'err', text: err instanceof Error ? err.message : 'Error al enviar' })
+    } finally {
+      setWaSending(false)
     }
   }
 
@@ -454,7 +566,11 @@ export default function DailyReportsPage() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {pesada.map(v => (
-                <VesselReportCard key={v.id} vessel={v} report={reports[v.id]} onChange={(f, val) => updateField(v.id, f, val)} />
+                <VesselReportCard
+                  key={v.id} vessel={v} report={reports[v.id]}
+                  onChange={(f, val) => updateField(v.id, f, val)}
+                  clients={clients} employees={employees}
+                />
               ))}
             </div>
           </div>
@@ -467,7 +583,11 @@ export default function DailyReportsPage() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {liviana.map(v => (
-                <VesselReportCard key={v.id} vessel={v} report={reports[v.id]} onChange={(f, val) => updateField(v.id, f, val)} />
+                <VesselReportCard
+                  key={v.id} vessel={v} report={reports[v.id]}
+                  onChange={(f, val) => updateField(v.id, f, val)}
+                  clients={clients} employees={employees}
+                />
               ))}
             </div>
           </div>
@@ -505,6 +625,115 @@ export default function DailyReportsPage() {
             <button onClick={handleDownloadTxt} style={btnSecondary}>
               Descargar .txt
             </button>
+            <button
+              onClick={handleOpenWaModal}
+              style={{
+                ...btnSecondary,
+                background: 'rgba(37,211,102,0.12)',
+                border: '1px solid rgba(37,211,102,0.4)',
+                color: '#25D366',
+                fontWeight: 700,
+              }}
+            >
+              Enviar a WhatsApp
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ─────── MODAL WHATSAPP ─────── */}
+      {waModalOpen && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999,
+        }}>
+          <div style={{
+            ...card, padding: '28px', width: '360px', maxWidth: '95vw',
+            display: 'flex', flexDirection: 'column', gap: '16px', position: 'relative',
+          }}>
+            {/* Cerrar */}
+            <button
+              onClick={() => setWaModalOpen(false)}
+              style={{ position: 'absolute', top: '14px', right: '14px', background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '18px', cursor: 'pointer' }}
+            >✕</button>
+
+            <div style={{ fontSize: '16px', fontWeight: 700, color: '#25D366' }}>Enviar a WhatsApp</div>
+
+            {/* Cargando */}
+            {waStatus === 'loading' && (
+              <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', padding: '20px 0' }}>
+                Iniciando WhatsApp Web...
+              </div>
+            )}
+
+            {/* QR */}
+            {waStatus === 'qr' && waQr && (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                <div style={{ fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center' }}>
+                  Escanea el QR con tu celular en<br/>
+                  <strong style={{ color: 'var(--text-primary)' }}>WhatsApp → Dispositivos vinculados</strong>
+                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={waQr} alt="QR WhatsApp" style={{ width: '240px', height: '240px', borderRadius: '8px', background: '#fff', padding: '8px' }} />
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>El QR se actualiza automáticamente...</div>
+              </div>
+            )}
+
+            {/* Conectado — seleccionar grupo */}
+            {waStatus === 'connected' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ fontSize: '12px', color: 'var(--success)', fontWeight: 600 }}>WhatsApp conectado</div>
+                  <button
+                    onClick={async () => {
+                      const res = await fetch('/api/whatsapp/groups')
+                      const groups = await res.json()
+                      if (Array.isArray(groups)) setWaGroups(groups)
+                    }}
+                    style={{ ...btnSecondary, padding: '4px 10px', fontSize: '11px' }}
+                  >
+                    Refrescar grupos
+                  </button>
+                </div>
+                <div style={fieldWrap}>
+                  <label style={labelStyle}>
+                    Selecciona el grupo {waGroups.length === 0 && '(sin grupos — presiona Refrescar)'}
+                  </label>
+                  <select
+                    value={waGroupId}
+                    onChange={e => setWaGroupId(e.target.value)}
+                    style={selectStyle}
+                  >
+                    <option value="">-- Seleccionar grupo --</option>
+                    {waGroups.map(g => (
+                      <option key={g.id} value={g.id}>{g.name}</option>
+                    ))}
+                  </select>
+                </div>
+                {waMessage && (
+                  <div style={{
+                    padding: '10px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600,
+                    background: waMessage.type === 'ok' ? 'rgba(39,174,96,0.12)' : 'rgba(231,76,60,0.12)',
+                    color: waMessage.type === 'ok' ? 'var(--success)' : 'var(--danger)',
+                    border: `1px solid ${waMessage.type === 'ok' ? 'rgba(39,174,96,0.3)' : 'rgba(231,76,60,0.3)'}`,
+                  }}>
+                    {waMessage.text}
+                  </div>
+                )}
+                <button
+                  onClick={handleSendWhatsApp}
+                  disabled={waSending || !waGroupId}
+                  style={{
+                    ...btnPrimary,
+                    background: '#25D366',
+                    color: '#fff',
+                    opacity: (waSending || !waGroupId) ? 0.6 : 1,
+                  }}
+                >
+                  {waSending ? 'Enviando...' : 'Enviar Reporte'}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -657,17 +886,25 @@ export default function DailyReportsPage() {
 
 /* ═════════════════════ VESSEL REPORT CARD ═════════════════════ */
 function VesselReportCard({
-  vessel, report, onChange,
+  vessel, report, onChange, clients, employees,
 }: {
   vessel: Vessel
   report: VesselReport
   onChange: (field: keyof VesselReport, value: string) => void
+  clients: Client[]
+  employees: Employee[]
 }) {
   const [expanded, setExpanded] = useState(false)
 
   if (!report) return null
 
   const hasData = report.activity || report.client || report.fuelLiters
+
+  const fuelAutoCalc = !!vessel.tankCapacityLiters
+  const waterAutoCalc = !!vessel.waterTankCapacityLiters
+
+  const fuelPct = report.fuelPercent ? Number(report.fuelPercent) : null
+  const waterPct = report.waterPercent ? Number(report.waterPercent) : null
 
   return (
     <div style={{
@@ -697,81 +934,169 @@ function VesselReportCard({
 
       {/* Expanded form */}
       {expanded && (
-        <div style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
-          {/* Cliente */}
-          <div style={fieldWrap}>
-            <label style={labelStyle}>Cliente</label>
-            <input style={inputStyle} value={report.client} onChange={e => onChange('client', e.target.value)} placeholder="Ej: PDVSA" />
+        <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+
+          {/* ── Fila 1: Personas, cliente, ubicación ── */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: '12px' }}>
+
+            {/* Cliente */}
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Cliente</label>
+              <select style={selectStyle} value={report.client} onChange={e => onChange('client', e.target.value)}>
+                <option value="">— Sin cliente —</option>
+                {clients.map(c => (
+                  <option key={c.id} value={c.name}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Status */}
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Status</label>
+              <select style={selectStyle} value={report.status} onChange={e => onChange('status', e.target.value)}>
+                {statusOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+
+            {/* Capitán */}
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Capitán</label>
+              <select style={selectStyle} value={report.captain} onChange={e => onChange('captain', e.target.value)}>
+                <option value="">— Seleccionar —</option>
+                {employees.map(e => (
+                  <option key={e.id} value={`${e.firstName} ${e.lastName}`}>{e.lastName}, {e.firstName} — {e.position}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Marino de Guardia */}
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Marino de Guardia</label>
+              <select style={selectStyle} value={report.marineOnDuty} onChange={e => onChange('marineOnDuty', e.target.value)}>
+                <option value="">— Seleccionar —</option>
+                {employees.map(e => (
+                  <option key={e.id} value={`${e.firstName} ${e.lastName}`}>{e.lastName}, {e.firstName} — {e.position}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Personal adicional */}
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Personal adicional</label>
+              <input style={inputStyle} value={report.additionalCrew} onChange={e => onChange('additionalCrew', e.target.value)} placeholder="Opcional" />
+            </div>
+
+            {/* Ubicación */}
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Ubicación</label>
+              <input style={inputStyle} value={report.location} onChange={e => onChange('location', e.target.value)} placeholder="Ej: Muelle Norte, Maracaibo" />
+            </div>
           </div>
 
-          {/* Status */}
-          <div style={fieldWrap}>
-            <label style={labelStyle}>Status</label>
-            <select style={selectStyle} value={report.status} onChange={e => onChange('status', e.target.value)}>
-              {statusOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
+          {/* ── Fila 2: Combustible + Agua (FP) ── */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: '12px' }}>
+
+            {/* Combustible litros */}
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Combustible (litros)</label>
+              <input
+                style={inputStyle} type="number" min="0"
+                value={report.fuelLiters}
+                onChange={e => onChange('fuelLiters', e.target.value)}
+                placeholder={vessel.tankCapacityLiters ? `Máx ${numberWithDots(vessel.tankCapacityLiters)} L` : 'Ej: 3500'}
+              />
+            </div>
+
+            {/* Combustible % */}
+            <div style={fieldWrap}>
+              <label style={labelStyle}>
+                Combustible (%)
+                {fuelAutoCalc && <span style={{ color: 'var(--accent)', marginLeft: '4px', fontSize: '10px' }}>AUTO</span>}
+              </label>
+              <input
+                style={fuelAutoCalc ? inputReadOnly : inputStyle}
+                type="number" min="0" max="100"
+                value={report.fuelPercent}
+                onChange={fuelAutoCalc ? undefined : e => onChange('fuelPercent', e.target.value)}
+                readOnly={fuelAutoCalc}
+                placeholder={fuelAutoCalc ? 'Auto-calculado' : 'Manual (0-100)'}
+              />
+              {fuelPct !== null && (
+                <div style={{ marginTop: '4px' }}>
+                  <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%', borderRadius: '3px',
+                      width: `${Math.min(fuelPct, 100)}%`,
+                      background: fuelPct > 60 ? 'var(--success)' : fuelPct > 25 ? 'var(--accent)' : 'var(--danger)',
+                      transition: 'width 0.3s',
+                    }} />
+                  </div>
+                  <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{fuelPct}% de tanque</span>
+                </div>
+              )}
+            </div>
+
+            {/* Agua a bordo — solo Flota Pesada */}
+            {vessel.fleetType === 'PESADA' && (
+              <>
+                <div style={fieldWrap}>
+                  <label style={labelStyle}>Agua a bordo (litros)</label>
+                  <input
+                    style={inputStyle} type="number" min="0"
+                    value={report.waterLiters}
+                    onChange={e => onChange('waterLiters', e.target.value)}
+                    placeholder={vessel.waterTankCapacityLiters ? `Máx ${numberWithDots(vessel.waterTankCapacityLiters)} L` : 'Ej: 500'}
+                  />
+                </div>
+
+                <div style={fieldWrap}>
+                  <label style={labelStyle}>
+                    Agua a bordo (%)
+                    {waterAutoCalc && <span style={{ color: 'var(--accent)', marginLeft: '4px', fontSize: '10px' }}>AUTO</span>}
+                  </label>
+                  <input
+                    style={waterAutoCalc ? inputReadOnly : inputStyle}
+                    type="number" min="0" max="100"
+                    value={report.waterPercent}
+                    onChange={waterAutoCalc ? undefined : e => onChange('waterPercent', e.target.value)}
+                    readOnly={waterAutoCalc}
+                    placeholder={waterAutoCalc ? 'Auto-calculado' : 'Manual (0-100)'}
+                  />
+                  {waterPct !== null && (
+                    <div style={{ marginTop: '4px' }}>
+                      <div style={{ height: '6px', borderRadius: '3px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+                        <div style={{
+                          height: '100%', borderRadius: '3px',
+                          width: `${Math.min(waterPct, 100)}%`,
+                          background: waterPct > 60 ? 'var(--info)' : waterPct > 25 ? 'var(--accent)' : 'var(--danger)',
+                          transition: 'width 0.3s',
+                        }} />
+                      </div>
+                      <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{waterPct}% de tanque</span>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
-          {/* Capitán */}
-          <div style={fieldWrap}>
-            <label style={labelStyle}>Capitán</label>
-            <input style={inputStyle} value={report.captain} onChange={e => onChange('captain', e.target.value)} />
+          {/* ── Fila 3: Actividad y Notas ── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Actividad</label>
+              <textarea
+                style={textareaStyle}
+                value={report.activity}
+                onChange={e => onChange('activity', e.target.value)}
+                placeholder="Ej: Se encuentra haciendo recorrida por campo con personal de seguridad"
+              />
+            </div>
+            <div style={fieldWrap}>
+              <label style={labelStyle}>Notas</label>
+              <input style={inputStyle} value={report.notes} onChange={e => onChange('notes', e.target.value)} placeholder="Notas adicionales (opcional)" />
+            </div>
           </div>
 
-          {/* Marino de Guardia */}
-          <div style={fieldWrap}>
-            <label style={labelStyle}>Marino de Guardia</label>
-            <input style={inputStyle} value={report.marineOnDuty} onChange={e => onChange('marineOnDuty', e.target.value)} />
-          </div>
-
-          {/* Personal adicional */}
-          <div style={fieldWrap}>
-            <label style={labelStyle}>Personal adicional</label>
-            <input style={inputStyle} value={report.additionalCrew} onChange={e => onChange('additionalCrew', e.target.value)} placeholder="Opcional" />
-          </div>
-
-          {/* Combustible litros */}
-          <div style={fieldWrap}>
-            <label style={labelStyle}>Combustible (litros)</label>
-            <input style={inputStyle} type="number" value={report.fuelLiters} onChange={e => onChange('fuelLiters', e.target.value)} placeholder="Ej: 3500" />
-          </div>
-
-          {/* Combustible % */}
-          <div style={fieldWrap}>
-            <label style={labelStyle}>
-              Combustible (%)
-              {vessel.tankCapacityLiters ? ' — auto' : ''}
-            </label>
-            <input
-              style={inputStyle} type="number" value={report.fuelPercent}
-              onChange={e => onChange('fuelPercent', e.target.value)}
-              readOnly={!!vessel.tankCapacityLiters && !!report.fuelLiters}
-              placeholder={vessel.tankCapacityLiters ? 'Auto-calculado' : 'Manual'}
-            />
-          </div>
-
-          {/* Ubicación */}
-          <div style={fieldWrap}>
-            <label style={labelStyle}>Ubicación</label>
-            <input style={inputStyle} value={report.location} onChange={e => onChange('location', e.target.value)} placeholder="Ej: Muelle Norte, Maracaibo" />
-          </div>
-
-          {/* Actividad — full width */}
-          <div style={{ ...fieldWrap, gridColumn: '1 / -1' }}>
-            <label style={labelStyle}>Actividad</label>
-            <textarea
-              style={textareaStyle}
-              value={report.activity}
-              onChange={e => onChange('activity', e.target.value)}
-              placeholder="Ej: Se encuentra haciendo recorrida por campo con personal de seguridad"
-            />
-          </div>
-
-          {/* Notas — full width */}
-          <div style={{ ...fieldWrap, gridColumn: '1 / -1' }}>
-            <label style={labelStyle}>Notas</label>
-            <input style={inputStyle} value={report.notes} onChange={e => onChange('notes', e.target.value)} placeholder="Notas adicionales (opcional)" />
-          </div>
         </div>
       )}
     </div>
@@ -786,6 +1111,8 @@ function HistoryReportCard({ report }: { report: DailyReport }) {
     MANTENIMIENTO: 'var(--danger)', INACTIVO: 'var(--text-muted)',
   }
   const color = statusColor[report.vesselStatus] || 'var(--text-secondary)'
+  const fuelPct = report.fuelPercentage ?? null
+  const waterPct = report.waterOnBoardPercent ?? null
 
   return (
     <div style={{ ...card, padding: '14px 18px' }}>
@@ -813,18 +1140,52 @@ function HistoryReportCard({ report }: { report: DailyReport }) {
         )}
         <div><span style={{ color: 'var(--text-muted)' }}>Capitán:</span> <span style={{ color: 'var(--text-primary)' }}>{report.captain}</span></div>
         <div><span style={{ color: 'var(--text-muted)' }}>Marino:</span> <span style={{ color: 'var(--text-primary)' }}>{report.marineOnDuty}</span></div>
-        {report.additionalCrew && (
-          <div><span style={{ color: 'var(--text-muted)' }}>Personal:</span> <span style={{ color: 'var(--text-primary)' }}>{report.additionalCrew}</span></div>
+        {report.personnel && (
+          <div><span style={{ color: 'var(--text-muted)' }}>Personal:</span> <span style={{ color: 'var(--text-primary)' }}>{report.personnel}</span></div>
         )}
-        {(report.fuelLiters != null || report.fuelPercent != null) && (
-          <div>
-            <span style={{ color: 'var(--text-muted)' }}>Combustible:</span>{' '}
-            <span style={{ color: 'var(--text-primary)' }}>
-              {report.fuelLiters != null ? `${numberWithDots(report.fuelLiters)} Lts` : ''}
-              {report.fuelPercent != null ? ` (${report.fuelPercent}%)` : ''}
-            </span>
+
+        {/* Combustible */}
+        {(report.fuelLevelLiters != null || fuelPct != null) && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div>
+              <span style={{ color: 'var(--text-muted)' }}>Combustible:</span>{' '}
+              <span style={{ color: 'var(--text-primary)' }}>
+                {report.fuelLevelLiters != null ? `${numberWithDots(report.fuelLevelLiters)} L` : ''}
+                {fuelPct != null ? ` (${fuelPct}%)` : ''}
+              </span>
+            </div>
+            {fuelPct != null && (
+              <div style={{ height: '5px', borderRadius: '3px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden', maxWidth: '140px' }}>
+                <div style={{
+                  height: '100%', borderRadius: '3px', width: `${Math.min(fuelPct, 100)}%`,
+                  background: fuelPct > 60 ? 'var(--success)' : fuelPct > 25 ? 'var(--accent)' : 'var(--danger)',
+                }} />
+              </div>
+            )}
           </div>
         )}
+
+        {/* Agua a bordo (solo Flota Pesada) */}
+        {report.vessel?.fleetType === 'PESADA' && (report.waterOnBoardLiters != null || waterPct != null) && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div>
+              <span style={{ color: 'var(--text-muted)' }}>Agua a bordo:</span>{' '}
+              <span style={{ color: 'var(--text-primary)' }}>
+                {report.waterOnBoardLiters != null ? `${numberWithDots(report.waterOnBoardLiters)} L` : ''}
+                {waterPct != null ? ` (${waterPct}%)` : ''}
+              </span>
+            </div>
+            {waterPct != null && (
+              <div style={{ height: '5px', borderRadius: '3px', background: 'rgba(255,255,255,0.08)', overflow: 'hidden', maxWidth: '140px' }}>
+                <div style={{
+                  height: '100%', borderRadius: '3px', width: `${Math.min(waterPct, 100)}%`,
+                  background: waterPct > 60 ? 'var(--info)' : waterPct > 25 ? 'var(--accent)' : 'var(--danger)',
+                }} />
+              </div>
+            )}
+          </div>
+        )}
+
         {report.location && (
           <div><span style={{ color: 'var(--text-muted)' }}>Ubicación:</span> <span style={{ color: 'var(--text-primary)' }}>{report.location}</span></div>
         )}

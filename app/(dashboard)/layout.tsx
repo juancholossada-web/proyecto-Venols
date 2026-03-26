@@ -7,8 +7,9 @@ import Header from '@/components/layout/Header'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser]           = useState<any>(null)
+  const [loading, setLoading]     = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -28,9 +29,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       .finally(() => setLoading(false))
   }, [router])
 
+  // Close sidebar on route change (mobile UX)
+  useEffect(() => { setSidebarOpen(false) }, [])
+
   if (loading) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-surface gap-4">
+      <div className="h-screen flex flex-col items-center justify-center bg-[var(--bg-base)] gap-4">
         <span className="material-symbols-outlined text-amber-500 text-5xl animate-pulse">anchor</span>
         <p className="text-[13px] text-slate-600 tracking-widest uppercase font-mono">
           Cargando VENOLS ERP…
@@ -42,11 +46,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!user) return null
 
   return (
-    <div className="flex flex-col h-screen bg-surface font-body overflow-hidden">
-      <Header user={user} />
+    <div className="flex flex-col h-screen bg-[var(--bg-base)] overflow-hidden">
+      <Header user={user} onMenuToggle={() => setSidebarOpen(o => !o)} />
+
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar userRole={user.role} />
-        <main className="flex-1 overflow-y-auto bg-surface p-8">
+        {/* Mobile backdrop */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        <Sidebar
+          userRole={user.role}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
+
+        <main className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-8">
           {children}
         </main>
       </div>

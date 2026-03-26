@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { api } from '@/lib/api-client'
 
 /* ─── Types ─── */
 type Vessel = { id: string; name: string; fleetType: string }
@@ -37,19 +38,6 @@ const statusLabels: Record<string, string> = {
   TODOS: 'Todos', PLANIFICADO: 'Planificado', EN_CURSO: 'En Curso', COMPLETADO: 'Completado', CANCELADO: 'Cancelado',
 }
 
-/* ─── API helper ─── */
-function getToken() { return localStorage.getItem('token') || '' }
-async function api<T = any>(path: string, opts?: RequestInit): Promise<T> {
-  const res = await fetch(path, {
-    ...opts,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}`, ...opts?.headers },
-  })
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(body.error || `API ${res.status}`)
-  }
-  return res.json()
-}
 
 /* ─── Styles ─── */
 const card: React.CSSProperties = { background: 'var(--bg-surface)', border: '1px solid var(--border-accent)', borderRadius: '12px' }
@@ -198,7 +186,7 @@ export default function RoutesPage() {
       </div>
 
       {/* ── KPIs ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '24px' }}>
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-3.5 mb-6">
         {kpis.map(kpi => (
           <div key={kpi.label} style={{ ...card, padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

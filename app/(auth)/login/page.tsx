@@ -7,29 +7,22 @@ import VenolsLogo from '@/components/icons/VenolsLogo'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [form, setForm] = useState({ email: '', password: '' })
-  const [error, setError] = useState('')
+  const [form, setForm]     = useState({ email: '', password: '' })
+  const [error, setError]   = useState('')
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setLoading(true)
-
     try {
-      const res = await fetch('/api/auth/login', {
+      const res  = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
-
       const data = await res.json()
-
-      if (!res.ok) {
-        setError(data.error || 'Error al iniciar sesión')
-        return
-      }
-
+      if (!res.ok) { setError(data.error || 'Error al iniciar sesión'); return }
       localStorage.setItem('token', data.accessToken)
       localStorage.setItem('user', JSON.stringify(data.user))
       router.push('/dashboard')
@@ -40,164 +33,106 @@ export default function LoginPage() {
     }
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    background: 'var(--bg-input)',
-    border: '1px solid var(--border-accent)',
-    borderRadius: '8px',
-    padding: '12px 14px',
-    fontSize: '14px',
-    color: 'var(--text-primary)',
-    outline: 'none',
-    fontFamily: 'inherit',
-    transition: 'border-color 0.15s',
-  }
-  const labelStyle: React.CSSProperties = {
-    display: 'block',
-    fontSize: '11px',
-    fontWeight: 600,
-    letterSpacing: '1px',
-    textTransform: 'uppercase',
-    color: 'var(--text-muted)',
-    marginBottom: '7px',
-  }
-
   return (
-    <div style={{ display: 'flex', height: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', background: 'var(--bg-base)' }}>
+    <div className="flex min-h-screen bg-[var(--bg-base)]">
 
-      {/* Left panel */}
-      <div style={{
-        flex: 1,
-        background: 'linear-gradient(160deg, #0B1628 0%, #0E1F3E 55%, #132848 100%)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '48px',
-        position: 'relative',
-        overflow: 'hidden',
-        borderRight: '1px solid var(--border-subtle)',
-      }}>
-        {/* Background decorative circles */}
-        <div style={{ position: 'absolute', bottom: '-80px', left: '-60px', width: '400px', height: '400px', borderRadius: '50%', border: '1px solid var(--border-accent)' }} />
-        <div style={{ position: 'absolute', top: '-100px', right: '-80px', width: '360px', height: '360px', borderRadius: '50%', border: '1px solid var(--border-subtle)' }} />
+      {/* ── Panel izquierdo — oculto en móvil ── */}
+      <div className="hidden md:flex flex-1 flex-col items-center justify-center px-12 py-16 relative overflow-hidden"
+        style={{ background: 'linear-gradient(160deg, #0B1628 0%, #0E1F3E 55%, #132848 100%)', borderRight: '1px solid var(--border-subtle)' }}>
+
+        {/* Círculos decorativos */}
+        <div className="absolute -bottom-20 -left-16 w-96 h-96 rounded-full border border-[var(--border-accent)] pointer-events-none" />
+        <div className="absolute -top-24 -right-20 w-80 h-80 rounded-full border border-[var(--border-subtle)] pointer-events-none" />
 
         {/* Brand */}
-        <div style={{ textAlign: 'center', zIndex: 1, marginBottom: '52px' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+        <div className="text-center z-10 mb-12">
+          <div className="flex justify-center mb-5">
             <VenolsLogo size="lg" />
           </div>
-          <div style={{ fontSize: '13px', color: 'var(--text-muted)', letterSpacing: '1px', marginTop: '8px' }}>
+          <p className="text-[13px] text-[var(--text-muted)] tracking-[1px] mt-2">
             Maritime Logistics Platform
-          </div>
+          </p>
         </div>
 
-        {/* Stats grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', width: '100%', maxWidth: '320px', zIndex: 1 }}>
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-3 w-full max-w-xs z-10">
           {[
-            { num: '24', label: 'Embarcaciones' },
-            { num: '187', label: 'Tripulantes' },
+            { num: '24',    label: 'Embarcaciones' },
+            { num: '187',   label: 'Tripulantes' },
             { num: '98.2%', label: 'Disponibilidad' },
-            { num: '12', label: 'Puertos' },
-          ].map((s) => (
-            <div key={s.label} style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid var(--border-accent)',
-              borderRadius: '10px',
-              padding: '16px',
-              textAlign: 'center',
-            }}>
-              <div style={{ fontFamily: 'monospace', fontSize: '22px', fontWeight: 700, color: 'var(--accent)' }}>{s.num}</div>
-              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '5px', textTransform: 'uppercase', letterSpacing: '1px' }}>{s.label}</div>
+            { num: '12',    label: 'Puertos' },
+          ].map(s => (
+            <div key={s.label}
+              className="bg-white/[0.03] border border-[var(--border-accent)] rounded-xl p-4 text-center">
+              <div className="font-mono text-[22px] font-bold text-[var(--accent)]">{s.num}</div>
+              <div className="text-[10px] text-[var(--text-muted)] mt-1 uppercase tracking-[1px]">{s.label}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Right panel — form */}
-      <div style={{
-        width: '460px',
-        background: 'var(--bg-surface)',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        padding: '48px 42px',
-      }}>
-        <div style={{ marginBottom: '32px' }}>
-          <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>
-            Iniciar sesión
-          </div>
-          <div style={{ fontSize: '14px', color: 'var(--text-muted)', marginTop: '6px' }}>
+      {/* ── Panel derecho — formulario ── */}
+      <div className="w-full md:w-[460px] flex flex-col justify-center px-6 py-10 sm:px-10 md:px-11 bg-[var(--bg-surface)]">
+
+        {/* Logo visible solo en móvil */}
+        <div className="flex justify-center mb-8 md:hidden">
+          <VenolsLogo size="md" />
+        </div>
+
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">Iniciar sesión</h1>
+          <p className="text-[14px] text-[var(--text-muted)] mt-1.5">
             Accede a tu panel de gestión marítima
-          </div>
+          </p>
         </div>
 
         {error && (
-          <div style={{
-            background: 'var(--danger-dim)',
-            border: '1px solid rgba(176,48,40,0.30)',
-            borderRadius: '8px',
-            padding: '10px 14px',
-            fontSize: '13px',
-            color: 'var(--danger)',
-            marginBottom: '20px',
-          }}>
+          <div className="bg-[var(--danger-dim)] border border-[var(--danger)]/30 rounded-lg px-4 py-2.5 text-[13px] text-[var(--danger)] mb-5">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '18px' }}>
-            <label style={labelStyle}>Email</label>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div>
+            <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-[1px] mb-1.5">
+              Email
+            </label>
             <input
-              type="email"
-              required
+              type="email" required
               value={form.email}
               onChange={e => setForm({ ...form, email: e.target.value })}
               placeholder="usuario@venols.com"
-              style={inputStyle}
+              className="w-full px-3.5 py-3 bg-[var(--bg-input)] border border-[var(--border-accent)] rounded-lg text-[14px] text-[var(--text-primary)] outline-none focus:border-[var(--border-accent-strong)] placeholder:text-[var(--text-muted)] transition-colors"
             />
           </div>
 
-          <div style={{ marginBottom: '28px' }}>
-            <label style={labelStyle}>Contraseña</label>
+          <div>
+            <label className="block text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-[1px] mb-1.5">
+              Contraseña
+            </label>
             <input
-              type="password"
-              required
+              type="password" required
               value={form.password}
               onChange={e => setForm({ ...form, password: e.target.value })}
               placeholder="••••••••"
-              style={inputStyle}
+              className="w-full px-3.5 py-3 bg-[var(--bg-input)] border border-[var(--border-accent)] rounded-lg text-[14px] text-[var(--text-primary)] outline-none focus:border-[var(--border-accent-strong)] placeholder:text-[var(--text-muted)] transition-colors"
             />
           </div>
 
           <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              background: loading ? 'rgba(195,160,65,0.4)' : 'var(--accent)',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '13px',
-              fontSize: '14px',
-              fontWeight: 700,
-              color: loading ? 'rgba(8,14,26,0.5)' : '#080E1A',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontFamily: 'inherit',
-              letterSpacing: '0.3px',
-            }}
+            type="submit" disabled={loading}
+            className="w-full py-3.5 rounded-lg text-[14px] font-bold text-[#080E1A] bg-[var(--accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors mt-1"
           >
             {loading ? 'Verificando…' : 'Ingresar al Sistema'}
           </button>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '13px', color: 'var(--text-muted)' }}>
+        <p className="text-center mt-6 text-[13px] text-[var(--text-muted)]">
           ¿No tienes cuenta?{' '}
-          <Link href="/register" style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>
+          <Link href="/register" className="text-[var(--accent)] font-semibold hover:underline">
             Registrarse
           </Link>
-        </div>
+        </p>
       </div>
     </div>
   )

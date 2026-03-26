@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { api } from '@/lib/api-client'
 
 /* ─── Types ─── */
 type Client = {
@@ -40,20 +41,6 @@ const statusColors: Record<string, string> = {
   INACTIVO: 'var(--danger)',
 }
 
-/* ─── API helper ─── */
-function getToken() { return localStorage.getItem('token') || '' }
-async function api(path: string, opts?: RequestInit) {
-  const res = await fetch(path, {
-    ...opts,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${getToken()}`,
-      ...opts?.headers,
-    },
-  })
-  if (!res.ok) throw new Error(`API ${res.status}`)
-  return res.json()
-}
 
 /* ─── Styles ─── */
 const cardStyle: React.CSSProperties = {
@@ -236,7 +223,7 @@ export default function ClientsPage() {
       </div>
 
       {/* ── KPIs ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
         {[
           { label: 'Total Clientes', value: totalClients, color: 'var(--accent)' },
           { label: 'Activos', value: activeClients, color: 'var(--success)' },
@@ -406,6 +393,7 @@ export default function ClientsPage() {
           top: 0,
           right: 0,
           width: '520px',
+          maxWidth: '100vw',
           height: '100vh',
           background: 'var(--bg-surface)',
           borderLeft: `1px solid ${goldBorder}`,

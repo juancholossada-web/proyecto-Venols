@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
+import { api } from '@/lib/api-client'
 
 /* ─── Types ─── */
 type Vessel = { id: string; name: string }
@@ -18,7 +19,6 @@ type Movement = {
   id: string; inventoryItemId: string; type: 'ENTRADA' | 'SALIDA'
   quantity: number; reason?: string | null; reference?: string | null
   executedBy?: string | null; date: string; notes?: string | null
-  balanceAfter?: number | null
 }
 type MovementForm = {
   type: 'ENTRADA' | 'SALIDA'; quantity: string; reason: string
@@ -32,19 +32,6 @@ const emptyMovementForm: MovementForm = {
   date: new Date().toISOString().slice(0, 16), notes: '',
 }
 
-/* ─── API helper ─── */
-function getToken() { return localStorage.getItem('token') || '' }
-async function api(path: string, opts?: RequestInit) {
-  const res = await fetch(path, {
-    ...opts,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}`, ...opts?.headers },
-  })
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}))
-    throw new Error(data.error || `API ${res.status}`)
-  }
-  return res.json()
-}
 
 /* ─── Styles ─── */
 const goldBorder = 'var(--border-accent)'
@@ -105,6 +92,7 @@ export default function InventoryPage() {
   const [vessels, setVessels] = useState<Vessel[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [userRole, setUserRole] = useState<string>('')
 
   /* Filters */
   const [filterVessel, setFilterVessel] = useState('')
@@ -158,9 +146,10 @@ export default function InventoryPage() {
   /* ─── Fetch data ─── */
   const loadData = useCallback(async () => {
     try {
-      const [inv, ves] = await Promise.all([api('/api/inventory'), api('/api/vessels')])
+      const [inv, ves, me] = await Promise.all([api('/api/inventory'), api('/api/vessels'), api('/api/auth/me')])
       setItems(inv)
       setVessels(ves.map((v: any) => ({ id: v.id, name: v.name })))
+      setUserRole(me?.user?.role || '')
     } catch {
       setError('Error cargando datos')
     } finally {
@@ -213,9 +202,9 @@ export default function InventoryPage() {
   }, [filtered, vessels])
 
   /* ─── Drawer handlers ─── */
-  function openNew() {
+  function openNew(preVesselId?: string) {
     setEditingItem(null)
-    setForm(emptyForm)
+    setForm({ ...emptyForm, vesselId: preVesselId || '' })
     setFormError('')
     setDrawerTab('detalle')
     setMovements([])
@@ -236,7 +225,7 @@ export default function InventoryPage() {
       notes: item.notes || '',
     })
     setFormError('')
-    setDrawerTab('detalle')
+    setDrawerTab(userRole === 'ADMIN' ? 'detalle' : 'movimientos')
     setMovementForm({ ...emptyMovementForm, date: new Date().toISOString().slice(0, 16) })
     setMovementError('')
     setDrawerOpen(true)
@@ -368,82 +357,155 @@ export default function InventoryPage() {
     }
   }
 
-  /* ─── Render item card ─── */
+  /* ─── Category icons ─── */
+  const catIcons: Record<string, React.ReactNode> = {
+    Lubricantes: (
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2C12 2 7 8 7 13C7 15.761 9.239 18 12 18C14.761 18 17 15.761 17 13C17 8 12 2 12 2Z" stroke={catColors.Lubricantes.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M9 13C9 14.657 10.343 16 12 16" stroke={catColors.Lubricantes.color} strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M12 18V22M9 21H15" stroke={catColors.Lubricantes.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+    Repuestos: (
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+        <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" stroke={catColors.Repuestos.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+    Aparejos: (
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2V14M12 14C10.343 14 9 15.343 9 17C9 18.657 10.343 20 12 20C13.657 20 15 18.657 15 17C15 15.343 13.657 14 12 14Z" stroke={catColors.Aparejos.color} strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M5 8C5 8 7 6 12 6C17 6 19 8 19 8" stroke={catColors.Aparejos.color} strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M3 14H8M16 14H21" stroke={catColors.Aparejos.color} strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    ),
+    Seguridad: (
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L4 6V12C4 16.418 7.582 20.5 12 22C16.418 20.5 20 16.418 20 12V6L12 2Z" stroke={catColors.Seguridad.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M9 12L11 14L15 10" stroke={catColors.Seguridad.color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+    Mantenimiento: (
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="3" stroke={catColors.Mantenimiento.color} strokeWidth="1.5" />
+        <path d="M12 2V4M12 20V22M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M2 12H4M20 12H22M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke={catColors.Mantenimiento.color} strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    ),
+    Otros: (
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+        <rect x="3" y="3" width="18" height="18" rx="3" stroke={catColors.Otros.color} strokeWidth="1.5" />
+        <path d="M9 9H15M9 12H15M9 15H12" stroke={catColors.Otros.color} strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    ),
+  }
+
+  /* ─── Render item card (horizontal) ─── */
   function renderItemCard(item: InventoryItem, showVessel = false) {
     const isLow = item.quantity <= item.minStock
     const cat = catColors[item.category] || catColors.Otros
+    const max = Math.max(item.minStock * 2, item.quantity, 1)
+    const pct = Math.min((item.quantity / max) * 100, 100)
+    const stockColor = isLow ? 'var(--danger)' : 'var(--success)'
+
     return (
       <div
         key={item.id}
         onClick={() => openEdit(item)}
         style={{
-          ...cardStyle,
+          background: 'var(--bg-surface)',
+          border: `1px solid ${isLow ? 'rgba(231,76,60,0.4)' : goldBorder}`,
+          borderRadius: '12px',
+          display: 'flex',
+          overflow: 'hidden',
           cursor: 'pointer',
-          transition: 'border-color 0.2s ease, transform 0.15s ease',
+          transition: 'border-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease',
           ...(isLow ? { animation: 'pulseRed 2s ease-in-out infinite' } : {}),
         }}
         onMouseEnter={e => {
-          (e.currentTarget as HTMLElement).style.borderColor = goldBorderActive;
-          (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'
+          (e.currentTarget as HTMLElement).style.borderColor = goldBorderActive
+            ; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'
+            ; (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 20px rgba(0,0,0,0.25)'
         }}
         onMouseLeave={e => {
-          (e.currentTarget as HTMLElement).style.borderColor = isLow ? 'rgba(231,76,60,0.3)' : goldBorder;
-          (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
+          (e.currentTarget as HTMLElement).style.borderColor = isLow ? 'rgba(231,76,60,0.4)' : goldBorder
+            ; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
+            ; (e.currentTarget as HTMLElement).style.boxShadow = 'none'
         }}
       >
-        {/* Category badge + low stock */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <span style={{
-            fontSize: '10px', fontWeight: 600, padding: '3px 10px', borderRadius: '6px',
-            background: cat.bg, color: cat.color, textTransform: 'uppercase', letterSpacing: '0.5px',
-          }}>
-            {item.category}
-          </span>
-          {isLow && (
+        {/* Left: category icon block */}
+        <div style={{
+          width: '86px', flexShrink: 0,
+          background: cat.bg,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          borderRight: `1px solid rgba(255,255,255,0.05)`,
+        }}>
+          {catIcons[item.category] || catIcons.Otros}
+        </div>
+
+        {/* Right: info */}
+        <div style={{ flex: 1, padding: '13px 15px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '5px' }}>
+
+          {/* Name + BAJO STOCK badge */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.3, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {item.name}
+            </div>
+            {isLow && (
+              <span style={{
+                fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px',
+                background: 'rgba(231,76,60,0.15)', color: 'var(--danger)',
+                border: '1px solid rgba(231,76,60,0.3)', flexShrink: 0, whiteSpace: 'nowrap',
+              }}>
+                BAJO STOCK
+              </span>
+            )}
+          </div>
+
+          {/* Category badge + vessel (general view) */}
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
             <span style={{
-              fontSize: '10px', fontWeight: 700, padding: '3px 8px', borderRadius: '6px',
-              background: 'rgba(231,76,60,0.15)', color: 'var(--danger)', border: '1px solid rgba(231,76,60,0.3)',
+              fontSize: '9px', fontWeight: 600, padding: '2px 7px', borderRadius: '4px',
+              background: cat.bg, color: cat.color, textTransform: 'uppercase', letterSpacing: '0.5px',
             }}>
-              BAJO STOCK
+              {item.category}
             </span>
+            {showVessel && (
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                {item.vessel?.name || vessels.find(v => v.id === item.vesselId)?.name || ''}
+              </span>
+            )}
+          </div>
+
+          {/* Stock row + bar */}
+          <div style={{ marginTop: '3px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Stock</span>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: stockColor }}>
+                {item.quantity}{' '}
+                <span style={{ fontSize: '10px', fontWeight: 400, color: 'var(--text-muted)' }}>{item.unit}</span>
+                <span style={{ fontSize: '10px', fontWeight: 400, color: 'var(--text-muted)', opacity: 0.7 }}> · min {item.minStock}</span>
+              </span>
+            </div>
+            <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.07)', borderRadius: '2px', overflow: 'hidden' }}>
+              <div style={{ width: `${pct}%`, height: '100%', background: stockColor, borderRadius: '2px', transition: 'width 0.3s ease' }} />
+            </div>
+          </div>
+
+          {/* Supplier / Location */}
+          {(item.supplier || item.location) && (
+            <div style={{ display: 'flex', gap: '10px', marginTop: '2px', flexWrap: 'wrap' }}>
+              {item.supplier && (
+                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                  <span style={{ opacity: 0.55 }}>Prov:</span> {item.supplier}
+                </span>
+              )}
+              {item.location && (
+                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                  <span style={{ opacity: 0.55 }}>Ubic:</span> {item.location}
+                </span>
+              )}
+            </div>
           )}
         </div>
-
-        {/* Name */}
-        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
-          {item.name}
-        </div>
-
-        {/* Vessel label in general view */}
-        {showVessel && (
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>
-            {item.vessel?.name || vessels.find(v => v.id === item.vesselId)?.name || ''}
-          </div>
-        )}
-
-        {/* Quantity */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Cantidad</span>
-          <span style={{ fontSize: '14px', fontWeight: 700, color: isLow ? 'var(--danger)' : 'var(--text-primary)' }}>
-            {item.quantity} <span style={{ fontSize: '11px', fontWeight: 400, color: 'var(--text-muted)' }}>{item.unit}</span>
-          </span>
-        </div>
-
-        {/* Stock bar */}
-        <div style={{ marginBottom: '6px' }}>
-          <StockBar quantity={item.quantity} minStock={item.minStock} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '3px' }}>
-            <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Min: {item.minStock}</span>
-            <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{Math.round((item.quantity / Math.max(item.minStock * 2, item.quantity, 1)) * 100)}%</span>
-          </div>
-        </div>
-
-        {/* Supplier */}
-        {item.supplier && (
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px', borderTop: `1px solid ${goldBorder}`, paddingTop: '8px' }}>
-            Proveedor: <span style={{ color: 'var(--text-muted)' }}>{item.supplier}</span>
-          </div>
-        )}
       </div>
     )
   }
@@ -762,11 +824,11 @@ export default function InventoryPage() {
                   }}>
                     {isEntry ? (
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M8 12V4M8 4L4 8M8 4L12 8" stroke="var(--success)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M8 12V4M8 4L4 8M8 4L12 8" stroke="var(--success)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     ) : (
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path d="M8 4V12M8 12L4 8M8 12L12 8" stroke="var(--danger)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M8 4V12M8 12L4 8M8 12L12 8" stroke="var(--danger)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     )}
                   </div>
@@ -780,11 +842,6 @@ export default function InventoryPage() {
                       }}>
                         {isEntry ? '+' : '-'}{mov.quantity} {currentItem.unit}
                       </span>
-                      {mov.balanceAfter != null && (
-                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                          Balance: {mov.balanceAfter}
-                        </span>
-                      )}
                     </div>
                     <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '2px' }}>
                       {formatDate(mov.date)}
@@ -822,14 +879,11 @@ export default function InventoryPage() {
   return (
     <div style={{ position: 'relative' }}>
       {/* ── Header ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>Inventario</div>
-          <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
-            Inventario a bordo — {totalItems} items registrados
-          </div>
+      <div style={{ marginBottom: '28px' }}>
+        <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>Inventario</div>
+        <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
+          Inventario a bordo — {totalItems} items registrados
         </div>
-        <button style={btnPrimary} onClick={openNew}>+ Nuevo Item</button>
       </div>
 
       {/* ── Low Stock Alert Banner ── */}
@@ -845,7 +899,7 @@ export default function InventoryPage() {
             background: 'rgba(231,76,60,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M10 6V10M10 14H10.01M8.57 2.72L1.51 14.49C1.19 15.05 1.03 15.33 1.05 15.56C1.07 15.76 1.18 15.94 1.34 16.06C1.53 16.2 1.85 16.2 2.49 16.2H17.51C18.15 16.2 18.47 16.2 18.66 16.06C18.82 15.94 18.93 15.76 18.95 15.56C18.97 15.33 18.81 15.05 18.49 14.49L11.43 2.72C11.11 2.16 10.95 1.88 10.74 1.79C10.56 1.71 10.36 1.71 10.18 1.79C9.97 1.88 9.81 2.16 9.49 2.72L8.57 2.72Z" stroke="var(--danger)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M10 6V10M10 14H10.01M8.57 2.72L1.51 14.49C1.19 15.05 1.03 15.33 1.05 15.56C1.07 15.76 1.18 15.94 1.34 16.06C1.53 16.2 1.85 16.2 2.49 16.2H17.51C18.15 16.2 18.47 16.2 18.66 16.06C18.82 15.94 18.93 15.76 18.95 15.56C18.97 15.33 18.81 15.05 18.49 14.49L11.43 2.72C11.11 2.16 10.95 1.88 10.74 1.79C10.56 1.71 10.36 1.71 10.18 1.79C9.97 1.88 9.81 2.16 9.49 2.72L8.57 2.72Z" stroke="var(--danger)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
           <div style={{ flex: 1 }}>
@@ -868,28 +922,22 @@ export default function InventoryPage() {
         </div>
       )}
 
-      {/* ── KPIs ── */}
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        <div style={kpiStyle}>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Items</div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)' }}>{totalItems}</div>
-        </div>
-        <div style={{
-          ...kpiStyle,
-          ...(lowStock > 0 ? { border: '1px solid rgba(231,76,60,0.3)', background: 'rgba(231,76,60,0.04)' } : {}),
-        }}>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bajo Stock Minimo</div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: lowStock > 0 ? 'var(--danger)' : 'var(--success)' }}>{lowStock}</div>
-        </div>
-        <div style={kpiStyle}>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Categorias</div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--accent)' }}>{distinctCategories}</div>
-        </div>
-        <div style={kpiStyle}>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Embarcaciones</div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)' }}>{vesselsWithInventory}</div>
-        </div>
-      </div>
+      {/* ── KPI: Embarcaciones (solo sin embarcacion seleccionada) ── */}
+      {!filterVessel && (() => {
+        const isLight = userRole === 'OPERATOR_LIGHT'
+        const isHeavy = userRole === 'OPERATOR_HEAVY'
+        const label = isLight ? 'Flota Liviana (FT)' : isHeavy ? 'Flota Pesada (FP)' : 'Total Embarcaciones'
+        const sublabel = isLight ? 'Lanchas registradas en el sistema' : isHeavy ? 'Barcos registrados en el sistema' : 'Embarcaciones registradas en el sistema'
+        return (
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ ...kpiStyle, maxWidth: '260px' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</div>
+              <div style={{ fontSize: '36px', fontWeight: 800, color: 'var(--accent)', lineHeight: 1 }}>{vessels.length}</div>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{sublabel}</div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* ── View Toggle + Filters ── */}
       <div style={{ ...cardStyle, padding: '16px', marginBottom: '24px', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -950,12 +998,23 @@ export default function InventoryPage() {
             onChange={e => setSearch(e.target.value)}
           />
         </div>
-        {(filterVessel || filterCategory || search) && (
-          <button
-            style={{ ...btnSecondary, fontSize: '11px', padding: '8px 12px' }}
-            onClick={() => { setFilterVessel(''); setFilterCategory(''); setSearch('') }}
-          >
-            Limpiar filtros
+        <button
+          style={{
+            ...btnSecondary,
+            fontSize: '11px',
+            padding: '8px 12px',
+            flexShrink: 0,
+            opacity: (filterVessel || filterCategory || search) ? 1 : 0.35,
+            cursor: (filterVessel || filterCategory || search) ? 'pointer' : 'default',
+          }}
+          onClick={() => { setFilterVessel(''); setFilterCategory(''); setSearch('') }}
+          disabled={!(filterVessel || filterCategory || search)}
+        >
+          ✕ Limpiar filtros
+        </button>
+        {['ADMIN', 'OPERATOR_HEAVY', 'OPERATOR_LIGHT'].includes(userRole) && (
+          <button style={{ ...btnPrimary, flexShrink: 0 }} onClick={() => openNew(filterVessel || undefined)}>
+            + Agregar Item
           </button>
         )}
       </div>
@@ -972,7 +1031,7 @@ export default function InventoryPage() {
 
       {/* ── General view (flat grid) ── */}
       {viewMode === 'general' && filtered.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '14px' }}>
           {filtered.map(item => renderItemCard(item, true))}
         </div>
       )}
@@ -982,7 +1041,7 @@ export default function InventoryPage() {
         <div key={vesselId} style={{ marginBottom: '28px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-              <path d="M3 17L5 7H19L21 17M3 17H21M3 17L1 21H23L21 17M7 7V5C7 3.9 7.9 3 9 3H15C16.1 3 17 3.9 17 5V7" stroke="var(--text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M3 17L5 7H19L21 17M3 17H21M3 17L1 21H23L21 17M7 7V5C7 3.9 7.9 3 9 3H15C16.1 3 17 3.9 17 5V7" stroke="var(--text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>{group.vesselName}</span>
             <span style={{
@@ -1002,7 +1061,7 @@ export default function InventoryPage() {
             )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '14px' }}>
             {group.items.map(item => renderItemCard(item))}
           </div>
         </div>
@@ -1022,13 +1081,13 @@ export default function InventoryPage() {
                 style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '22px', cursor: 'pointer', padding: '4px 8px' }}
               >
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                  <path d="M4 4L14 14M14 4L4 14" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M4 4L14 14M14 4L4 14" stroke="var(--text-secondary)" strokeWidth="2" strokeLinecap="round" />
                 </svg>
               </button>
             </div>
 
-            {/* Tabs (only for editing) */}
-            {editingItem && (
+            {/* Tabs (only for ADMIN editing) */}
+            {editingItem && userRole === 'ADMIN' && (
               <div style={{
                 display: 'flex', borderRadius: '10px', overflow: 'hidden',
                 border: `1px solid ${goldBorder}`, background: '#080E1A',

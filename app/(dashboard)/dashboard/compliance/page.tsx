@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { api } from '@/lib/api-client'
 
 /* ─── Types ─── */
 type Vessel = { id: string; name: string }
@@ -61,16 +62,6 @@ const emptyForm: DocForm = {
   vesselId: '', type: 'MARPOL', name: '', documentNumber: '', issuedBy: '', issuedAt: '', expiresAt: '', notes: '',
 }
 
-/* ─── API helper ─── */
-function getToken() { return localStorage.getItem('token') || '' }
-async function api(path: string, opts?: RequestInit) {
-  const res = await fetch(path, {
-    ...opts,
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}`, ...opts?.headers },
-  })
-  if (!res.ok) throw new Error(`API ${res.status}`)
-  return res.json()
-}
 
 /* ─── Styles ─── */
 const cardStyle: React.CSSProperties = {
@@ -250,7 +241,7 @@ export default function CompliancePage() {
       )}
 
       {/* ── KPI Cards ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
         {[
           { label: 'Total Documentos', value: total, color: 'var(--accent)' },
           { label: 'Vigentes', value: vigentes, color: 'var(--success)' },
@@ -405,7 +396,7 @@ export default function CompliancePage() {
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              position: 'fixed', top: 0, right: 0, bottom: 0, width: '480px',
+              position: 'fixed', top: 0, right: 0, bottom: 0, width: '480px', maxWidth: '100vw',
               background: 'var(--bg-elevated)', borderLeft: '1px solid rgba(212,149,10,0.2)',
               overflowY: 'auto', padding: '28px',
             }}
@@ -493,7 +484,7 @@ export default function CompliancePage() {
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              position: 'fixed', top: 0, right: 0, bottom: 0, width: '500px',
+              position: 'fixed', top: 0, right: 0, bottom: 0, width: '500px', maxWidth: '100vw',
               background: 'var(--bg-elevated)', borderLeft: '1px solid rgba(212,149,10,0.2)',
               overflowY: 'auto', padding: '28px',
             }}

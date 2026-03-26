@@ -184,15 +184,11 @@ export default function RegisterPage() {
 
   // ─────────────────────────────────────────────────────────
   return (
-    <div style={{ display: 'flex', height: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', background: 'var(--bg-base)' }}>
+    <div className="flex min-h-screen bg-[var(--bg-base)]">
 
-      {/* Panel izquierdo */}
-      <div style={{
-        flex: 1,
-        background: 'linear-gradient(160deg, #0B1628 0%, #0E1F3E 55%, #132848 100%)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: '48px', borderRight: '1px solid var(--border-subtle)',
-      }}>
+      {/* Panel izquierdo — oculto en móvil */}
+      <div className="hidden md:flex flex-1 flex-col items-center justify-center px-12 py-16 relative overflow-hidden"
+        style={{ background: 'linear-gradient(160deg, #0B1628 0%, #0E1F3E 55%, #132848 100%)', borderRight: '1px solid var(--border-subtle)' }}>
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
             <VenolsLogo size="lg" />
@@ -247,11 +243,12 @@ export default function RegisterPage() {
       </div>
 
       {/* Panel derecho */}
-      <div style={{
-        width: '480px', background: 'var(--bg-surface)',
-        display: 'flex', flexDirection: 'column', justifyContent: 'center',
-        padding: '48px 42px', overflowY: 'auto',
-      }}>
+      <div className="w-full md:w-[480px] flex flex-col justify-center px-6 py-10 sm:px-10 md:px-11 bg-[var(--bg-surface)] overflow-y-auto">
+
+        {/* Logo visible solo en móvil */}
+        <div className="flex justify-center mb-8 md:hidden">
+          <VenolsLogo size="md" />
+        </div>
 
         {/* ══ PASO 1: Formulario ══ */}
         {step === 'form' && (
@@ -380,9 +377,10 @@ export default function RegisterPage() {
                     onKeyDown={e => handleDigitKeyDown(i, e)}
                     onPaste={handleDigitPaste}
                     style={{
-                      width: '52px', height: '60px',
+                      width: 'clamp(40px, 11vw, 52px)',
+                      height: 'clamp(48px, 13vw, 60px)',
                       textAlign: 'center',
-                      fontSize: '24px', fontWeight: 700,
+                      fontSize: 'clamp(18px, 5vw, 24px)', fontWeight: 700,
                       fontFamily: 'monospace',
                       background: d ? 'rgba(195,160,65,0.08)' : 'var(--bg-input)',
                       border: d ? '2px solid var(--accent)' : '1px solid var(--border-accent)',

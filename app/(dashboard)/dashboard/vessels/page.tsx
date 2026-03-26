@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { api } from '@/lib/api-client'
+import { Button, Card, Badge, FormField, Input, Select, Textarea, LoadingState, EmptyState } from '@/components/ui'
 
 /* ─── Types ─── */
 type Vessel = {
@@ -20,106 +22,94 @@ type StatusReport = {
   id: string; date: string; location: string; activity: string; fuelLevel?: number
   client?: string; captain: string; marineOnDuty: string; vesselStatus: string; notes?: string
 }
-
 type DrawerView = 'modules' | 'reports' | 'fuel-list' | 'fuel-form' | 'maint-list' | 'maint-form' | 'status-list' | 'status-form'
 
 /* ─── Config ─── */
-const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
-  OPERATIVO:     { label: 'Operativo',     color: 'var(--success)', bg: 'rgba(39,174,96,0.12)' },
-  EN_TRANSITO:   { label: 'En tránsito',   color: 'var(--accent)', bg: 'rgba(212,149,10,0.12)' },
-  ATRACADO:      { label: 'Atracado',      color: 'var(--text-secondary)', bg: 'rgba(127,168,201,0.12)' },
-  MANTENIMIENTO: { label: 'Mantenimiento', color: 'var(--danger)', bg: 'rgba(231,76,60,0.12)' },
-  INACTIVO:      { label: 'Inactivo',      color: 'var(--text-muted)', bg: 'rgba(71,100,126,0.12)' },
+const STATUS_CONFIG: Record<string, { label: string; tone: 'success' | 'accent' | 'muted' | 'danger' }> = {
+  OPERATIVO:     { label: 'Operativo',     tone: 'success' },
+  EN_TRANSITO:   { label: 'En tránsito',   tone: 'accent' },
+  ATRACADO:      { label: 'Atracado',      tone: 'muted' },
+  MANTENIMIENTO: { label: 'Mantenimiento', tone: 'danger' },
+  INACTIVO:      { label: 'Inactivo',      tone: 'muted' },
 }
-const fleetIcon = (ft: string) => ft === 'PESADA' ? 'PS' : 'LV'
+const fleetTag = (ft: string) => ft === 'PESADA' ? 'PS' : 'LV'
 
-/* ─── API helper ─── */
-function getToken() { return localStorage.getItem('token') || '' }
-async function api(path: string, opts?: RequestInit) {
-  const res = await fetch(path, { ...opts, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}`, ...opts?.headers } })
-  if (res.status === 401) {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    window.location.href = '/login'
-    throw new Error('Sesión expirada')
-  }
-  if (!res.ok) throw new Error(`API ${res.status}`)
-  return res.json()
+function fmtDate(d: string) {
+  const dt = new Date(d)
+  return dt.toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' }) +
+    ' ' + dt.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })
 }
-
-/* ─── Styles ─── */
-const card = { background: 'var(--bg-surface)', border: '1px solid var(--border-accent)', borderRadius: '12px' }
-const goldBorder = 'var(--border-accent)'
-const goldBorderActive = 'var(--border-accent-strong)'
-const inputStyle: React.CSSProperties = { width: '100%', padding: '9px 12px', background: 'var(--bg-input)', border: '1px solid var(--border-accent)', borderRadius: '8px', color: 'var(--text-primary)', fontSize: '13px', outline: 'none' }
-const btnPrimary: React.CSSProperties = { padding: '10px 20px', background: 'var(--accent)', border: 'none', borderRadius: '8px', color: '#080E1A', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }
-const btnSecondary: React.CSSProperties = { padding: '8px 14px', background: 'transparent', border: '1px solid var(--border-accent)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '12px', cursor: 'pointer' }
+function nowLocal() {
+  return new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+}
 
 /* ═════════════════════ MAIN PAGE ═════════════════════ */
 export default function VesselsPage() {
-  const [vessels, setVessels] = useState<Vessel[]>([])
-  const [loading, setLoading] = useState(true)
-  const [activeFleet, setActiveFleet] = useState<'PESADA' | 'LIVIANA' | null>(null)
+  const [vessels, setVessels]               = useState<Vessel[]>([])
+  const [loading, setLoading]               = useState(true)
+  const [activeFleet, setActiveFleet]       = useState<'PESADA' | 'LIVIANA' | null>(null)
   const [selectedVessel, setSelectedVessel] = useState<Vessel | null>(null)
-  const [drawerView, setDrawerView] = useState<DrawerView>('modules')
+  const [drawerView, setDrawerView]         = useState<DrawerView>('modules')
 
   useEffect(() => {
-    api('/api/vessels').then(setVessels).catch(() => {}).finally(() => setLoading(false))
+    api<Vessel[]>('/api/vessels').then(setVessels).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
-  const pesada = vessels.filter(v => v.fleetType === 'PESADA')
-  const liviana = vessels.filter(v => v.fleetType === 'LIVIANA')
+  const pesada   = vessels.filter(v => v.fleetType === 'PESADA')
+  const liviana  = vessels.filter(v => v.fleetType === 'LIVIANA')
   const displayed = activeFleet ? vessels.filter(v => v.fleetType === activeFleet) : vessels
 
   function openVessel(v: Vessel) { setSelectedVessel(v); setDrawerView('modules') }
-  function closeDrawer() { setSelectedVessel(null) }
+  function closeDrawer()         { setSelectedVessel(null) }
 
-  if (loading) return <div style={{ color: 'var(--text-secondary)', padding: '40px', textAlign: 'center' }}>Cargando flota...</div>
+  if (loading) return <LoadingState message="Cargando flota..." />
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div className="relative">
       {/* Header */}
-      <div style={{ marginBottom: '28px' }}>
-        <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.3px' }}>Embarcaciones</div>
-        <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
-          Gestion de flota — {vessels.length} embarcaciones registradas
-        </div>
+      <div className="mb-7">
+        <h1 className="text-xl font-bold text-[var(--text-primary)] tracking-tight">Embarcaciones</h1>
+        <p className="text-[13px] text-[var(--text-muted)] mt-1">
+          Gestión de flota — {vessels.length} embarcaciones registradas
+        </p>
       </div>
 
       {/* Fleet tabs */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
+      <div className="flex gap-2.5 mb-6">
         {([null, 'PESADA', 'LIVIANA'] as const).map(ft => {
           const active = activeFleet === ft
-          const label = ft === null ? 'Toda la Flota' : ft === 'PESADA' ? `Flota Pesada (${pesada.length})` : `Flota Liviana (${liviana.length})`
+          const label  = ft === null ? 'Toda la Flota'
+            : ft === 'PESADA' ? `Flota Pesada (${pesada.length})`
+            : `Flota Liviana (${liviana.length})`
           return (
-            <button key={String(ft)} onClick={() => setActiveFleet(ft)} style={{
-              padding: '8px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
-              border: `1px solid ${active ? goldBorderActive : goldBorder}`,
-              background: active ? 'rgba(212,149,10,0.12)' : 'transparent',
-              color: active ? 'var(--accent)' : 'var(--text-secondary)',
-            }}>
+            <Button key={String(ft)} variant={active ? 'primary' : 'secondary'} size="sm"
+              onClick={() => setActiveFleet(ft)}>
               {label}
-            </button>
+            </Button>
           )
         })}
       </div>
 
       {/* Fleet sections */}
       {activeFleet === null ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-          {[{ key: 'PESADA' as const, label: 'Flota Pesada', tag: 'PS', desc: 'Buques de gran calado para operaciones offshore', list: pesada },
-            { key: 'LIVIANA' as const, label: 'Flota Liviana', tag: 'LV', desc: 'Lanchas para transporte de personal y operaciones costeras', list: liviana }]
-            .map(fleet => (
+        <div className="flex flex-col gap-7">
+          {([
+            { key: 'PESADA' as const, label: 'Flota Pesada',   tag: 'PS', desc: 'Buques de gran calado para operaciones offshore',                list: pesada },
+            { key: 'LIVIANA' as const, label: 'Flota Liviana', tag: 'LV', desc: 'Lanchas para transporte de personal y operaciones costeras', list: liviana },
+          ]).map(fleet => (
             <div key={fleet.key}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '30px', height: '30px', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.5px' }}>{fleet.tag}</div>
+              <div className="flex items-center justify-between mb-3.5">
+                <div className="flex items-center gap-2.5">
+                  <FleetIcon tag={fleet.tag} />
                   <div>
-                    <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)' }}>{fleet.label}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{fleet.desc}</div>
+                    <div className="text-[15px] font-bold text-[var(--text-primary)]">{fleet.label}</div>
+                    <div className="text-[11px] text-[var(--text-muted)]">{fleet.desc}</div>
                   </div>
                 </div>
-                <button onClick={() => setActiveFleet(fleet.key)} style={{ fontSize: '11px', color: 'var(--accent)', cursor: 'pointer', background: 'none', border: 'none' }}>Ver detalle</button>
+                <button onClick={() => setActiveFleet(fleet.key)}
+                  className="text-[11px] text-[var(--accent)] cursor-pointer bg-transparent border-none hover:underline">
+                  Ver detalle
+                </button>
               </div>
               <VesselGrid vessels={fleet.list} onSelect={openVessel} />
             </div>
@@ -129,7 +119,6 @@ export default function VesselsPage() {
         <VesselGrid vessels={displayed} onSelect={openVessel} />
       )}
 
-      {/* Drawer overlay */}
       {selectedVessel && (
         <VesselDrawer vessel={selectedVessel} view={drawerView} setView={setDrawerView} onClose={closeDrawer} />
       )}
@@ -137,27 +126,39 @@ export default function VesselsPage() {
   )
 }
 
+/* ─── Fleet Icon chip ─── */
+function FleetIcon({ tag, size = 30 }: { tag: string; size?: number }) {
+  return (
+    <div style={{ width: size, height: size }}
+      className="bg-[var(--accent-dim)] border border-[var(--border-accent)] rounded-lg flex items-center justify-center text-[10px] font-bold text-[var(--accent)] tracking-[0.5px]">
+      {tag}
+    </div>
+  )
+}
+
 /* ═════════════════════ VESSEL GRID ═════════════════════ */
 function VesselGrid({ vessels, onSelect }: { vessels: Vessel[]; onSelect: (v: Vessel) => void }) {
+  if (!vessels.length) {
+    return <EmptyState icon="directions_boat" title="Sin embarcaciones" description="No hay embarcaciones en esta flota." />
+  }
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
+    <div className="grid gap-3.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
       {vessels.map(vessel => {
-        const st = statusConfig[vessel.status] || statusConfig.INACTIVO
+        const st = STATUS_CONFIG[vessel.status] || STATUS_CONFIG.INACTIVO
         return (
-          <div key={vessel.id} onClick={() => onSelect(vessel)}
-            style={{ ...card, padding: '20px', cursor: 'pointer', transition: 'border-color 0.2s, box-shadow 0.2s' }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-accent-strong)' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-accent)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
-              <div style={{ width: '44px', height: '44px', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.5px' }}>
-                {fleetIcon(vessel.fleetType)}
-              </div>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: st.color, background: st.bg, padding: '4px 10px', borderRadius: '20px' }}>{st.label}</span>
+          <Card key={vessel.id} padding="none"
+            className="p-5 cursor-pointer hover:border-[var(--border-accent-strong)] transition-colors"
+            onClick={() => onSelect(vessel)}>
+            <div className="flex justify-between items-start mb-3.5">
+              <FleetIcon tag={fleetTag(vessel.fleetType)} size={44} />
+              <Badge tone={st.tone}>{st.label}</Badge>
             </div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>{vessel.name}</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{vessel.vesselType}</div>
-            {vessel.matricula && <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--accent)', fontFamily: 'monospace', opacity: 0.6 }}>MAT: {vessel.matricula}</div>}
-          </div>
+            <div className="text-[14px] font-bold text-[var(--text-primary)] mb-1">{vessel.name}</div>
+            <div className="text-[12px] text-[var(--text-muted)]">{vessel.vesselType}</div>
+            {vessel.matricula && (
+              <div className="mt-2 text-[11px] text-[var(--accent)] font-mono opacity-60">MAT: {vessel.matricula}</div>
+            )}
+          </Card>
         )
       })}
     </div>
@@ -168,89 +169,96 @@ function VesselGrid({ vessels, onSelect }: { vessels: Vessel[]; onSelect: (v: Ve
 function VesselDrawer({ vessel, view, setView, onClose }: {
   vessel: Vessel; view: DrawerView; setView: (v: DrawerView) => void; onClose: () => void
 }) {
-  /* Reports state */
-  const [fuelReports, setFuelReports] = useState<FuelReport[]>([])
-  const [maintReports, setMaintReports] = useState<MaintenanceReport[]>([])
+  const [fuelReports,   setFuelReports]   = useState<FuelReport[]>([])
+  const [maintReports,  setMaintReports]  = useState<MaintenanceReport[]>([])
   const [statusReports, setStatusReports] = useState<StatusReport[]>([])
   const [loadingReports, setLoadingReports] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [toast, setToast] = useState('')
+  const [saving, setSaving]               = useState(false)
+  const [toast, setToast]                 = useState('')
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3000) }
 
   const loadReports = useCallback(async (type: 'fuel' | 'maintenance' | 'status') => {
     setLoadingReports(true)
     try {
-      const data = await api(`/api/vessels/${vessel.id}/reports/${type}`)
-      if (type === 'fuel') setFuelReports(data)
-      else if (type === 'maintenance') setMaintReports(data)
-      else setStatusReports(data)
+      const data = await api<FuelReport[] | MaintenanceReport[] | StatusReport[]>(`/api/vessels/${vessel.id}/reports/${type}`)
+      if (type === 'fuel')        setFuelReports(data as FuelReport[])
+      else if (type === 'maintenance') setMaintReports(data as MaintenanceReport[])
+      else                        setStatusReports(data as StatusReport[])
     } catch { /* silent */ }
     setLoadingReports(false)
   }, [vessel.id])
 
   function navigateTo(v: DrawerView) {
     setView(v)
-    if (v === 'fuel-list') loadReports('fuel')
-    else if (v === 'maint-list') loadReports('maintenance')
+    if (v === 'fuel-list')   loadReports('fuel')
+    else if (v === 'maint-list')  loadReports('maintenance')
     else if (v === 'status-list') loadReports('status')
   }
 
-  /* Breadcrumb */
-  const breadcrumb: { label: string; view: DrawerView }[] = [{ label: 'Modulos', view: 'modules' }]
+  const breadcrumb: { label: string; view: DrawerView }[] = [{ label: 'Módulos', view: 'modules' }]
   if (view !== 'modules') breadcrumb.push({ label: 'Reportes', view: 'reports' })
-  if (['fuel-list', 'fuel-form'].includes(view)) breadcrumb.push({ label: 'Combustible', view: 'fuel-list' })
-  if (['maint-list', 'maint-form'].includes(view)) breadcrumb.push({ label: 'Mantenimiento', view: 'maint-list' })
-  if (['status-list', 'status-form'].includes(view)) breadcrumb.push({ label: 'Estado', view: 'status-list' })
+  if (['fuel-list',   'fuel-form'].includes(view))   breadcrumb.push({ label: 'Combustible',    view: 'fuel-list' })
+  if (['maint-list',  'maint-form'].includes(view))  breadcrumb.push({ label: 'Mantenimiento',  view: 'maint-list' })
+  if (['status-list', 'status-form'].includes(view)) breadcrumb.push({ label: 'Estado',         view: 'status-list' })
 
-  const st = statusConfig[vessel.status] || statusConfig.INACTIVO
+  const st = STATUS_CONFIG[vessel.status] || STATUS_CONFIG.INACTIVO
 
   return (
     <>
-      {/* Backdrop */}
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, backdropFilter: 'blur(4px)' }} />
-      {/* Panel */}
-      <div style={{ position: 'fixed', top: 0, right: 0, width: '520px', maxWidth: '90vw', height: '100vh', background: 'var(--bg-surface)', borderLeft: '1px solid rgba(212,149,10,0.2)', zIndex: 1001, display: 'flex', flexDirection: 'column', animation: 'slideIn 0.25s ease' }}>
-        {/* Toast */}
-        {toast && <div style={{ position: 'absolute', top: '12px', left: '50%', transform: 'translateX(-50%)', background: 'var(--success)', color: 'white', padding: '8px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, zIndex: 10 }}>{toast}</div>}
+      <div onClick={onClose} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000]" />
+      <div className="fixed top-0 right-0 w-[520px] max-w-[90vw] h-screen bg-[var(--bg-surface)] border-l border-[var(--border-accent)] z-[1001] flex flex-col"
+        style={{ animation: 'slideIn 0.25s ease' }}>
+
+        {toast && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-[var(--success)] text-white px-5 py-2 rounded-lg text-[13px] font-semibold z-10">
+            {toast}
+          </div>
+        )}
 
         {/* Header */}
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(212,149,10,0.15)', flexShrink: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ width: '44px', height: '44px', background: 'rgba(212,149,10,0.1)', border: '1px solid rgba(212,149,10,0.2)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px' }}>{fleetIcon(vessel.fleetType)}</div>
+        <div className="px-6 py-5 border-b border-[var(--border-accent)] flex-shrink-0">
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center gap-3">
+              <FleetIcon tag={fleetTag(vessel.fleetType)} size={44} />
               <div>
-                <div style={{ fontSize: '17px', fontWeight: 700, color: 'var(--text-primary)' }}>{vessel.name}</div>
-                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{vessel.vesselType} — {vessel.fleetType === 'PESADA' ? 'Flota Pesada' : 'Flota Liviana'}</div>
+                <div className="text-[17px] font-bold text-[var(--text-primary)]">{vessel.name}</div>
+                <div className="text-[12px] text-[var(--text-secondary)]">
+                  {vessel.vesselType} — {vessel.fleetType === 'PESADA' ? 'Flota Pesada' : 'Flota Liviana'}
+                </div>
               </div>
             </div>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '20px', cursor: 'pointer', padding: '4px 8px' }}>✕</button>
+            <button onClick={onClose} className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-transparent border-none text-xl cursor-pointer px-2 py-1">✕</button>
           </div>
-          {/* Vessel meta row */}
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '11px', fontWeight: 600, color: st.color, background: st.bg, padding: '3px 10px', borderRadius: '20px' }}>{st.label}</span>
-            {vessel.matricula && <span style={{ fontSize: '11px', color: 'var(--accent)', fontFamily: 'monospace', background: 'rgba(212,149,10,0.08)', padding: '3px 10px', borderRadius: '20px' }}>MAT: {vessel.matricula}</span>}
-            {vessel.homePort && <span style={{ fontSize: '11px', color: 'var(--text-secondary)', background: 'rgba(127,168,201,0.08)', padding: '3px 10px', borderRadius: '20px' }}>{vessel.homePort}</span>}
+
+          <div className="flex gap-2 flex-wrap">
+            <Badge tone={st.tone} dot>{st.label}</Badge>
+            {vessel.matricula && <Badge tone="accent">MAT: {vessel.matricula}</Badge>}
+            {vessel.homePort  && <Badge tone="muted">{vessel.homePort}</Badge>}
           </div>
+
           {/* Breadcrumb */}
-          <div style={{ display: 'flex', gap: '6px', alignItems: 'center', marginTop: '14px', fontSize: '12px' }}>
+          <div className="flex items-center gap-1.5 mt-3.5 text-[12px]">
             {breadcrumb.map((b, i) => (
-              <span key={b.view}>
-                {i > 0 && <span style={{ color: 'rgba(212,149,10,0.3)', margin: '0 4px' }}>/</span>}
-                <button onClick={() => navigateTo(b.view)} style={{ background: 'none', border: 'none', color: i === breadcrumb.length - 1 ? 'var(--accent)' : 'var(--text-secondary)', cursor: 'pointer', padding: 0, fontSize: '12px', fontWeight: i === breadcrumb.length - 1 ? 600 : 400 }}>{b.label}</button>
+              <span key={b.view} className="flex items-center">
+                {i > 0 && <span className="text-[var(--border-accent-strong)] mx-1">/</span>}
+                <button onClick={() => navigateTo(b.view)}
+                  className={`bg-transparent border-none cursor-pointer p-0 text-[12px] ${i === breadcrumb.length - 1 ? 'text-[var(--accent)] font-semibold' : 'text-[var(--text-secondary)]'}`}>
+                  {b.label}
+                </button>
               </span>
             ))}
           </div>
         </div>
 
         {/* Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
-          {view === 'modules' && <ModulesView onNavigate={navigateTo} />}
-          {view === 'reports' && <ReportsMenu onNavigate={navigateTo} />}
-          {view === 'fuel-list' && <FuelListView reports={fuelReports} loading={loadingReports} onNew={() => setView('fuel-form')} />}
-          {view === 'fuel-form' && <FuelForm vesselId={vessel.id} onSaved={() => { navigateTo('fuel-list'); showToast('Reporte de combustible guardado') }} saving={saving} setSaving={setSaving} />}
-          {view === 'maint-list' && <MaintListView reports={maintReports} loading={loadingReports} onNew={() => setView('maint-form')} />}
-          {view === 'maint-form' && <MaintForm vesselId={vessel.id} onSaved={() => { navigateTo('maint-list'); showToast('Reporte de mantenimiento guardado') }} saving={saving} setSaving={setSaving} />}
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          {view === 'modules'     && <ModulesView onNavigate={navigateTo} />}
+          {view === 'reports'     && <ReportsMenu onNavigate={navigateTo} />}
+          {view === 'fuel-list'   && <FuelListView reports={fuelReports} loading={loadingReports} onNew={() => setView('fuel-form')} />}
+          {view === 'fuel-form'   && <FuelForm vesselId={vessel.id} onSaved={() => { navigateTo('fuel-list'); showToast('Reporte de combustible guardado') }} saving={saving} setSaving={setSaving} />}
+          {view === 'maint-list'  && <MaintListView reports={maintReports} loading={loadingReports} onNew={() => setView('maint-form')} />}
+          {view === 'maint-form'  && <MaintForm vesselId={vessel.id} onSaved={() => { navigateTo('maint-list'); showToast('Reporte de mantenimiento guardado') }} saving={saving} setSaving={setSaving} />}
           {view === 'status-list' && <StatusListView reports={statusReports} loading={loadingReports} onNew={() => setView('status-form')} />}
           {view === 'status-form' && <StatusForm vessel={vessel} onSaved={() => { navigateTo('status-list'); showToast('Reporte de estado guardado') }} saving={saving} setSaving={setSaving} />}
         </div>
@@ -263,27 +271,22 @@ function VesselDrawer({ vessel, view, setView, onClose }: {
 /* ─── Modules View ─── */
 function ModulesView({ onNavigate }: { onNavigate: (v: DrawerView) => void }) {
   const modules = [
-    { id: 'reports' as const, icon: 'RPT', label: 'Reportes', desc: 'Combustible, mantenimiento y estado', active: true },
-    { id: 'docs' as const, icon: 'DOC', label: 'Documentos', desc: 'Certificados y permisos', active: false },
-    { id: 'history' as const, icon: 'HST', label: 'Historial', desc: 'Registro de operaciones', active: false },
-    { id: 'map' as const, icon: 'AIS', label: 'Posicion AIS', desc: 'Ubicacion GPS en tiempo real', active: false },
+    { id: 'reports' as const, icon: 'RPT', label: 'Reportes',     desc: 'Combustible, mantenimiento y estado',  active: true },
+    { id: 'docs'    as const, icon: 'DOC', label: 'Documentos',   desc: 'Certificados y permisos',               active: false },
+    { id: 'history' as const, icon: 'HST', label: 'Historial',    desc: 'Registro de operaciones',               active: false },
+    { id: 'map'     as const, icon: 'AIS', label: 'Posición AIS', desc: 'Ubicación GPS en tiempo real',          active: false },
   ]
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+    <div className="grid grid-cols-2 gap-3">
       {modules.map(m => (
-        <div key={m.id}
-          onClick={() => m.active && onNavigate(m.id === 'reports' ? 'reports' : 'modules')}
-          style={{
-            ...card, padding: '20px', cursor: m.active ? 'pointer' : 'default',
-            opacity: m.active ? 1 : 0.4, transition: 'border-color 0.2s',
-          }}
-          onMouseEnter={e => m.active && (e.currentTarget.style.borderColor = 'rgba(212,149,10,0.4)')}
-          onMouseLeave={e => (e.currentTarget.style.borderColor = goldBorder)}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.5px', marginBottom: '10px' }}>{m.icon}</div>
-          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>{m.label}</div>
-          <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{m.desc}</div>
-          {!m.active && <div style={{ fontSize: '9px', color: 'rgba(212,149,10,0.4)', marginTop: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>Proximamente</div>}
-        </div>
+        <Card key={m.id} padding="none"
+          className={`p-5 transition-colors ${m.active ? 'cursor-pointer hover:border-[var(--border-accent-strong)]' : 'opacity-40 cursor-default'}`}
+          onClick={() => m.active && onNavigate(m.id === 'reports' ? 'reports' : 'modules')}>
+          <FleetIcon tag={m.icon} size={40} />
+          <div className="text-[14px] font-bold text-[var(--text-primary)] mt-2.5 mb-1">{m.label}</div>
+          <div className="text-[11px] text-[var(--text-secondary)]">{m.desc}</div>
+          {!m.active && <div className="text-[9px] text-[var(--accent)]/40 mt-2 uppercase tracking-widest">Próximamente</div>}
+        </Card>
       ))}
     </div>
   )
@@ -292,60 +295,55 @@ function ModulesView({ onNavigate }: { onNavigate: (v: DrawerView) => void }) {
 /* ─── Reports Menu ─── */
 function ReportsMenu({ onNavigate }: { onNavigate: (v: DrawerView) => void }) {
   const types = [
-    { view: 'fuel-list' as const, tag: 'CMB', label: 'Reporte de Combustible', desc: 'Nivel de combustible, consumo, operador y ubicacion', color: 'var(--warning)' },
-    { view: 'maint-list' as const, tag: 'MNT', label: 'Reporte de Mantenimiento', desc: 'Tipo de trabajo, tecnico, repuestos, costos y estado', color: 'var(--danger)' },
-    { view: 'status-list' as const, tag: 'EST', label: 'Reporte de Estado', desc: 'Ubicacion, actividad, cliente, capitan, marino en guardia', color: 'var(--info)' },
+    { view: 'fuel-list'   as const, tag: 'CMB', label: 'Reporte de Combustible',    desc: 'Nivel de combustible, consumo, operador y ubicación',         tone: 'warning' as const },
+    { view: 'maint-list'  as const, tag: 'MNT', label: 'Reporte de Mantenimiento',  desc: 'Tipo de trabajo, técnico, repuestos, costos y estado',        tone: 'danger'  as const },
+    { view: 'status-list' as const, tag: 'EST', label: 'Reporte de Estado',          desc: 'Ubicación, actividad, cliente, capitán, marino en guardia',  tone: 'info'    as const },
   ]
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>Selecciona tipo de reporte</div>
+    <div className="flex flex-col gap-3">
+      <div className="text-[14px] font-bold text-[var(--text-primary)] mb-1">Selecciona tipo de reporte</div>
       {types.map(t => (
-        <div key={t.view} onClick={() => onNavigate(t.view)}
-          style={{ ...card, padding: '16px 18px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '14px', borderLeft: `2px solid ${t.color}`, transition: 'border-color 0.15s' }}
-          onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-accent-strong)')}
-          onMouseLeave={e => (e.currentTarget.style.borderColor = t.color)}>
-          <div style={{ width: '38px', height: '38px', background: 'var(--accent-dim)', border: '1px solid var(--border-accent)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: t.color, letterSpacing: '0.5px', flexShrink: 0 }}>{t.tag}</div>
-          <div>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{t.label}</div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{t.desc}</div>
+        <Card key={t.view} padding="none"
+          className="px-4 py-3.5 flex items-center gap-3.5 cursor-pointer hover:border-[var(--border-accent-strong)] transition-colors"
+          onClick={() => onNavigate(t.view)}>
+          <div className="w-[38px] h-[38px] bg-[var(--accent-dim)] border border-[var(--border-accent)] rounded-lg flex items-center justify-center text-[11px] font-bold tracking-[0.5px] flex-shrink-0"
+            style={{ color: `var(--${t.tone})` }}>
+            {t.tag}
           </div>
-          <div style={{ marginLeft: 'auto', color: 'var(--accent)', fontSize: '14px' }}>›</div>
-        </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[13px] font-semibold text-[var(--text-primary)]">{t.label}</div>
+            <div className="text-[11px] text-[var(--text-muted)] mt-0.5 truncate">{t.desc}</div>
+          </div>
+          <span className="text-[var(--accent)] text-[16px]">›</span>
+        </Card>
       ))}
     </div>
   )
 }
 
-/* ─── Formatters ─── */
-function fmtDate(d: string) {
-  const dt = new Date(d)
-  return dt.toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + dt.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })
-}
-function nowLocal() { return new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) }
-
 /* ═══════ FUEL ═══════ */
 function FuelListView({ reports, loading, onNew }: { reports: FuelReport[]; loading: boolean; onNew: () => void }) {
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Reportes de Combustible</div>
-        <button onClick={onNew} style={btnPrimary}>+ Nuevo Reporte</button>
+      <div className="flex justify-between items-center mb-4">
+        <div className="text-[14px] font-bold text-[var(--text-primary)]">Reportes de Combustible</div>
+        <Button size="sm" onClick={onNew}>+ Nuevo Reporte</Button>
       </div>
-      {loading ? <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '30px' }}>Cargando...</div>
-        : reports.length === 0 ? <EmptyState label="combustible" />
+      {loading ? <LoadingState /> : reports.length === 0
+        ? <EmptyState icon="local_gas_station" title="Sin reportes de combustible" description="Crea el primer reporte con el botón de arriba" />
         : reports.map(r => (
-          <div key={r.id} style={{ ...card, padding: '16px', marginBottom: '10px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>Combustible: {r.fuelLevel} {r.fuelUnit}</span>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{fmtDate(r.date)}</span>
+          <Card key={r.id} padding="sm" className="mb-2.5">
+            <div className="flex justify-between mb-2">
+              <span className="text-[13px] font-semibold text-[var(--text-primary)]">Combustible: {r.fuelLevel} {r.fuelUnit}</span>
+              <span className="text-[11px] text-[var(--text-muted)] font-mono">{fmtDate(r.date)}</span>
             </div>
-            <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: 'var(--text-muted)' }}>
+            <div className="flex gap-4 text-[12px] text-[var(--text-muted)]">
               {r.consumption != null && <span>Consumo: {r.consumption} {r.fuelUnit}</span>}
-              {r.location && <span>Ubicacion: {r.location}</span>}
+              {r.location && <span>Ubicación: {r.location}</span>}
               {r.operator && <span>Op: {r.operator}</span>}
             </div>
-            {r.notes && <div style={{ fontSize: '11px', color: 'rgba(127,168,201,0.5)', marginTop: '6px' }}>{r.notes}</div>}
-          </div>
+            {r.notes && <div className="text-[11px] text-[var(--text-secondary)]/50 mt-1.5">{r.notes}</div>}
+          </Card>
         ))
       }
     </div>
@@ -355,56 +353,75 @@ function FuelListView({ reports, loading, onNew }: { reports: FuelReport[]; load
 function FuelForm({ vesselId, onSaved, saving, setSaving }: { vesselId: string; onSaved: () => void; saving: boolean; setSaving: (b: boolean) => void }) {
   const [form, setForm] = useState({ date: nowLocal(), fuelLevel: '', fuelUnit: 'litros', consumption: '', location: '', operator: '', notes: '' })
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
+
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setSaving(true)
     try { await api(`/api/vessels/${vesselId}/reports/fuel`, { method: 'POST', body: JSON.stringify(form) }); onSaved() }
     catch { alert('Error al guardar') }
     setSaving(false)
   }
+
   return (
-    <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Nuevo Reporte de Combustible</div>
-      <Field label="Fecha y hora"><input type="datetime-local" value={form.date} onChange={e => set('date', e.target.value)} style={inputStyle} required /></Field>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        <Field label="Nivel de combustible"><input type="number" step="0.1" value={form.fuelLevel} onChange={e => set('fuelLevel', e.target.value)} style={inputStyle} required placeholder="Ej: 2500" /></Field>
-        <Field label="Unidad"><select value={form.fuelUnit} onChange={e => set('fuelUnit', e.target.value)} style={inputStyle}><option value="litros">Litros</option><option value="galones">Galones</option><option value="barriles">Barriles</option><option value="%">Porcentaje %</option></select></Field>
+    <form onSubmit={submit} className="flex flex-col gap-3.5">
+      <div className="text-[14px] font-bold text-[var(--text-primary)]">Nuevo Reporte de Combustible</div>
+      <FormField label="Fecha y hora">
+        <Input type="datetime-local" value={form.date} onChange={e => set('date', e.target.value)} required />
+      </FormField>
+      <div className="grid grid-cols-2 gap-3">
+        <FormField label="Nivel de combustible">
+          <Input type="number" step="0.1" value={form.fuelLevel} onChange={e => set('fuelLevel', e.target.value)} required placeholder="Ej: 2500" />
+        </FormField>
+        <FormField label="Unidad">
+          <Select value={form.fuelUnit} onChange={e => set('fuelUnit', e.target.value)}>
+            <option value="litros">Litros</option>
+            <option value="galones">Galones</option>
+            <option value="barriles">Barriles</option>
+            <option value="%">Porcentaje %</option>
+          </Select>
+        </FormField>
       </div>
-      <Field label="Consumo desde ultimo reporte"><input type="number" step="0.1" value={form.consumption} onChange={e => set('consumption', e.target.value)} style={inputStyle} placeholder="Opcional" /></Field>
-      <Field label="Ubicacion"><input value={form.location} onChange={e => set('location', e.target.value)} style={inputStyle} placeholder="Puerto o coordenadas" /></Field>
-      <Field label="Operador"><input value={form.operator} onChange={e => set('operator', e.target.value)} style={inputStyle} placeholder="Nombre del operador" /></Field>
-      <Field label="Notas"><textarea value={form.notes} onChange={e => set('notes', e.target.value)} style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} placeholder="Observaciones..." /></Field>
-      <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
-        <button type="submit" disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.6 : 1 }}>{saving ? 'Guardando...' : 'Guardar Reporte'}</button>
-      </div>
+      <FormField label="Consumo desde último reporte">
+        <Input type="number" step="0.1" value={form.consumption} onChange={e => set('consumption', e.target.value)} placeholder="Opcional" />
+      </FormField>
+      <FormField label="Ubicación">
+        <Input value={form.location} onChange={e => set('location', e.target.value)} placeholder="Puerto o coordenadas" />
+      </FormField>
+      <FormField label="Operador">
+        <Input value={form.operator} onChange={e => set('operator', e.target.value)} placeholder="Nombre del operador" />
+      </FormField>
+      <FormField label="Notas">
+        <Textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={3} placeholder="Observaciones..." />
+      </FormField>
+      <Button type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Guardar Reporte'}</Button>
     </form>
   )
 }
 
 /* ═══════ MAINTENANCE ═══════ */
 function MaintListView({ reports, loading, onNew }: { reports: MaintenanceReport[]; loading: boolean; onNew: () => void }) {
-  const statusColors: Record<string, string> = { PENDIENTE: 'var(--warning)', EN_PROCESO: 'var(--accent)', COMPLETADO: 'var(--success)' }
+  const statusTone = (s: string) => s === 'COMPLETADO' ? 'success' : s === 'EN_PROCESO' ? 'accent' : 'warning'
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Reportes de Mantenimiento</div>
-        <button onClick={onNew} style={btnPrimary}>+ Nuevo Reporte</button>
+      <div className="flex justify-between items-center mb-4">
+        <div className="text-[14px] font-bold text-[var(--text-primary)]">Reportes de Mantenimiento</div>
+        <Button size="sm" onClick={onNew}>+ Nuevo Reporte</Button>
       </div>
-      {loading ? <div style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '30px' }}>Cargando...</div>
-        : reports.length === 0 ? <EmptyState label="mantenimiento" />
+      {loading ? <LoadingState /> : reports.length === 0
+        ? <EmptyState icon="build" title="Sin reportes de mantenimiento" description="Crea el primer reporte con el botón de arriba" />
         : reports.map(r => (
-          <div key={r.id} style={{ ...card, padding: '16px', marginBottom: '10px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{r.type}</span>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: statusColors[r.status] || 'var(--text-secondary)', background: 'rgba(212,149,10,0.08)', padding: '2px 10px', borderRadius: '12px' }}>{r.status}</span>
+          <Card key={r.id} padding="sm" className="mb-2.5">
+            <div className="flex justify-between mb-2">
+              <span className="text-[13px] font-semibold text-[var(--text-primary)]">{r.type}</span>
+              <Badge tone={statusTone(r.status) as 'success' | 'accent' | 'warning'}>{r.status}</Badge>
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--text-primary)', marginBottom: '6px' }}>{r.description}</div>
-            <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: 'var(--text-secondary)' }}>
+            <div className="text-[12px] text-[var(--text-primary)] mb-1.5">{r.description}</div>
+            <div className="flex gap-4 text-[11px] text-[var(--text-secondary)]">
               <span>{fmtDate(r.date)}</span>
-              {r.technician && <span>Tecnico: {r.technician}</span>}
+              {r.technician && <span>Técnico: {r.technician}</span>}
               {r.cost != null && <span>Costo: ${r.cost.toLocaleString()}</span>}
             </div>
-            {r.partsReplaced && <div style={{ fontSize: '11px', color: 'rgba(127,168,201,0.5)', marginTop: '4px' }}>Repuestos: {r.partsReplaced}</div>}
-          </div>
+            {r.partsReplaced && <div className="text-[11px] text-[var(--text-secondary)]/50 mt-1">Repuestos: {r.partsReplaced}</div>}
+          </Card>
         ))
       }
     </div>
@@ -414,31 +431,57 @@ function MaintListView({ reports, loading, onNew }: { reports: MaintenanceReport
 function MaintForm({ vesselId, onSaved, saving, setSaving }: { vesselId: string; onSaved: () => void; saving: boolean; setSaving: (b: boolean) => void }) {
   const [form, setForm] = useState({ date: nowLocal(), type: 'Preventivo', description: '', technician: '', partsReplaced: '', cost: '', status: 'PENDIENTE', nextScheduled: '', notes: '' })
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
+
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setSaving(true)
     try { await api(`/api/vessels/${vesselId}/reports/maintenance`, { method: 'POST', body: JSON.stringify(form) }); onSaved() }
     catch { alert('Error al guardar') }
     setSaving(false)
   }
+
   return (
-    <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Nuevo Reporte de Mantenimiento</div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        <Field label="Fecha"><input type="datetime-local" value={form.date} onChange={e => set('date', e.target.value)} style={inputStyle} required /></Field>
-        <Field label="Tipo"><select value={form.type} onChange={e => set('type', e.target.value)} style={inputStyle}><option>Preventivo</option><option>Correctivo</option><option>Emergencia</option><option>Clasificacion</option></select></Field>
+    <form onSubmit={submit} className="flex flex-col gap-3.5">
+      <div className="text-[14px] font-bold text-[var(--text-primary)]">Nuevo Reporte de Mantenimiento</div>
+      <div className="grid grid-cols-2 gap-3">
+        <FormField label="Fecha">
+          <Input type="datetime-local" value={form.date} onChange={e => set('date', e.target.value)} required />
+        </FormField>
+        <FormField label="Tipo">
+          <Select value={form.type} onChange={e => set('type', e.target.value)}>
+            <option>Preventivo</option><option>Correctivo</option><option>Emergencia</option><option>Clasificacion</option>
+          </Select>
+        </FormField>
       </div>
-      <Field label="Descripcion del trabajo"><textarea value={form.description} onChange={e => set('description', e.target.value)} style={{ ...inputStyle, minHeight: '70px', resize: 'vertical' }} required placeholder="Detalle del trabajo realizado..." /></Field>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        <Field label="Tecnico responsable"><input value={form.technician} onChange={e => set('technician', e.target.value)} style={inputStyle} placeholder="Nombre" /></Field>
-        <Field label="Estado"><select value={form.status} onChange={e => set('status', e.target.value)} style={inputStyle}><option value="PENDIENTE">Pendiente</option><option value="EN_PROCESO">En proceso</option><option value="COMPLETADO">Completado</option></select></Field>
+      <FormField label="Descripción del trabajo">
+        <Textarea value={form.description} onChange={e => set('description', e.target.value)} required rows={3} placeholder="Detalle del trabajo realizado..." />
+      </FormField>
+      <div className="grid grid-cols-2 gap-3">
+        <FormField label="Técnico responsable">
+          <Input value={form.technician} onChange={e => set('technician', e.target.value)} placeholder="Nombre" />
+        </FormField>
+        <FormField label="Estado">
+          <Select value={form.status} onChange={e => set('status', e.target.value)}>
+            <option value="PENDIENTE">Pendiente</option>
+            <option value="EN_PROCESO">En proceso</option>
+            <option value="COMPLETADO">Completado</option>
+          </Select>
+        </FormField>
       </div>
-      <Field label="Repuestos utilizados"><input value={form.partsReplaced} onChange={e => set('partsReplaced', e.target.value)} style={inputStyle} placeholder="Lista de repuestos..." /></Field>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        <Field label="Costo ($)"><input type="number" step="0.01" value={form.cost} onChange={e => set('cost', e.target.value)} style={inputStyle} placeholder="0.00" /></Field>
-        <Field label="Proximo mantenimiento"><input type="datetime-local" value={form.nextScheduled} onChange={e => set('nextScheduled', e.target.value)} style={inputStyle} /></Field>
+      <FormField label="Repuestos utilizados">
+        <Input value={form.partsReplaced} onChange={e => set('partsReplaced', e.target.value)} placeholder="Lista de repuestos..." />
+      </FormField>
+      <div className="grid grid-cols-2 gap-3">
+        <FormField label="Costo ($)">
+          <Input type="number" step="0.01" value={form.cost} onChange={e => set('cost', e.target.value)} placeholder="0.00" />
+        </FormField>
+        <FormField label="Próximo mantenimiento">
+          <Input type="datetime-local" value={form.nextScheduled} onChange={e => set('nextScheduled', e.target.value)} />
+        </FormField>
       </div>
-      <Field label="Notas"><textarea value={form.notes} onChange={e => set('notes', e.target.value)} style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} placeholder="Observaciones..." /></Field>
-      <button type="submit" disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.6 : 1 }}>{saving ? 'Guardando...' : 'Guardar Reporte'}</button>
+      <FormField label="Notas">
+        <Textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={3} placeholder="Observaciones..." />
+      </FormField>
+      <Button type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Guardar Reporte'}</Button>
     </form>
   )
 }
@@ -447,29 +490,29 @@ function MaintForm({ vesselId, onSaved, saving, setSaving }: { vesselId: string;
 function StatusListView({ reports, loading, onNew }: { reports: StatusReport[]; loading: boolean; onNew: () => void }) {
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Reportes de Estado</div>
-        <button onClick={onNew} style={btnPrimary}>+ Nuevo Reporte</button>
+      <div className="flex justify-between items-center mb-4">
+        <div className="text-[14px] font-bold text-[var(--text-primary)]">Reportes de Estado</div>
+        <Button size="sm" onClick={onNew}>+ Nuevo Reporte</Button>
       </div>
-      {loading ? <div style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '30px' }}>Cargando...</div>
-        : reports.length === 0 ? <EmptyState label="estado" />
+      {loading ? <LoadingState /> : reports.length === 0
+        ? <EmptyState icon="article" title="Sin reportes de estado" description="Crea el primer reporte con el botón de arriba" />
         : reports.map(r => {
-          const st = statusConfig[r.vesselStatus] || statusConfig.INACTIVO
+          const st = STATUS_CONFIG[r.vesselStatus] || STATUS_CONFIG.INACTIVO
           return (
-            <div key={r.id} style={{ ...card, padding: '16px', marginBottom: '10px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>{r.location}</span>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: st.color, background: st.bg, padding: '2px 10px', borderRadius: '12px' }}>{st.label}</span>
+            <Card key={r.id} padding="sm" className="mb-2.5">
+              <div className="flex justify-between mb-2">
+                <span className="text-[13px] font-semibold text-[var(--text-primary)]">{r.location}</span>
+                <Badge tone={st.tone} dot>{st.label}</Badge>
               </div>
-              <div style={{ fontSize: '12px', color: 'var(--text-primary)', marginBottom: '6px' }}>{r.activity}</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                <span>Capitan: {r.captain}</span>
+              <div className="text-[12px] text-[var(--text-primary)] mb-1.5">{r.activity}</div>
+              <div className="grid grid-cols-2 gap-1 text-[11px] text-[var(--text-secondary)]">
+                <span>Capitán: {r.captain}</span>
                 <span>Marino: {r.marineOnDuty}</span>
                 {r.client && <span>Cliente: {r.client}</span>}
                 {r.fuelLevel != null && <span>Combustible: {r.fuelLevel}%</span>}
               </div>
-              <div style={{ fontSize: '10px', color: 'rgba(127,168,201,0.4)', marginTop: '6px', fontFamily: 'monospace' }}>{fmtDate(r.date)}</div>
-            </div>
+              <div className="text-[10px] text-[var(--text-muted)]/40 mt-1.5 font-mono">{fmtDate(r.date)}</div>
+            </Card>
           )
         })
       }
@@ -484,63 +527,62 @@ function StatusForm({ vessel, onSaved, saving, setSaving }: { vessel: Vessel; on
     marineOnDuty: vessel.marineOnDuty || '', vesselStatus: vessel.status, notes: '',
   })
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
+
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setSaving(true)
     try { await api(`/api/vessels/${vessel.id}/reports/status`, { method: 'POST', body: JSON.stringify(form) }); onSaved() }
     catch { alert('Error al guardar') }
     setSaving(false)
   }
+
   return (
-    <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Nuevo Reporte de Estado</div>
+    <form onSubmit={submit} className="flex flex-col gap-3.5">
+      <div className="text-[14px] font-bold text-[var(--text-primary)]">Nuevo Reporte de Estado</div>
       {vessel.matricula && (
-        <div style={{ ...card, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '3px solid var(--accent)' }}>
-          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Matricula:</span>
-          <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--accent)', fontFamily: 'monospace' }}>{vessel.matricula}</span>
-          <span style={{ fontSize: '10px', color: 'rgba(127,168,201,0.4)', marginLeft: 'auto' }}>Campo fijo</span>
-        </div>
+        <Card padding="sm" className="flex items-center gap-2.5 border-l-[3px] border-l-[var(--accent)]">
+          <span className="text-[11px] text-[var(--text-secondary)]">Matrícula:</span>
+          <span className="text-[13px] font-bold text-[var(--accent)] font-mono">{vessel.matricula}</span>
+          <span className="text-[10px] text-[var(--text-muted)]/40 ml-auto">Campo fijo</span>
+        </Card>
       )}
-      <Field label="Fecha y hora"><input type="datetime-local" value={form.date} onChange={e => set('date', e.target.value)} style={inputStyle} required /></Field>
-      <Field label="Ubicacion actual"><input value={form.location} onChange={e => set('location', e.target.value)} style={inputStyle} required placeholder="Puerto, coordenadas o zona" /></Field>
-      <Field label="Actividad que realiza"><input value={form.activity} onChange={e => set('activity', e.target.value)} style={inputStyle} required placeholder="Ej: Transporte de personal a plataforma X" /></Field>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        <Field label="Capitan en guardia"><input value={form.captain} onChange={e => set('captain', e.target.value)} style={inputStyle} required placeholder="Nombre completo" /></Field>
-        <Field label="Marino en guardia"><input value={form.marineOnDuty} onChange={e => set('marineOnDuty', e.target.value)} style={inputStyle} required placeholder="Nombre completo" /></Field>
+      <FormField label="Fecha y hora">
+        <Input type="datetime-local" value={form.date} onChange={e => set('date', e.target.value)} required />
+      </FormField>
+      <FormField label="Ubicación actual">
+        <Input value={form.location} onChange={e => set('location', e.target.value)} required placeholder="Puerto, coordenadas o zona" />
+      </FormField>
+      <FormField label="Actividad que realiza">
+        <Input value={form.activity} onChange={e => set('activity', e.target.value)} required placeholder="Ej: Transporte de personal a plataforma X" />
+      </FormField>
+      <div className="grid grid-cols-2 gap-3">
+        <FormField label="Capitán en guardia">
+          <Input value={form.captain} onChange={e => set('captain', e.target.value)} required placeholder="Nombre completo" />
+        </FormField>
+        <FormField label="Marino en guardia">
+          <Input value={form.marineOnDuty} onChange={e => set('marineOnDuty', e.target.value)} required placeholder="Nombre completo" />
+        </FormField>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-        <Field label="Nivel de combustible (%)"><input type="number" step="0.1" min="0" max="100" value={form.fuelLevel} onChange={e => set('fuelLevel', e.target.value)} style={inputStyle} placeholder="Ej: 75" /></Field>
-        <Field label="Estado de la embarcacion">
-          <select value={form.vesselStatus} onChange={e => set('vesselStatus', e.target.value)} style={inputStyle}>
+      <div className="grid grid-cols-2 gap-3">
+        <FormField label="Nivel de combustible (%)">
+          <Input type="number" step="0.1" min="0" max="100" value={form.fuelLevel} onChange={e => set('fuelLevel', e.target.value)} placeholder="Ej: 75" />
+        </FormField>
+        <FormField label="Estado de la embarcación">
+          <Select value={form.vesselStatus} onChange={e => set('vesselStatus', e.target.value)}>
             <option value="OPERATIVO">Operativo</option>
-            <option value="EN_TRANSITO">En transito</option>
+            <option value="EN_TRANSITO">En tránsito</option>
             <option value="ATRACADO">Atracado</option>
             <option value="MANTENIMIENTO">Mantenimiento</option>
             <option value="INACTIVO">Inactivo</option>
-          </select>
-        </Field>
+          </Select>
+        </FormField>
       </div>
-      <Field label="Cliente"><input value={form.client} onChange={e => set('client', e.target.value)} style={inputStyle} placeholder="Empresa o cliente asignado" /></Field>
-      <Field label="Notas"><textarea value={form.notes} onChange={e => set('notes', e.target.value)} style={{ ...inputStyle, minHeight: '60px', resize: 'vertical' }} placeholder="Observaciones adicionales..." /></Field>
-      <button type="submit" disabled={saving} style={{ ...btnPrimary, opacity: saving ? 0.6 : 1 }}>{saving ? 'Guardando...' : 'Guardar Reporte'}</button>
+      <FormField label="Cliente">
+        <Input value={form.client} onChange={e => set('client', e.target.value)} placeholder="Empresa o cliente asignado" />
+      </FormField>
+      <FormField label="Notas">
+        <Textarea value={form.notes} onChange={e => set('notes', e.target.value)} rows={3} placeholder="Observaciones adicionales..." />
+      </FormField>
+      <Button type="submit" disabled={saving}>{saving ? 'Guardando...' : 'Guardar Reporte'}</Button>
     </form>
-  )
-}
-
-/* ─── Shared ─── */
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '5px' }}>{label}</label>
-      {children}
-    </div>
-  )
-}
-function EmptyState({ label }: { label: string }) {
-  return (
-    <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-secondary)' }}>
-      <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--accent-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: 'var(--accent)', opacity: 0.4, margin: '0 auto 12px', letterSpacing: '0.5px' }}>—</div>
-      <div style={{ fontSize: '14px', marginBottom: '4px' }}>No hay reportes de {label}</div>
-      <div style={{ fontSize: '12px', opacity: 0.6 }}>Crea el primer reporte con el boton de arriba</div>
-    </div>
   )
 }
