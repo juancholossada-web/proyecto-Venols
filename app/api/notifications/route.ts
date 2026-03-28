@@ -4,10 +4,11 @@ import { withAuth, getFleetFilter, AuthenticatedRequest } from '@/lib/auth-middl
 
 export type NotificationItem = {
   id: string
-  type: 'low_stock' | 'maintenance' | 'compliance'
+  type: 'low_stock' | 'maintenance' | 'compliance' | 'new_user' | 'role_assigned'
   title: string
   detail: string
-  severity: 'warning' | 'danger'
+  severity: 'warning' | 'danger' | 'info'
+  userId?: string
 }
 
 export const GET = withAuth(async (req: AuthenticatedRequest) => {
@@ -15,6 +16,26 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
   const now = new Date()
   const in3Days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
   const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+
+  const isAdmin = req.user!.role === 'ADMIN'
+  const currentUserId = req.user!.sub
+
+  // Usuarios pendientes de aprobación de rol — solo visibles para ADMIN
+  const pendingUsers = isAdmin
+    ? await prisma.user.findMany({
+        where: { pendingRoleApproval: true },
+        select: { id: true, firstName: true, lastName: true, email: true, createdAt: true },
+        orderBy: { createdAt: 'asc' },
+      }).catch(() => [])
+    : []
+
+  // Notificación de rol asignado — solo para el usuario actual si tiene roleAssignedAt
+  const currentUserData = !isAdmin
+    ? await prisma.user.findUnique({
+        where: { id: currentUserId },
+        select: { roleAssignedAt: true, role: true },
+      }).catch(() => null)
+    : null
 
   const [allItems, maintenanceOrders, complianceDocs] = await Promise.all([
     prisma.inventoryItem.findMany({
@@ -45,7 +66,38 @@ export const GET = withAuth(async (req: AuthenticatedRequest) => {
     }).catch(() => []),
   ])
 
+  const ROLE_LABELS: Record<string, string> = {
+    ADMIN: 'Administrador',
+    OPERATOR_HEAVY: 'Operador Flota Pesada',
+    OPERATOR_LIGHT: 'Operador Flota Liviana',
+    STANDARD: 'Estándar',
+  }
+
   const notifications: NotificationItem[] = []
+
+  // Notificación de rol asignado para el usuario actual
+  if (currentUserData?.roleAssignedAt) {
+    notifications.push({
+      id: `role-assigned-${currentUserId}`,
+      type: 'role_assigned',
+      title: 'Rol asignado',
+      detail: `El administrador te ha asignado el rol "${ROLE_LABELS[currentUserData.role] ?? currentUserData.role}"`,
+      severity: 'info',
+      userId: currentUserId,
+    })
+  }
+
+  // Nuevos usuarios esperando asignación de rol
+  for (const u of pendingUsers as any[]) {
+    notifications.push({
+      id: `user-${u.id}`,
+      type: 'new_user',
+      title: `${u.firstName} ${u.lastName}`,
+      detail: u.email,
+      severity: 'info',
+      userId: u.id,
+    })
+  }
 
   // Low stock: quantity <= minStock
   const lowStockItems = (allItems as any[]).filter(i => i.quantity <= i.minStock).slice(0, 15)

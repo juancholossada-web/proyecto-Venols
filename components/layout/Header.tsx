@@ -5,16 +5,17 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { api } from '@/lib/api-client'
 
 interface HeaderProps {
-  user: { firstName: string; lastName: string; role: string }
+  user: { firstName: string; lastName: string; role: string; avatar?: string }
   onMenuToggle: () => void
 }
 
 type NotificationItem = {
   id: string
-  type: 'low_stock' | 'maintenance' | 'compliance'
+  type: 'low_stock' | 'maintenance' | 'compliance' | 'new_user' | 'role_assigned'
   title: string
   detail: string
-  severity: 'warning' | 'danger'
+  severity: 'warning' | 'danger' | 'info'
+  userId?: string
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -25,10 +26,19 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 const TYPE_ICON: Record<string, string> = {
-  low_stock:   'inventory_2',
-  maintenance: 'build',
-  compliance:  'description',
+  low_stock:     'inventory_2',
+  maintenance:   'build',
+  compliance:    'description',
+  new_user:      'person_add',
+  role_assigned: 'verified_user',
 }
+
+const ROLE_OPTIONS = [
+  { value: 'STANDARD',       label: 'Estándar' },
+  { value: 'OPERATOR_HEAVY', label: 'Op. Flota Pesada' },
+  { value: 'OPERATOR_LIGHT', label: 'Op. Flota Liviana' },
+  { value: 'ADMIN',          label: 'Administrador' },
+]
 
 /* ─── Change Password Modal ─── */
 function ChangePasswordModal({ onClose }: { onClose: () => void }) {
@@ -178,9 +188,60 @@ export default function Header({ user, onMenuToggle }: HeaderProps) {
   const bellRef = useRef<HTMLDivElement>(null)
 
   /* Profile menu */
-  const [profileOpen, setProfileOpen]     = useState(false)
-  const [showChangePwd, setShowChangePwd] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
+
+  /* Rol pendiente: userId → rol seleccionado */
+  const [pendingRoles, setPendingRoles] = useState<Record<string, string>>({})
+  const [assigningRole, setAssigningRole] = useState<string | null>(null)
+  const [dismissingRole, setDismissingRole] = useState(false)
+
+  async function handleDismissRoleNotification() {
+    setDismissingRole(true)
+    try {
+      const token = localStorage.getItem('token')
+      await fetch('/api/notifications/dismiss-role', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      await fetchNotifs()
+    } finally {
+      setDismissingRole(false)
+    }
+  }
+
+  async function handleAssignRole(userId: string) {
+    const role = pendingRoles[userId] || 'STANDARD'
+    setAssigningRole(userId)
+    try {
+      const token = localStorage.getItem('token')
+      await fetch(`/api/users/${userId}/role`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ role }),
+      })
+      await fetchNotifs()
+    } finally {
+      setAssigningRole(null)
+    }
+  }
+
+  /* Avatar — sincroniza cuando settings sube una foto nueva */
+  const [avatar, setAvatar] = useState<string | null>(user.avatar || null)
+  useEffect(() => {
+    function syncAvatar() {
+      try {
+        const stored = localStorage.getItem('user')
+        if (stored) {
+          const { avatar: storedAvatar } = JSON.parse(stored)
+          if (storedAvatar) setAvatar(storedAvatar)
+        }
+      } catch {}
+    }
+    syncAvatar()
+    window.addEventListener('avatar-updated', syncAvatar)
+    return () => window.removeEventListener('avatar-updated', syncAvatar)
+  }, [])
 
   /* ─── Fetch notifications ─── */
   const fetchNotifs = useCallback(async () => {
@@ -234,14 +295,14 @@ export default function Header({ user, onMenuToggle }: HeaderProps) {
         <div className="flex items-center gap-2 lg:gap-3">
           <button
             onClick={onMenuToggle}
-            className="lg:hidden p-2 -ml-1 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors"
+            className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors"
             aria-label="Abrir menú"
           >
-            <span className="material-symbols-outlined text-[22px]">menu</span>
+            <span className="material-symbols-outlined text-[22px] leading-none">menu</span>
           </button>
-          <span className="text-xl lg:text-2xl font-black tracking-tighter text-amber-500">VENOLS</span>
+          <img src="/ICONO VENOLS.png" alt="VENOLS" className="hidden sm:block h-9 lg:h-10 w-auto object-contain" />
           <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest hidden xl:block">
-            Sistema de Gestión Marítima
+            Sistema de Gestión
           </span>
         </div>
 
@@ -252,7 +313,7 @@ export default function Header({ user, onMenuToggle }: HeaderProps) {
           <div ref={bellRef} className="relative">
             <button
               onClick={() => { setBellOpen(o => !o); setProfileOpen(false) }}
-              className="relative p-2 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-white/5 transition-colors"
+              className="relative flex items-center justify-center w-9 h-9 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-white/5 transition-colors"
               aria-label="Notificaciones"
             >
               <span className="material-symbols-outlined text-[20px]">
@@ -299,22 +360,79 @@ export default function Header({ user, onMenuToggle }: HeaderProps) {
                       <p className="text-[12px] text-slate-500">Sin alertas activas</p>
                     </div>
                   ) : (
-                    notifs.map(n => (
-                      <div key={n.id} className="flex items-start gap-3 px-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/3 transition-colors">
-                        <span
-                          className="material-symbols-outlined text-[18px] mt-0.5 flex-shrink-0"
-                          style={{ color: n.severity === 'danger' ? 'var(--danger)' : 'var(--accent)' }}
-                        >
-                          {TYPE_ICON[n.type]}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="text-[12px] font-bold leading-tight" style={{ color: n.severity === 'danger' ? 'var(--danger)' : 'var(--accent)' }}>
-                            {n.title}
-                          </p>
-                          <p className="text-[11px] text-slate-400 mt-0.5 leading-snug break-words">{n.detail}</p>
+                    notifs.map(n => {
+                      const iconColor = n.severity === 'danger' ? 'var(--danger)' : n.severity === 'info' ? '#60a5fa' : 'var(--accent)'
+                      if (n.type === 'role_assigned') {
+                        return (
+                          <div key={n.id} className="flex items-start gap-3 px-4 py-3 border-b border-white/5 last:border-0">
+                            <span className="material-symbols-outlined text-[18px] mt-0.5 flex-shrink-0" style={{ color: iconColor }}>
+                              verified_user
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[12px] font-bold leading-tight" style={{ color: iconColor }}>{n.title}</p>
+                              <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">{n.detail}</p>
+                            </div>
+                            <button
+                              onClick={handleDismissRoleNotification}
+                              disabled={dismissingRole}
+                              className="flex-shrink-0 p-1 rounded text-slate-500 hover:text-slate-300 transition-colors disabled:opacity-50 mt-0.5"
+                              title="Descartar"
+                            >
+                              <span className="material-symbols-outlined text-[15px]">close</span>
+                            </button>
+                          </div>
+                        )
+                      }
+                      if (n.type === 'new_user' && n.userId) {
+                        const selectedRole = pendingRoles[n.userId] ?? 'STANDARD'
+                        const isAssigning = assigningRole === n.userId
+                        return (
+                          <div key={n.id} className="px-4 py-3 border-b border-white/5 last:border-0">
+                            <div className="flex items-start gap-3 mb-2.5">
+                              <span className="material-symbols-outlined text-[18px] mt-0.5 flex-shrink-0" style={{ color: iconColor }}>
+                                person_add
+                              </span>
+                              <div className="min-w-0">
+                                <p className="text-[12px] font-bold leading-tight text-[var(--text-primary)]">{n.title}</p>
+                                <p className="text-[11px] text-slate-400 mt-0.5 break-words">{n.detail}</p>
+                                <p className="text-[10px] mt-0.5" style={{ color: iconColor }}>Pendiente de asignación de rol</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 pl-7">
+                              <select
+                                value={selectedRole}
+                                onChange={e => setPendingRoles(prev => ({ ...prev, [n.userId!]: e.target.value }))}
+                                className="flex-1 text-[11px] rounded-md px-2 py-1.5 outline-none"
+                                style={{ background: 'var(--bg-input)', border: '1px solid var(--border-accent)', color: 'var(--text-primary)' }}
+                              >
+                                {ROLE_OPTIONS.map(r => (
+                                  <option key={r.value} value={r.value}>{r.label}</option>
+                                ))}
+                              </select>
+                              <button
+                                onClick={() => handleAssignRole(n.userId!)}
+                                disabled={isAssigning}
+                                className="px-3 py-1.5 rounded-md text-[11px] font-bold transition-colors disabled:opacity-50"
+                                style={{ background: 'var(--accent)', color: '#080E1A' }}
+                              >
+                                {isAssigning ? '…' : 'Asignar'}
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      }
+                      return (
+                        <div key={n.id} className="flex items-start gap-3 px-4 py-3 border-b border-white/5 last:border-0 hover:bg-white/3 transition-colors">
+                          <span className="material-symbols-outlined text-[18px] mt-0.5 flex-shrink-0" style={{ color: iconColor }}>
+                            {TYPE_ICON[n.type]}
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-[12px] font-bold leading-tight" style={{ color: iconColor }}>{n.title}</p>
+                            <p className="text-[11px] text-slate-400 mt-0.5 leading-snug break-words">{n.detail}</p>
+                          </div>
                         </div>
-                      </div>
-                    ))
+                      )
+                    })
                   )}
                 </div>
               </div>
@@ -332,10 +450,14 @@ export default function Header({ user, onMenuToggle }: HeaderProps) {
           <div ref={profileRef} className="relative">
             <button
               onClick={() => { setProfileOpen(o => !o); setBellOpen(false) }}
-              className="w-8 h-8 lg:w-9 lg:h-9 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center flex-shrink-0 hover:bg-amber-500/30 hover:border-amber-500/50 transition-all cursor-pointer"
+              className="w-10 h-10 lg:w-11 lg:h-11 rounded-lg border flex items-center justify-center flex-shrink-0 transition-all cursor-pointer overflow-hidden"
+              style={{ borderColor: 'rgba(212,149,10,0.3)', background: avatar ? 'transparent' : 'rgba(212,149,10,0.2)' }}
               aria-label="Menú de perfil"
             >
-              <span className="text-[11px] font-black text-amber-500">{initials}</span>
+              {avatar
+                ? <img src={avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <span className="text-[11px] font-black text-amber-500">{initials}</span>
+              }
             </button>
 
             {profileOpen && (
@@ -353,14 +475,6 @@ export default function Header({ user, onMenuToggle }: HeaderProps) {
 
                 {/* Options */}
                 <div className="py-1">
-                  <button
-                    onClick={() => { setProfileOpen(false); setShowChangePwd(true) }}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-[13px] text-slate-300 hover:bg-white/5 hover:text-[var(--text-primary)] transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[18px] text-slate-500">lock_reset</span>
-                    Cambiar contraseña
-                  </button>
-
                   <button
                     onClick={() => { setProfileOpen(false); router.push('/dashboard/settings') }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-[13px] text-slate-300 hover:bg-white/5 hover:text-[var(--text-primary)] transition-colors"
@@ -386,7 +500,6 @@ export default function Header({ user, onMenuToggle }: HeaderProps) {
         </div>
       </header>
 
-      {showChangePwd && <ChangePasswordModal onClose={() => setShowChangePwd(false)} />}
     </>
   )
 }

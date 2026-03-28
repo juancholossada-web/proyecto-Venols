@@ -25,7 +25,10 @@ type DailyReport = {
   vessel?: { name: string; fleetType: string; vesselType: string; tankCapacityLiters?: number; waterTankCapacityLiters?: number }
 }
 type Client = { id: string; name: string }
-type Employee = { id: string; firstName: string; lastName: string; position: string; status: string }
+type Employee = {
+  id: string; firstName: string; lastName: string; position: string; status: string
+  assignments?: { vessel: { id: string } }[]
+}
 
 type View = 'crear' | 'historial'
 
@@ -136,7 +139,7 @@ function generateWhatsAppReport(reports: VesselReport[], dateStr: string): strin
     if (r.location)      lines.push(`│ Ubicación: ${r.location}`)
     if (r.activity)      lines.push(`│ Actividad: ${r.activity}`)
     if (r.captain)       lines.push(`│ Capitán: ${r.captain}`)
-    if (r.marineOnDuty)  lines.push(`│ Marino de guardia: ${r.marineOnDuty}`)
+    if (r.marineOnDuty)  lines.push(`│ Marino: ${r.marineOnDuty}`)
     if (r.additionalCrew) lines.push(`│ Personal adicional: ${r.additionalCrew}`)
     if (r.fuelLiters || r.fuelPercent) {
       const pct = r.fuelPercent ? Number(r.fuelPercent) : null
@@ -898,6 +901,11 @@ function VesselReportCard({
 
   if (!report) return null
 
+  // Solo tripulantes asignados a esta embarcación
+  const vesselCrew = employees.filter(e =>
+    e.assignments?.some(a => a.vessel?.id === vessel.id)
+  )
+
   const hasData = report.activity || report.client || report.fuelLiters
 
   const fuelAutoCalc = !!vessel.tankCapacityLiters
@@ -941,7 +949,7 @@ function VesselReportCard({
 
             {/* Cliente */}
             <div style={fieldWrap}>
-              <label style={labelStyle}>Cliente</label>
+              <label style={labelStyle}>Cliente <span style={{ color: 'var(--danger)' }}>*</span></label>
               <select style={selectStyle} value={report.client} onChange={e => onChange('client', e.target.value)}>
                 <option value="">— Sin cliente —</option>
                 {clients.map(c => (
@@ -950,9 +958,9 @@ function VesselReportCard({
               </select>
             </div>
 
-            {/* Status */}
+            {/* Estatus */}
             <div style={fieldWrap}>
-              <label style={labelStyle}>Status</label>
+              <label style={labelStyle}>Estatus <span style={{ color: 'var(--danger)' }}>*</span></label>
               <select style={selectStyle} value={report.status} onChange={e => onChange('status', e.target.value)}>
                 {statusOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
@@ -963,18 +971,18 @@ function VesselReportCard({
               <label style={labelStyle}>Capitán</label>
               <select style={selectStyle} value={report.captain} onChange={e => onChange('captain', e.target.value)}>
                 <option value="">— Seleccionar —</option>
-                {employees.map(e => (
+                {vesselCrew.map(e => (
                   <option key={e.id} value={`${e.firstName} ${e.lastName}`}>{e.lastName}, {e.firstName} — {e.position}</option>
                 ))}
               </select>
             </div>
 
-            {/* Marino de Guardia */}
+            {/* Marino */}
             <div style={fieldWrap}>
-              <label style={labelStyle}>Marino de Guardia</label>
+              <label style={labelStyle}>Marino</label>
               <select style={selectStyle} value={report.marineOnDuty} onChange={e => onChange('marineOnDuty', e.target.value)}>
                 <option value="">— Seleccionar —</option>
-                {employees.map(e => (
+                {vesselCrew.map(e => (
                   <option key={e.id} value={`${e.firstName} ${e.lastName}`}>{e.lastName}, {e.firstName} — {e.position}</option>
                 ))}
               </select>
@@ -988,8 +996,8 @@ function VesselReportCard({
 
             {/* Ubicación */}
             <div style={fieldWrap}>
-              <label style={labelStyle}>Ubicación</label>
-              <input style={inputStyle} value={report.location} onChange={e => onChange('location', e.target.value)} placeholder="Ej: Muelle Norte, Maracaibo" />
+              <label style={labelStyle}>Ubicación <span style={{ color: 'var(--danger)' }}>*</span></label>
+              <input style={inputStyle} value={report.location} onChange={e => onChange('location', e.target.value)} />
             </div>
           </div>
 
@@ -998,28 +1006,23 @@ function VesselReportCard({
 
             {/* Combustible litros */}
             <div style={fieldWrap}>
-              <label style={labelStyle}>Combustible (litros)</label>
+              <label style={labelStyle}>Combustible (litros) <span style={{ color: 'var(--danger)' }}>*</span></label>
               <input
                 style={inputStyle} type="number" min="0"
                 value={report.fuelLiters}
                 onChange={e => onChange('fuelLiters', e.target.value)}
-                placeholder={vessel.tankCapacityLiters ? `Máx ${numberWithDots(vessel.tankCapacityLiters)} L` : 'Ej: 3500'}
               />
             </div>
 
             {/* Combustible % */}
             <div style={fieldWrap}>
-              <label style={labelStyle}>
-                Combustible (%)
-                {fuelAutoCalc && <span style={{ color: 'var(--accent)', marginLeft: '4px', fontSize: '10px' }}>AUTO</span>}
-              </label>
+              <label style={labelStyle}>Combustible (%)</label>
               <input
                 style={fuelAutoCalc ? inputReadOnly : inputStyle}
                 type="number" min="0" max="100"
                 value={report.fuelPercent}
                 onChange={fuelAutoCalc ? undefined : e => onChange('fuelPercent', e.target.value)}
                 readOnly={fuelAutoCalc}
-                placeholder={fuelAutoCalc ? 'Auto-calculado' : 'Manual (0-100)'}
               />
               {fuelPct !== null && (
                 <div style={{ marginTop: '4px' }}>
@@ -1040,27 +1043,22 @@ function VesselReportCard({
             {vessel.fleetType === 'PESADA' && (
               <>
                 <div style={fieldWrap}>
-                  <label style={labelStyle}>Agua a bordo (litros)</label>
+                  <label style={labelStyle}>Agua a bordo (litros) <span style={{ color: 'var(--danger)' }}>*</span></label>
                   <input
                     style={inputStyle} type="number" min="0"
                     value={report.waterLiters}
                     onChange={e => onChange('waterLiters', e.target.value)}
-                    placeholder={vessel.waterTankCapacityLiters ? `Máx ${numberWithDots(vessel.waterTankCapacityLiters)} L` : 'Ej: 500'}
                   />
                 </div>
 
                 <div style={fieldWrap}>
-                  <label style={labelStyle}>
-                    Agua a bordo (%)
-                    {waterAutoCalc && <span style={{ color: 'var(--accent)', marginLeft: '4px', fontSize: '10px' }}>AUTO</span>}
-                  </label>
+                  <label style={labelStyle}>Agua a bordo (%)</label>
                   <input
                     style={waterAutoCalc ? inputReadOnly : inputStyle}
                     type="number" min="0" max="100"
                     value={report.waterPercent}
                     onChange={waterAutoCalc ? undefined : e => onChange('waterPercent', e.target.value)}
                     readOnly={waterAutoCalc}
-                    placeholder={waterAutoCalc ? 'Auto-calculado' : 'Manual (0-100)'}
                   />
                   {waterPct !== null && (
                     <div style={{ marginTop: '4px' }}>
@@ -1083,12 +1081,11 @@ function VesselReportCard({
           {/* ── Fila 3: Actividad y Notas ── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div style={fieldWrap}>
-              <label style={labelStyle}>Actividad</label>
+              <label style={labelStyle}>Actividad <span style={{ color: 'var(--danger)' }}>*</span></label>
               <textarea
                 style={textareaStyle}
                 value={report.activity}
                 onChange={e => onChange('activity', e.target.value)}
-                placeholder="Ej: Se encuentra haciendo recorrida por campo con personal de seguridad"
               />
             </div>
             <div style={fieldWrap}>

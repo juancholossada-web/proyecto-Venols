@@ -27,6 +27,7 @@ export const PUT = withAuth(async (req: AuthenticatedRequest, { params }: { para
       nationalId: body.nationalId,
       nationality: body.nationality,
       position: body.position,
+      department: body.department,
       seafarerBook: body.seafarerBook,
       passportNumber: body.passportNumber,
       passportExpiry: body.passportExpiry ? new Date(body.passportExpiry) : null,

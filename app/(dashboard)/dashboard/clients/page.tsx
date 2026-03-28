@@ -23,13 +23,15 @@ type Client = {
 
 type DrawerMode = 'view' | 'edit' | 'create'
 
-const CLIENT_TYPES = ['REFINERIA', 'OPERADORA', 'TERMINAL', 'TRADER', 'ASTILLERO', 'EMPRESA'] as const
+const CLIENT_TYPES = ['PETROLERA', 'CONSTRUCTORA'] as const
 type ClientType = typeof CLIENT_TYPES[number]
 
 /* ─── Config ─── */
 const typeColors: Record<string, string> = {
+  PETROLERA: 'var(--accent)',
+  CONSTRUCTORA: 'var(--warning)',
   REFINERIA: 'var(--danger)',
-  OPERADORA: 'var(--accent)',
+  OPERADORA: 'var(--info)',
   TERMINAL: 'var(--info)',
   TRADER: 'var(--success)',
   ASTILLERO: 'var(--warning)',

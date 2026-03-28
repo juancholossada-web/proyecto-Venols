@@ -4,13 +4,15 @@ import { withAuth, AuthenticatedRequest } from '@/lib/auth-middleware'
 
 export const GET = withAuth(async (req: AuthenticatedRequest) => {
   const { searchParams } = new URL(req.url)
-  const status = searchParams.get('status')
-  const position = searchParams.get('position')
+  const status     = searchParams.get('status')
+  const position   = searchParams.get('position')
+  const department = searchParams.get('department')
 
   const employees = await prisma.employee.findMany({
     where: {
-      ...(status ? { status: status as any } : {}),
-      ...(position ? { position: { contains: position, mode: 'insensitive' as const } } : {}),
+      ...(status     ? { status: status as any } : {}),
+      ...(position   ? { position: { contains: position, mode: 'insensitive' as const } } : {}),
+      ...(department ? { department: department as any } : {}),
     },
     include: {
       certifications: { orderBy: { expiresAt: 'asc' } },
@@ -33,6 +35,7 @@ export const POST = withAuth(async (req: AuthenticatedRequest) => {
       nationalId: body.nationalId,
       nationality: body.nationality || 'Venezolana',
       position: body.position,
+      department: body.department || 'FP',
       seafarerBook: body.seafarerBook || null,
       passportNumber: body.passportNumber || null,
       passportExpiry: body.passportExpiry ? new Date(body.passportExpiry) : null,

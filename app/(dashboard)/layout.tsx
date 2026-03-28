@@ -25,7 +25,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
         return res.json()
       })
-      .then(data => { if (data?.user) setUser(data.user) })
+      .then(data => {
+        if (data?.user) {
+          setUser(data.user)
+          const stored = localStorage.getItem('user')
+          if (stored) {
+            localStorage.setItem('user', JSON.stringify({ ...JSON.parse(stored), ...data.user }))
+          }
+        }
+      })
       .finally(() => setLoading(false))
   }, [router])
 

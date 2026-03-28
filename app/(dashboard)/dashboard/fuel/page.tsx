@@ -4,168 +4,134 @@ import { useEffect, useState, useCallback } from 'react'
 import { api } from '@/lib/api-client'
 
 /* ─── Types ─── */
-type Vessel = { id: string; name: string }
+type Vessel = { id: string; name: string; fleetType: string; fuelStockLiters: number }
 type FuelLog = {
   id: string
   vesselId: string
-  vessel: { id: string; name: string }
-  voyage?: { id: string; voyageNumber: string } | null
+  vessel: { id: string; name: string; fuelStockLiters: number }
+  type: string
+  liters: number
+  balanceAfter: number
   date: string
+  source: string | null
   fuelType: string
   operationAt: string
-  bunkerReceived: number | null
-  consumed: number | null
-  rob: number
   price: number | null
   supplier: string | null
   bdn: string | null
   reportedBy: string | null
   notes: string | null
   createdAt: string
-  updatedAt: string
 }
 
-type DrawerMode = 'detail' | 'new'
+/* ─── Config ─── */
+const FLEET_CFG = {
+  PESADA:  { label: 'Flota Pesada',  short: 'FP', color: '#3B82F6', bg: 'rgba(59,130,246,0.12)' },
+  LIVIANA: { label: 'Flota Liviana', short: 'FL', color: '#10B981', bg: 'rgba(16,185,129,0.12)' },
+}
 
-const FUEL_TYPES = ['HFO', 'IFO380', 'VLSFO', 'MDO', 'MGO', 'LSMGO'] as const
-
+const TYPE_CFG = {
+  SURTIDO: { label: 'Surtido',  color: '#10B981', bg: 'rgba(16,185,129,0.12)', icon: '⬆' },
+  CONSUMO: { label: 'Consumo',  color: '#e74c3c', bg: 'rgba(231,76,60,0.12)',  icon: '⬇' },
+  AJUSTE:  { label: 'Ajuste',   color: '#d4950a', bg: 'rgba(212,149,10,0.12)', icon: '⚙' },
+}
 
 /* ─── Styles ─── */
-const card: React.CSSProperties = {
-  background: 'var(--bg-surface)',
-  border: '1px solid var(--border-accent)',
-  borderRadius: '12px',
-}
+const card: React.CSSProperties = { background: 'var(--bg-surface)', border: '1px solid var(--border-accent)', borderRadius: '12px' }
 const goldBorder = 'var(--border-accent)'
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '9px 12px',
-  background: 'var(--bg-input)',
-  border: '1px solid var(--border-accent)',
-  borderRadius: '8px',
-  color: 'var(--text-primary)',
-  fontSize: '13px',
-  outline: 'none',
-  boxSizing: 'border-box',
-}
-const btnPrimary: React.CSSProperties = {
-  padding: '10px 20px',
-  background: 'var(--accent)',
-  border: 'none',
-  borderRadius: '8px',
-  color: '#080E1A',
-  fontWeight: 700,
-  fontSize: '13px',
-  cursor: 'pointer',
-}
-const btnSecondary: React.CSSProperties = {
-  padding: '10px 20px',
-  background: 'transparent',
-  border: '1px solid var(--border-accent)',
-  borderRadius: '8px',
-  color: 'var(--text-secondary)',
-  fontWeight: 600,
-  fontSize: '13px',
-  cursor: 'pointer',
-}
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: '12px',
-  color: 'var(--text-muted)',
-  marginBottom: '4px',
-  fontWeight: 600,
-}
-
-/* ─── Fuel type badge colors ─── */
-const fuelColors: Record<string, { color: string; bg: string }> = {
-  HFO:    { color: 'var(--danger)', bg: 'rgba(231,76,60,0.12)' },
-  IFO380: { color: 'var(--warning)', bg: 'rgba(230,126,34,0.12)' },
-  VLSFO:  { color: 'var(--info)', bg: 'var(--info-dim)' },
-  MDO:    { color: 'var(--success)', bg: 'rgba(39,174,96,0.12)' },
-  MGO:    { color: 'var(--accent)', bg: 'rgba(212,149,10,0.12)' },
-  LSMGO:  { color: '#9b59b6', bg: 'rgba(155,89,182,0.12)' },
-}
+const inputStyle: React.CSSProperties = { width: '100%', padding: '9px 12px', background: 'var(--bg-input)', border: '1px solid var(--border-accent)', borderRadius: '8px', color: 'var(--text-primary)', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }
+const btnPrimary: React.CSSProperties = { padding: '10px 20px', background: 'var(--accent)', border: 'none', borderRadius: '8px', color: '#080E1A', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }
+const btnSecondary: React.CSSProperties = { padding: '10px 20px', background: 'transparent', border: '1px solid var(--border-accent)', borderRadius: '8px', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }
+const btnDanger: React.CSSProperties = { ...btnSecondary, borderColor: 'rgba(231,76,60,0.4)', color: '#e74c3c' }
+const labelStyle: React.CSSProperties = { display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px', fontWeight: 600 }
 
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' })
 }
-function fmtNum(n: number | null | undefined, decimals = 2) {
+function fmtDatetime(d: string) {
+  return new Date(d).toLocaleString('es-VE', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+function fmtL(n: number | null | undefined) {
   if (n == null) return '—'
-  return n.toLocaleString('es-VE', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+  return n.toLocaleString('es-VE', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' L'
 }
 
 /* ═══════════════════════ MAIN PAGE ═══════════════════════ */
 export default function FuelPage() {
-  const [logs, setLogs] = useState<FuelLog[]>([])
-  const [vessels, setVessels] = useState<Vessel[]>([])
-  const [loading, setLoading] = useState(true)
-  const [vesselFilter, setVesselFilter] = useState('')
-  const [selectedLog, setSelectedLog] = useState<FuelLog | null>(null)
-  const [drawerMode, setDrawerMode] = useState<DrawerMode>('detail')
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [toast, setToast] = useState('')
-  const [saving, setSaving] = useState(false)
+  const [logs, setLogs]         = useState<FuelLog[]>([])
+  const [vessels, setVessels]   = useState<Vessel[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [userRole, setUserRole] = useState('STANDARD')
 
-  // Form state
-  const emptyForm = {
-    vesselId: '', date: '', fuelType: 'MGO', operationAt: '', bunkerReceived: '',
-    consumed: '', rob: '', price: '', supplier: '', bdn: '', notes: '',
-  }
+  const [drawerOpen, setDrawerOpen]         = useState(false)
+  const [drawerMode, setDrawerMode]         = useState<'new' | 'detail'>('new')
+  const [selectedLog, setSelectedLog]       = useState<FuelLog | null>(null)
+  const [activeVesselId, setActiveVesselId] = useState<string | null>(null)
+  const [preVesselId, setPreVesselId]       = useState<string>('')
+  const [toast, setToast]   = useState('')
+  const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  const emptyForm = { vesselId: '', type: 'SURTIDO', liters: '', date: new Date().toISOString().slice(0, 10), operationAt: '', supplier: '', bdn: '', price: '', reportedBy: '', notes: '' }
   const [form, setForm] = useState(emptyForm)
 
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(''), 3500) }
+  const showToast = (msg: string, err = false) => {
+    setToast(msg)
+    setTimeout(() => setToast(''), 3500)
+  }
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('user')
+      if (stored) setUserRole(JSON.parse(stored).role || 'STANDARD')
+    } catch {}
+  }, [])
 
   const loadData = useCallback(async () => {
     try {
       const [fuelLogs, vesselList] = await Promise.all([
-        api(`/api/fuel-logs${vesselFilter ? `?vesselId=${vesselFilter}` : ''}`),
+        api('/api/fuel-logs'),
         api('/api/vessels'),
       ])
       setLogs(fuelLogs)
       setVessels(vesselList)
-    } catch {
-      /* silent */
-    }
+    } catch {}
     setLoading(false)
-  }, [vesselFilter])
+  }, [])
 
   useEffect(() => { loadData() }, [loadData])
 
-  /* ─── KPIs ─── */
-  const totalRegistros = logs.length
-  const avgRob = logs.length > 0
-    ? logs.reduce((sum, l) => sum + l.rob, 0) / logs.length
-    : 0
-  const lastBunker = logs.find(l => l.bunkerReceived && l.bunkerReceived > 0)
-  const maxConsumo = logs.reduce<FuelLog | null>((max, l) => {
-    if (l.consumed == null) return max
-    if (!max || (max.consumed ?? 0) < l.consumed) return l
-    return max
-  }, null)
+  /* ─── Filtrar por rol ─── */
+  const visibleVessels = vessels.filter(v => {
+    if (userRole === 'OPERATOR_HEAVY') return v.fleetType === 'PESADA'
+    if (userRole === 'OPERATOR_LIGHT') return v.fleetType === 'LIVIANA'
+    return true
+  })
+
+  function logsForVessel(vesselId: string) {
+    return logs.filter(l => l.vesselId === vesselId).sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    )
+  }
 
   /* ─── Drawer ─── */
+  function openNew(vesselId = '') {
+    setPreVesselId(vesselId)
+    setForm({ ...emptyForm, vesselId })
+    setDrawerMode('new')
+    setDrawerOpen(true)
+    setSelectedLog(null)
+  }
   function openDetail(log: FuelLog) {
     setSelectedLog(log)
     setDrawerMode('detail')
     setDrawerOpen(true)
   }
-  function openNew() {
-    setSelectedLog(null)
-    setForm(emptyForm)
-    setDrawerMode('new')
-    setDrawerOpen(true)
-  }
-  function closeDrawer() {
-    setDrawerOpen(false)
-    setSelectedLog(null)
-  }
-  function handleFormChange(field: string, value: string) {
-    setForm(prev => ({ ...prev, [field]: value }))
-  }
+  function closeDrawer() { setDrawerOpen(false); setSelectedLog(null) }
 
   async function handleSubmit() {
-    if (!form.vesselId || !form.date || !form.rob || !form.operationAt) {
-      showToast('Completa los campos obligatorios: embarcacion, fecha, ubicacion y ROB')
+    if (!form.vesselId || !form.liters || !form.date) {
+      showToast('Completa: embarcación, litros y fecha')
       return
     }
     setSaving(true)
@@ -173,47 +139,46 @@ export default function FuelPage() {
       await api('/api/fuel-logs', {
         method: 'POST',
         body: JSON.stringify({
-          vesselId: form.vesselId,
-          date: form.date,
-          fuelType: form.fuelType,
-          operationAt: form.operationAt,
-          bunkerReceived: form.bunkerReceived || null,
-          consumed: form.consumed || null,
-          rob: form.rob,
-          price: form.price || null,
-          supplier: form.supplier || null,
-          bdn: form.bdn || null,
-          notes: form.notes || null,
+          vesselId:    form.vesselId,
+          type:        form.type,
+          liters:      parseFloat(form.liters),
+          date:        form.date,
+          operationAt: form.operationAt || '',
+          supplier:    form.supplier || null,
+          bdn:         form.bdn || null,
+          price:       form.price ? parseFloat(form.price) : null,
+          reportedBy:  form.reportedBy || null,
+          notes:       form.notes || null,
+          source:      'MANUAL',
         }),
       })
-      showToast('Registro de combustible creado exitosamente')
+      showToast(form.type === 'SURTIDO' ? 'Surtido registrado — stock actualizado' : 'Consumo registrado — stock actualizado')
       closeDrawer()
       setLoading(true)
       await loadData()
-    } catch {
-      showToast('Error al crear registro')
-    }
+    } catch { showToast('Error al guardar') }
     setSaving(false)
   }
 
-  /* ─── Render ─── */
-  if (loading) {
-    return (
-      <div style={{ color: 'var(--text-muted)', padding: '40px', textAlign: 'center' }}>
-        Cargando registros de combustible...
-      </div>
-    )
+  async function handleDelete(id: string) {
+    if (!confirm('¿Eliminar este registro? El stock del buque se revertirá.')) return
+    setDeleting(true)
+    try {
+      await api(`/api/fuel-logs/${id}`, { method: 'DELETE' })
+      showToast('Registro eliminado')
+      closeDrawer()
+      setLoading(true)
+      await loadData()
+    } catch { showToast('Error al eliminar') }
+    setDeleting(false)
   }
+
+  if (loading) return <div style={{ color: 'var(--text-muted)', padding: '40px', textAlign: 'center' }}>Cargando...</div>
 
   return (
     <div style={{ position: 'relative' }}>
-      {/* Toast */}
       {toast && (
-        <div style={{
-          position: 'fixed', top: '20px', right: '20px', background: 'var(--success)',
-          color: 'white', padding: '12px 24px', borderRadius: '8px', fontSize: '13px',
-          fontWeight: 600, zIndex: 2000, boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-        }}>
+        <div style={{ position: 'fixed', top: '20px', right: '20px', background: 'var(--success)', color: 'white', padding: '12px 24px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, zIndex: 2000, boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
           {toast}
         </div>
       )}
@@ -221,207 +186,164 @@ export default function FuelPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800, color: 'var(--text-primary)' }}>
-            Control de Combustible
-          </h1>
+          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 800, color: 'var(--text-primary)' }}>Control de Combustible</h1>
           <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
-            Gestion de consumo, abastecimiento y ROB de la flota
+            Existencias, consumos y surtidos por embarcación · {visibleVessels.length} unidades
           </p>
         </div>
-        <button style={btnPrimary} onClick={openNew}>+ Nuevo Registro</button>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-        {/* Total Registros */}
-        <div style={{ ...card, padding: '20px' }}>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>
-            TOTAL REGISTROS
-          </div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--accent)' }}>
-            {totalRegistros}
-          </div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-            registros en el sistema
-          </div>
-        </div>
+      {/* Vessel rows */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {visibleVessels.map(vessel => {
+          const vLogs   = logsForVessel(vessel.id)
+          const fleet   = FLEET_CFG[vessel.fleetType as keyof typeof FLEET_CFG]
+          const isOpen  = activeVesselId === vessel.id
+          const lastConsumo = vLogs.find(l => l.type === 'CONSUMO')
+          const lastSurtido = vLogs.find(l => l.type === 'SURTIDO')
+          const stock   = vessel.fuelStockLiters ?? 0
+          const capacity = (vessels.find(v => v.id === vessel.id) as any)?.tankCapacityLiters
+          const stockPct = capacity ? Math.min(100, Math.round((stock / capacity) * 100)) : null
+          const stockColor = stockPct == null ? 'var(--accent)' : stockPct > 50 ? 'var(--success)' : stockPct > 20 ? 'var(--warning)' : 'var(--danger)'
 
-        {/* ROB Promedio */}
-        <div style={{ ...card, padding: '20px' }}>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>
-            ROB PROMEDIO FLOTA
-          </div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)' }}>
-            {fmtNum(avgRob, 1)}
-          </div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-            toneladas metricas
-          </div>
-        </div>
+          return (
+            <div key={vessel.id} style={{ ...card, overflow: 'hidden' }}>
+              {/* Row header */}
+              <div
+                onClick={() => setActiveVesselId(isOpen ? null : vessel.id)}
+                style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px 20px', cursor: 'pointer' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(212,149,10,0.04)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                {/* Fleet badge */}
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: fleet?.bg, border: `1px solid ${fleet?.color}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, color: fleet?.color, flexShrink: 0 }}>
+                  {fleet?.short ?? '—'}
+                </div>
 
-        {/* Ultimo Abastecimiento */}
-        <div style={{ ...card, padding: '20px' }}>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>
-            ULTIMO ABASTECIMIENTO
-          </div>
-          <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--success)' }}>
-            {lastBunker ? fmtNum(lastBunker.bunkerReceived) + ' MT' : '—'}
-          </div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-            {lastBunker ? `${lastBunker.vessel.name} - ${fmtDate(lastBunker.date)}` : 'Sin abastecimientos'}
-          </div>
-        </div>
+                {/* Name + fleet */}
+                <div style={{ minWidth: '150px', flexShrink: 0 }}>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>{vessel.name}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{fleet?.label}</div>
+                </div>
 
-        {/* Mayor Consumo */}
-        <div style={{ ...card, padding: '20px' }}>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>
-            MAYOR CONSUMO
-          </div>
-          <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--danger)' }}>
-            {maxConsumo ? fmtNum(maxConsumo.consumed) + ' MT' : '—'}
-          </div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
-            {maxConsumo ? `${maxConsumo.vessel.name} - ${maxConsumo.fuelType}` : 'Sin datos de consumo'}
-          </div>
-        </div>
-      </div>
+                {/* Metrics */}
+                <div style={{ display: 'flex', gap: '28px', flex: 1, flexWrap: 'wrap', alignItems: 'center' }}>
 
-      {/* Filter */}
-      <div style={{ ...card, padding: '16px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 600 }}>Filtrar por embarcacion:</span>
-        <select
-          value={vesselFilter}
-          onChange={e => { setVesselFilter(e.target.value); setLoading(true) }}
-          style={{
-            ...inputStyle,
-            width: '260px',
-            cursor: 'pointer',
-          }}
-        >
-          <option value="">Todas las embarcaciones</option>
-          {vessels.map(v => (
-            <option key={v.id} value={v.id}>{v.name}</option>
-          ))}
-        </select>
-        <div style={{ marginLeft: 'auto', fontSize: '12px', color: 'var(--text-muted)' }}>
-          Mostrando {logs.length} registro{logs.length !== 1 ? 's' : ''}
-        </div>
-      </div>
+                  {/* Existencia MGO */}
+                  <div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '3px' }}>Existencia MGO</div>
+                    <div style={{ fontSize: '15px', fontWeight: 800, color: stockColor }}>
+                      {fmtL(stock)}
+                      {stockPct != null && <span style={{ fontSize: '11px', fontWeight: 600, marginLeft: '6px', opacity: 0.8 }}>({stockPct}%)</span>}
+                    </div>
+                  </div>
 
-      {/* Table */}
-      <div style={{ ...card, overflow: 'hidden' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-            <thead>
-              <tr style={{ borderBottom: `1px solid ${goldBorder}` }}>
-                {['Fecha', 'Embarcacion', 'Tipo Combustible', 'ROB (MT)', 'Consumido (MT)', 'Recibido (MT)', 'Proveedor', 'Ubicacion'].map(h => (
-                  <th key={h} style={{
-                    textAlign: 'left', padding: '14px 16px', color: 'var(--text-muted)',
-                    fontWeight: 700, fontSize: '11px', textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                  }}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {logs.length === 0 ? (
-                <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                    No se encontraron registros de combustible
-                  </td>
-                </tr>
-              ) : (
-                logs.map(log => {
-                  const fc = fuelColors[log.fuelType] || { color: 'var(--text-muted)', bg: 'rgba(127,168,201,0.12)' }
-                  return (
-                    <tr
-                      key={log.id}
-                      onClick={() => openDetail(log)}
-                      style={{
-                        borderBottom: `1px solid rgba(212,149,10,0.07)`,
-                        cursor: 'pointer',
-                        transition: 'background 0.15s',
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(212,149,10,0.04)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      <td style={{ padding: '12px 16px', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
-                        {fmtDate(log.date)}
-                      </td>
-                      <td style={{ padding: '12px 16px', color: 'var(--text-primary)', fontWeight: 600 }}>
-                        {log.vessel.name}
-                      </td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span style={{
-                          display: 'inline-block', padding: '3px 10px', borderRadius: '6px',
-                          fontSize: '11px', fontWeight: 700, color: fc.color, background: fc.bg,
-                        }}>
-                          {log.fuelType}
-                        </span>
-                      </td>
-                      <td style={{ padding: '12px 16px', color: 'var(--accent)', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
-                        {fmtNum(log.rob)}
-                      </td>
-                      <td style={{ padding: '12px 16px', color: log.consumed ? 'var(--danger)' : 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
-                        {fmtNum(log.consumed)}
-                      </td>
-                      <td style={{ padding: '12px 16px', color: log.bunkerReceived ? 'var(--success)' : 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
-                        {fmtNum(log.bunkerReceived)}
-                      </td>
-                      <td style={{ padding: '12px 16px', color: 'var(--text-muted)' }}>
-                        {log.supplier || '—'}
-                      </td>
-                      <td style={{ padding: '12px 16px', color: 'var(--text-muted)' }}>
-                        {log.operationAt}
-                      </td>
-                    </tr>
-                  )
-                })
+                  {/* Último Consumo */}
+                  <div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '3px' }}>Último Consumo</div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: lastConsumo ? 'var(--danger)' : 'var(--text-muted)' }}>
+                      {lastConsumo ? `−${fmtL(lastConsumo.liters)}` : '—'}
+                    </div>
+                    {lastConsumo && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '1px' }}>{fmtDate(lastConsumo.date)}</div>}
+                  </div>
+
+                  {/* Último Surtido */}
+                  <div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '3px' }}>Último Surtido</div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: lastSurtido ? 'var(--success)' : 'var(--text-muted)' }}>
+                      {lastSurtido ? `+${fmtL(lastSurtido.liters)}` : '—'}
+                    </div>
+                    {lastSurtido && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '1px' }}>{fmtDate(lastSurtido.date)}</div>}
+                  </div>
+
+                  {/* Total movimientos */}
+                  <div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '3px' }}>Movimientos</div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>{vLogs.length}</div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                  <button onClick={e => { e.stopPropagation(); openNew(vessel.id) }} style={{ ...btnPrimary, padding: '7px 14px', fontSize: '12px' }}>
+                    + Movimiento
+                  </button>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '16px', transition: 'transform 0.2s', display: 'inline-block', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>▾</span>
+                </div>
+              </div>
+
+              {/* Expandable ledger */}
+              {isOpen && (
+                <div style={{ borderTop: `1px solid ${goldBorder}` }}>
+                  {vLogs.length === 0 ? (
+                    <div style={{ padding: '28px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+                      Sin movimientos registrados para esta embarcación
+                    </div>
+                  ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                        <thead>
+                          <tr style={{ background: 'rgba(212,149,10,0.04)' }}>
+                            {['Fecha', 'Tipo', 'Litros', 'Existencia Tras Movimiento', 'Proveedor / Fuente', 'Ubicación', 'Notas'].map(h => (
+                              <th key={h} style={{ textAlign: 'left', padding: '10px 16px', color: 'var(--text-muted)', fontWeight: 700, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', borderBottom: `1px solid ${goldBorder}`, whiteSpace: 'nowrap' }}>{h}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {vLogs.map(log => {
+                            const tc = TYPE_CFG[log.type as keyof typeof TYPE_CFG] ?? TYPE_CFG.AJUSTE
+                            return (
+                              <tr key={log.id} onClick={() => openDetail(log)} style={{ borderBottom: `1px solid rgba(212,149,10,0.06)`, cursor: 'pointer' }}
+                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(212,149,10,0.04)')}
+                                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                              >
+                                <td style={{ padding: '10px 16px', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{fmtDate(log.date)}</td>
+                                <td style={{ padding: '10px 16px' }}>
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, color: tc.color, background: tc.bg }}>
+                                    {tc.icon} {tc.label}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '10px 16px', fontWeight: 700, color: tc.color, fontVariantNumeric: 'tabular-nums' }}>
+                                  {log.type === 'CONSUMO' ? '−' : '+'}{fmtL(log.liters)}
+                                </td>
+                                <td style={{ padding: '10px 16px', color: 'var(--accent)', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+                                  {fmtL(log.balanceAfter)}
+                                </td>
+                                <td style={{ padding: '10px 16px', color: 'var(--text-muted)', fontSize: '12px' }}>
+                                  {log.supplier || log.source || '—'}
+                                </td>
+                                <td style={{ padding: '10px 16px', color: 'var(--text-muted)', fontSize: '12px' }}>{log.operationAt || '—'}</td>
+                                <td style={{ padding: '10px 16px', color: 'var(--text-muted)', fontSize: '12px', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.notes || '—'}</td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
               )}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          )
+        })}
       </div>
 
       {/* ─── Drawer ─── */}
       {drawerOpen && (
         <>
-          {/* Overlay */}
-          <div
-            onClick={closeDrawer}
-            style={{
-              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)',
-              zIndex: 1000, backdropFilter: 'blur(4px)',
-            }}
-          />
-          {/* Panel */}
-          <div style={{
-            position: 'fixed', top: 0, right: 0, bottom: 0, width: '520px', maxWidth: '100vw',
-            background: 'var(--bg-surface)', borderLeft: `1px solid ${goldBorder}`,
-            zIndex: 1001, overflowY: 'auto', padding: '28px',
-            boxShadow: '-8px 0 40px rgba(0,0,0,0.5)',
-          }}>
-            {/* Close */}
-            <button
-              onClick={closeDrawer}
-              style={{
-                position: 'absolute', top: '16px', right: '16px', background: 'none',
-                border: 'none', color: 'var(--text-muted)', fontSize: '22px', cursor: 'pointer',
-                lineHeight: 1, padding: '4px',
-              }}
-            >
-              x
-            </button>
+          <div onClick={closeDrawer} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1000, backdropFilter: 'blur(4px)' }} />
+          <div style={{ position: 'fixed', top: 0, right: 0, bottom: 0, width: '500px', maxWidth: '100vw', background: 'var(--bg-surface)', borderLeft: `1px solid ${goldBorder}`, zIndex: 1001, overflowY: 'auto', padding: '28px', boxShadow: '-8px 0 40px rgba(0,0,0,0.5)' }}>
+            <button onClick={closeDrawer} style={{ position: 'absolute', top: '16px', right: '16px', background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '20px', cursor: 'pointer' }}>✕</button>
 
-            {drawerMode === 'detail' && selectedLog && <DetailView log={selectedLog} />}
+            {drawerMode === 'detail' && selectedLog && (
+              <DetailView log={selectedLog} onDelete={handleDelete} deleting={deleting} />
+            )}
             {drawerMode === 'new' && (
               <FormView
                 form={form}
-                vessels={vessels}
+                vessels={visibleVessels}
                 saving={saving}
-                onChange={handleFormChange}
+                onChange={(k, v) => setForm(f => ({ ...f, [k]: v }))}
                 onSubmit={handleSubmit}
                 onCancel={closeDrawer}
               />
@@ -434,76 +356,49 @@ export default function FuelPage() {
 }
 
 /* ═══════════════════════ DETAIL VIEW ═══════════════════════ */
-function DetailView({ log }: { log: FuelLog }) {
-  const fc = fuelColors[log.fuelType] || { color: 'var(--text-muted)', bg: 'rgba(127,168,201,0.12)' }
-
-  const fields: { label: string; value: string | number | null; color?: string }[] = [
-    { label: 'Embarcacion', value: log.vessel.name },
-    { label: 'Fecha', value: fmtDate(log.date) },
-    { label: 'Tipo Combustible', value: log.fuelType },
-    { label: 'Ubicacion', value: log.operationAt },
-    { label: 'ROB (MT)', value: fmtNum(log.rob), color: 'var(--accent)' },
-    { label: 'Consumido (MT)', value: fmtNum(log.consumed), color: 'var(--danger)' },
-    { label: 'Recibido (MT)', value: fmtNum(log.bunkerReceived), color: 'var(--success)' },
-    { label: 'Precio (USD/MT)', value: log.price ? fmtNum(log.price) : '—' },
-    { label: 'Proveedor', value: log.supplier || '—' },
-    { label: 'BDN', value: log.bdn || '—' },
-    { label: 'Viaje', value: log.voyage?.voyageNumber || '—' },
-    { label: 'Reportado por', value: log.reportedBy || '—' },
-  ]
-
+function DetailView({ log, onDelete, deleting }: { log: FuelLog; onDelete: (id: string) => void; deleting: boolean }) {
+  const tc = TYPE_CFG[log.type as keyof typeof TYPE_CFG] ?? TYPE_CFG.AJUSTE
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-        <div style={{
-          width: '42px', height: '42px', borderRadius: '10px',
-          background: fc.bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '18px',
-        }}>
-          <span role="img" aria-label="fuel">&#9981;</span>
+        <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: tc.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+          {tc.icon}
         </div>
         <div>
           <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>
-            Detalle de Registro
+            {tc.label} de Combustible
           </h2>
-          <span style={{
-            display: 'inline-block', marginTop: '4px', padding: '2px 10px', borderRadius: '6px',
-            fontSize: '11px', fontWeight: 700, color: fc.color, background: fc.bg,
-          }}>
-            {log.fuelType}
-          </span>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '3px' }}>{log.vessel.name} · {fmtDatetime(log.date)}</div>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-        {fields.map(f => (
-          <div key={f.label} style={{
-            ...card, padding: '14px',
-          }}>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px', textTransform: 'uppercase' }}>
-              {f.label}
-            </div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: f.color || 'var(--text-primary)' }}>
-              {f.value}
-            </div>
-          </div>
-        ))}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+        <InfoCard label="Litros" value={`${log.type === 'CONSUMO' ? '−' : '+'}${fmtL(log.liters)}`} color={tc.color} />
+        <InfoCard label="Existencia Tras Movimiento" value={fmtL(log.balanceAfter)} color="var(--accent)" />
+        <InfoCard label="Fecha" value={fmtDate(log.date)} />
+        <InfoCard label="Tipo de Combustible" value={log.fuelType} />
+        {log.operationAt && <InfoCard label="Ubicación" value={log.operationAt} />}
+        {log.supplier    && <InfoCard label="Proveedor" value={log.supplier} />}
+        {log.bdn         && <InfoCard label="BDN" value={log.bdn} />}
+        {log.price       && <InfoCard label="Precio (USD/L)" value={`$${log.price}`} />}
+        {log.reportedBy  && <InfoCard label="Reportado por" value={log.reportedBy} />}
+        <InfoCard label="Fuente" value={log.source || 'MANUAL'} />
       </div>
 
       {log.notes && (
-        <div style={{ ...card, padding: '14px', marginTop: '16px' }}>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase' }}>
-            Notas
-          </div>
-          <div style={{ fontSize: '13px', color: 'var(--text-primary)', lineHeight: 1.5 }}>
-            {log.notes}
-          </div>
+        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-accent)', borderRadius: '10px', padding: '14px', marginBottom: '20px' }}>
+          <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '6px' }}>Notas</div>
+          <div style={{ fontSize: '13px', color: 'var(--text-primary)', lineHeight: 1.6 }}>{log.notes}</div>
         </div>
       )}
 
-      <div style={{ marginTop: '16px', fontSize: '11px', color: 'var(--text-muted)', textAlign: 'right' }}>
-        Creado: {fmtDate(log.createdAt)} | Actualizado: {fmtDate(log.updatedAt)}
+      <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '20px' }}>
+        Registrado: {fmtDatetime(log.createdAt)}
       </div>
+
+      <button onClick={() => onDelete(log.id)} disabled={deleting} style={{ ...btnDanger, opacity: deleting ? 0.5 : 1 }}>
+        {deleting ? 'Eliminando...' : 'Eliminar registro'}
+      </button>
     </div>
   )
 }
@@ -513,163 +408,130 @@ function FormView({ form, vessels, saving, onChange, onSubmit, onCancel }: {
   form: Record<string, string>
   vessels: Vessel[]
   saving: boolean
-  onChange: (field: string, value: string) => void
+  onChange: (k: string, v: string) => void
   onSubmit: () => void
   onCancel: () => void
 }) {
+  const isSurtido = form.type === 'SURTIDO'
+  const selectedVessel = vessels.find(v => v.id === form.vesselId)
+
   return (
     <div>
-      <h2 style={{ margin: '0 0 20px', fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>
-        Nuevo Registro de Combustible
+      <h2 style={{ margin: '0 0 6px', fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>
+        Nuevo Movimiento de Combustible
       </h2>
+      {selectedVessel && (
+        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '20px' }}>
+          Existencia actual: <span style={{ fontWeight: 700, color: 'var(--accent)' }}>{fmtL(selectedVessel.fuelStockLiters)}</span>
+        </div>
+      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        {/* Vessel */}
+
+        {/* Tipo */}
         <div>
-          <label style={labelStyle}>Embarcacion *</label>
-          <select
-            value={form.vesselId}
-            onChange={e => onChange('vesselId', e.target.value)}
-            style={{ ...inputStyle, cursor: 'pointer' }}
-          >
-            <option value="">Seleccionar embarcacion</option>
-            {vessels.map(v => (
-              <option key={v.id} value={v.id}>{v.name}</option>
-            ))}
+          <label style={labelStyle}>Tipo de Movimiento *</label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+            {(['SURTIDO', 'CONSUMO', 'AJUSTE'] as const).map(t => {
+              const tc = TYPE_CFG[t]
+              const active = form.type === t
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => onChange('type', t)}
+                  style={{ padding: '10px 8px', borderRadius: '8px', border: `1px solid ${active ? tc.color : 'var(--border-accent)'}`, background: active ? tc.bg : 'transparent', color: active ? tc.color : 'var(--text-secondary)', fontWeight: active ? 700 : 500, fontSize: '12px', cursor: 'pointer', transition: 'all 0.15s' }}
+                >
+                  {tc.icon} {tc.label}
+                </button>
+              )
+            })}
+          </div>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px' }}>
+            {form.type === 'SURTIDO' && '↑ Se sumará al stock actual del buque'}
+            {form.type === 'CONSUMO' && '↓ Se restará del stock actual del buque'}
+            {form.type === 'AJUSTE'  && '⚙ Establece el nuevo stock exacto (corrección)'}
+          </div>
+        </div>
+
+        {/* Embarcacion */}
+        <div>
+          <label style={labelStyle}>Embarcación *</label>
+          <select value={form.vesselId} onChange={e => onChange('vesselId', e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
+            <option value="">Seleccionar embarcación</option>
+            {vessels.map(v => <option key={v.id} value={v.id}>{v.name} · Existencia: {fmtL(v.fuelStockLiters)}</option>)}
           </select>
         </div>
 
-        {/* Date + FuelType row */}
+        {/* Litros + Fecha */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div>
+            <label style={labelStyle}>
+              {form.type === 'AJUSTE' ? 'Nuevo stock (litros) *' : 'Litros *'}
+            </label>
+            <input type="number" step="1" min="0" value={form.liters} onChange={e => onChange('liters', e.target.value)} placeholder="0" style={inputStyle} />
+          </div>
           <div>
             <label style={labelStyle}>Fecha *</label>
-            <input
-              type="date"
-              value={form.date}
-              onChange={e => onChange('date', e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-          <div>
-            <label style={labelStyle}>Tipo Combustible</label>
-            <select
-              value={form.fuelType}
-              onChange={e => onChange('fuelType', e.target.value)}
-              style={{ ...inputStyle, cursor: 'pointer' }}
-            >
-              {FUEL_TYPES.map(ft => (
-                <option key={ft} value={ft}>{ft}</option>
-              ))}
-            </select>
+            <input type="date" value={form.date} onChange={e => onChange('date', e.target.value)} style={inputStyle} />
           </div>
         </div>
 
-        {/* Operation At */}
+        {/* Ubicación */}
         <div>
-          <label style={labelStyle}>Ubicacion / Puerto *</label>
-          <input
-            type="text"
-            value={form.operationAt}
-            onChange={e => onChange('operationAt', e.target.value)}
-            placeholder="Ej: Puerto La Cruz, Muelle Norte"
-            style={inputStyle}
-          />
+          <label style={labelStyle}>Ubicación / Puerto</label>
+          <input type="text" value={form.operationAt} onChange={e => onChange('operationAt', e.target.value)} placeholder="Ej: Puerto La Cruz, Muelle Norte" style={inputStyle} />
         </div>
 
-        {/* ROB + Consumed + Received */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <div>
-            <label style={labelStyle}>ROB (MT) *</label>
-            <input
-              type="number"
-              step="0.01"
-              value={form.rob}
-              onChange={e => onChange('rob', e.target.value)}
-              placeholder="0.00"
-              style={inputStyle}
-            />
-          </div>
-          <div>
-            <label style={labelStyle}>Consumido (MT)</label>
-            <input
-              type="number"
-              step="0.01"
-              value={form.consumed}
-              onChange={e => onChange('consumed', e.target.value)}
-              placeholder="0.00"
-              style={inputStyle}
-            />
-          </div>
-          <div>
-            <label style={labelStyle}>Recibido (MT)</label>
-            <input
-              type="number"
-              step="0.01"
-              value={form.bunkerReceived}
-              onChange={e => onChange('bunkerReceived', e.target.value)}
-              placeholder="0.00"
-              style={inputStyle}
-            />
-          </div>
-        </div>
+        {/* Campos extra para SURTIDO */}
+        {isSurtido && (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div>
+                <label style={labelStyle}>Proveedor</label>
+                <input type="text" value={form.supplier} onChange={e => onChange('supplier', e.target.value)} placeholder="Nombre del proveedor" style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>BDN (Bunker Delivery Note)</label>
+                <input type="text" value={form.bdn} onChange={e => onChange('bdn', e.target.value)} placeholder="Número de BDN" style={inputStyle} />
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>Precio (USD/litro)</label>
+              <input type="number" step="0.0001" value={form.price} onChange={e => onChange('price', e.target.value)} placeholder="0.0000" style={inputStyle} />
+            </div>
+          </>
+        )}
 
-        {/* Price + Supplier */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-          <div>
-            <label style={labelStyle}>Precio (USD/MT)</label>
-            <input
-              type="number"
-              step="0.01"
-              value={form.price}
-              onChange={e => onChange('price', e.target.value)}
-              placeholder="0.00"
-              style={inputStyle}
-            />
-          </div>
-          <div>
-            <label style={labelStyle}>Proveedor</label>
-            <input
-              type="text"
-              value={form.supplier}
-              onChange={e => onChange('supplier', e.target.value)}
-              placeholder="Nombre del proveedor"
-              style={inputStyle}
-            />
-          </div>
-        </div>
-
-        {/* BDN */}
+        {/* Reportado por */}
         <div>
-          <label style={labelStyle}>BDN (Bunker Delivery Note)</label>
-          <input
-            type="text"
-            value={form.bdn}
-            onChange={e => onChange('bdn', e.target.value)}
-            placeholder="Numero de BDN"
-            style={inputStyle}
-          />
+          <label style={labelStyle}>Reportado por</label>
+          <input type="text" value={form.reportedBy} onChange={e => onChange('reportedBy', e.target.value)} placeholder="Nombre del responsable" style={inputStyle} />
         </div>
 
-        {/* Notes */}
+        {/* Notas */}
         <div>
           <label style={labelStyle}>Notas</label>
-          <textarea
-            value={form.notes}
-            onChange={e => onChange('notes', e.target.value)}
-            placeholder="Observaciones adicionales..."
-            rows={3}
-            style={{ ...inputStyle, resize: 'vertical' }}
-          />
+          <textarea value={form.notes} onChange={e => onChange('notes', e.target.value)} placeholder="Observaciones adicionales..." rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
         </div>
 
-        {/* Action buttons */}
         <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-          <button style={btnPrimary} onClick={onSubmit} disabled={saving}>
-            {saving ? 'Guardando...' : 'Guardar Registro'}
+          <button style={{ ...btnPrimary, opacity: saving ? 0.6 : 1 }} onClick={onSubmit} disabled={saving}>
+            {saving ? 'Guardando...' : 'Registrar Movimiento'}
           </button>
           <button style={btnSecondary} onClick={onCancel}>Cancelar</button>
         </div>
       </div>
+    </div>
+  )
+}
+
+/* ─── Shared ─── */
+function InfoCard({ label, value, color }: { label: string; value: string; color?: string }) {
+  return (
+    <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-accent)', borderRadius: '8px', padding: '12px' }}>
+      <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>{label}</div>
+      <div style={{ fontSize: '14px', fontWeight: 700, color: color || 'var(--text-primary)' }}>{value}</div>
     </div>
   )
 }

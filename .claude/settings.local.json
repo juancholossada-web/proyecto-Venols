@@ -2,7 +2,16 @@
   "permissions": {
     "allow": [
       "Bash(node -e \":*)",
-      "Bash(npx prisma:*)"
+      "Bash(npx prisma:*)",
+      "WebSearch",
+      "Bash(npx tsx:*)",
+      "Bash(npm install:*)",
+      "Bash(ls \"D:/proyecto/maritime-erp/app/\\(dashboard\\)/dashboard/settings/\")",
+      "Bash(npx ts-node -e \":*)",
+      "Bash(npx tsc:*)",
+      "Bash(node -e \"const sharp = require\\(''''sharp''''\\); console.log\\(''''sharp ok'''', sharp.versions\\)\")",
+      "Bash(grep -v \"^$\")",
+      "Bash(npx ts-node:*)"
     ]
   }
 }

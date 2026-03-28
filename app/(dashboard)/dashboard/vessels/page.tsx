@@ -106,10 +106,6 @@ export default function VesselsPage() {
                     <div className="text-[11px] text-[var(--text-muted)]">{fleet.desc}</div>
                   </div>
                 </div>
-                <button onClick={() => setActiveFleet(fleet.key)}
-                  className="text-[11px] text-[var(--accent)] cursor-pointer bg-transparent border-none hover:underline">
-                  Ver detalle
-                </button>
               </div>
               <VesselGrid vessels={fleet.list} onSelect={openVessel} />
             </div>

@@ -80,7 +80,8 @@ export async function POST(req: NextRequest) {
           firstName: pending.firstName,
           lastName: pending.lastName,
           phone: pending.phone,
-          role: pending.role,
+          role: 'STANDARD',
+          pendingRoleApproval: true,
         },
         select: {
           id: true,
@@ -141,6 +142,8 @@ export async function POST(req: NextRequest) {
     )
   } catch (error) {
     console.error('[VERIFY EMAIL ERROR]', error)
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
+    const isDev = process.env.NODE_ENV === 'development'
+    const detail = isDev && error instanceof Error ? error.message : undefined
+    return NextResponse.json({ error: 'Error interno del servidor', detail }, { status: 500 })
   }
 }
